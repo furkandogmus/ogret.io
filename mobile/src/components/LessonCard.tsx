@@ -14,6 +14,7 @@ interface Props {
   onCancel?: () => void;
   onComplete?: () => void;
   onMeetingLink?: () => void;
+  onMessage?: () => void;
 }
 
 const statusIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -24,7 +25,7 @@ const statusIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
   CANCELLED: "close-circle",
 };
 
-function LessonCardComponent({ lesson, userRole, onPress, onAvatarPress, onCancel, onComplete, onMeetingLink }: Props) {
+function LessonCardComponent({ lesson, userRole, onPress, onAvatarPress, onCancel, onComplete, onMeetingLink, onMessage }: Props) {
   const otherUser = userRole === "STUDENT" ? lesson.tutor : lesson.student;
   const canCancel = lesson.status === "PENDING";
   const canComplete = lesson.status === "IN_PROGRESS" || lesson.status === "PENDING" || lesson.status === "CONFIRMED";
@@ -76,22 +77,26 @@ function LessonCardComponent({ lesson, userRole, onPress, onAvatarPress, onCance
         </TouchableOpacity>
       )}
 
-      {showActions && (
-        <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
-          {canCancel && onCancel && (
-            <TouchableOpacity onPress={onCancel} style={{ flex: 1, backgroundColor: colors.error + "20", borderRadius: radius.sm, padding: spacing.sm, alignItems: "center" }}>
-              <Text style={{ color: colors.error, fontWeight: "600", fontSize: 13 }}>İptal Et</Text>
-            </TouchableOpacity>
-          )}
-          {canComplete && onComplete && (
-            <TouchableOpacity onPress={onComplete} style={{ flex: 1, backgroundColor: colors.success + "20", borderRadius: radius.sm, padding: spacing.sm, alignItems: "center" }}>
-              <Text style={{ color: colors.success, fontWeight: "600", fontSize: 13 }}>
-                {lesson.status === "PENDING" ? "Onayla" : "Tamamla"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
+      <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
+        {onMessage && lesson.status !== "CANCELLED" && (
+          <TouchableOpacity onPress={onMessage} style={{ flex: 1, backgroundColor: colors.primary + "15", borderRadius: radius.sm, padding: spacing.sm, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 4 }}>
+            <Ionicons name="chatbubble-ellipses" size={14} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontWeight: "600", fontSize: 13 }}>Mesaj Gönder</Text>
+          </TouchableOpacity>
+        )}
+        {canCancel && onCancel && (
+          <TouchableOpacity onPress={onCancel} style={{ flex: 1, backgroundColor: colors.error + "20", borderRadius: radius.sm, padding: spacing.sm, alignItems: "center" }}>
+            <Text style={{ color: colors.error, fontWeight: "600", fontSize: 13 }}>İptal Et</Text>
+          </TouchableOpacity>
+        )}
+        {canComplete && onComplete && (
+          <TouchableOpacity onPress={onComplete} style={{ flex: 1, backgroundColor: colors.success + "20", borderRadius: radius.sm, padding: spacing.sm, alignItems: "center" }}>
+            <Text style={{ color: colors.success, fontWeight: "600", fontSize: 13 }}>
+              {lesson.status === "PENDING" ? "Onayla" : "Tamamla"}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </TouchableOpacity>
   );
 }

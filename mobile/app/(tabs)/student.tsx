@@ -95,7 +95,7 @@ export default function StudentDashboard() {
         initialNumToRender={10}
         removeClippedSubviews={Platform.OS === "android"}
         contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
-        renderItem={({ item }) => <LessonCard lesson={item} userRole="STUDENT" onPress={() => router.push(`/lesson/${item.id}`)} onCancel={() => handleCancel(item.id)} />}
+        renderItem={({ item }) => <LessonCard lesson={item} userRole="STUDENT" onPress={() => router.push(`/lesson/${item.id}`)} onCancel={() => handleCancel(item.id)} onMessage={() => router.push(`/messages/${item.tutor.id}`)} />}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchLessons(); }} tintColor={colors.primary} />}
         ListEmptyComponent={
           loading ? <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />

@@ -197,6 +197,7 @@ export default function ProfileScreen() {
                 userRole={isTutor ? "TUTOR" : "STUDENT"}
                 onPress={() => router.push(`/lesson/${lesson.id}`)}
                 onAvatarPress={isTutor ? () => router.push(`/tutor/student-lessons/${lesson.student.id}` as any) : undefined}
+                onMessage={() => router.push(`/messages/${isTutor ? lesson.student.id : lesson.tutor.id}` as any)}
                 onCancel={["PENDING", "CONFIRMED"].includes(lesson.status) ? () => handleCancel(lesson.id) : undefined}
                 onComplete={
                   lesson.status === "PENDING" && isTutor ? () => handleConfirm(lesson.id)

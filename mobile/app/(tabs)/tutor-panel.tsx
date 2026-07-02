@@ -125,7 +125,7 @@ export default function TutorPanel() {
         removeClippedSubviews={Platform.OS === "android"}
         contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
         renderItem={({ item }) => (
-          <LessonCard lesson={item} userRole="TUTOR" onPress={() => router.push(`/lesson/${item.id}`)} onCancel={item.status === "PENDING" ? () => handleCancel(item.id) : undefined} onComplete={["CONFIRMED", "IN_PROGRESS"].includes(item.status) ? () => handleStartOrComplete(item.id, item.status) : item.status === "PENDING" ? () => handleConfirm(item.id) : undefined} />
+           <LessonCard lesson={item} userRole="TUTOR" onPress={() => router.push(`/lesson/${item.id}`)} onCancel={item.status === "PENDING" ? () => handleCancel(item.id) : undefined} onComplete={["CONFIRMED", "IN_PROGRESS"].includes(item.status) ? () => handleStartOrComplete(item.id, item.status) : item.status === "PENDING" ? () => handleConfirm(item.id) : undefined} onMessage={() => router.push(`/messages/${item.student.id}`)} />
         )}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchLessons(); }} tintColor={colors.primary} />}
         ListEmptyComponent={
