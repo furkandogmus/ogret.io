@@ -65,7 +65,7 @@ export function SearchPage() {
         online: onlyOnline || undefined,
         sort,
       });
-      setResults(data || []);
+      setResults(data?.content || data || []);
     } catch {
       toast.error("Arama sonuçları yüklenemedi");
     } finally {

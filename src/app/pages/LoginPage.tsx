@@ -108,6 +108,12 @@ export function LoginPage() {
             >
               {form.formState.isSubmitting ? "Giriş yapılıyor..." : "Giriş Yap"}
             </button>
+
+            <p className="text-center text-sm">
+              <Link to="/sifre-unuttum" className="text-muted-foreground hover:text-primary transition-colors">
+                Şifremi unuttum
+              </Link>
+            </p>
           </form>
         </Form>
 

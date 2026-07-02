@@ -136,6 +136,14 @@ export const userApi = {
     api.put<UserResponse>("/users/me/avatar", { avatarUrl }),
 };
 
+export interface Page<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 // ─── Auth ───
 
 export const authApi = {
@@ -144,6 +152,19 @@ export const authApi = {
 
   register: (data: { email: string; phone: string; password: string; fullName: string; role: "STUDENT" | "TUTOR" }) =>
     api.post("/auth/register", data),
+
+  verifyEmail: (token: string) =>
+    api.post("/auth/verify-email", { token }),
+
+  // TODO: Telefon doğrulama - Twilio entegrasyonu gerekiyor, şimdilik pasif
+  // verifyPhone: (code: string) =>
+  //   api.post("/auth/verify-phone", { code }),
+
+  forgotPassword: (email: string) =>
+    api.post("/auth/forgot-password", { email }),
+
+  resetPassword: (token: string, password: string) =>
+    api.post("/auth/reset-password", { token, password }),
 };
 
 // ─── Tutors ───
@@ -166,6 +187,9 @@ export const tutorApi = {
 
   updateMyAvailability: (slots: { dayOfWeek: number; startTime: string; endTime: string }[]) =>
     api.put("/tutors/me/availability", slots),
+
+  getAvailability: (tutorId: string) =>
+    api.get<{ id: string; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }[]>(`/tutors/${tutorId}/availability`),
 };
 
 // ─── Lessons ───
@@ -185,6 +209,9 @@ export const lessonApi = {
 
   cancel: (id: string, reason?: string) =>
     api.put<LessonResponse>(`/lessons/${id}/cancel`, null, { params: { reason } }),
+
+  start: (id: string) =>
+    api.put<LessonResponse>(`/lessons/${id}/start`),
 
   complete: (id: string) =>
     api.put<LessonResponse>(`/lessons/${id}/complete`),
@@ -293,8 +320,8 @@ export const adminApi = {
   getDashboard: () =>
     api.get("/admin/dashboard"),
 
-  getUsers: () =>
-    api.get<UserResponse[]>("/admin/users"),
+  getUsers: (params?: { page?: number; size?: number }) =>
+    api.get<Page<UserResponse>>("/admin/users", { params }),
 
   verifyUser: (id: string) =>
     api.put<UserResponse>(`/admin/users/${id}/verify`),
@@ -305,8 +332,8 @@ export const adminApi = {
   reviewVerification: (id: string, approved: boolean, adminNote?: string) =>
     api.put(`/admin/verifications/${id}`, { approved, adminNote }),
 
-  getLessons: () =>
-    api.get<LessonResponse[]>("/admin/lessons"),
+  getLessons: (params?: { page?: number; size?: number }) =>
+    api.get<Page<LessonResponse>>("/admin/lessons", { params }),
 };
 
 // ─── Tutor Listings ───
@@ -371,8 +398,10 @@ export const listingApi = {
     minRating?: number;
     online?: boolean;
     sort?: string;
+    page?: number;
+    size?: number;
   }) =>
-    api.get<ListingResponse[]>("/tutors/listings", { params }),
+    api.get<Page<ListingResponse>>("/tutors/listings", { params }),
 };
 
 // ─── File Upload ───

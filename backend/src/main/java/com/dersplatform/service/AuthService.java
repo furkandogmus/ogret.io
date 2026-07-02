@@ -65,6 +65,24 @@ public class AuthService {
 
         user = userRepository.save(user);
 
+        // TODO: E-posta doğrulama mail'i gönder - mail altyapısı hazır olunca aktifleştirilecek
+        try {
+            String verifyToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+            String verifyLink = baseUrl + "/email-dogrula?token=" + verifyToken;
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(user.getEmail());
+            message.setSubject("E-posta Doğrulama - öğret.io");
+            message.setText(
+                    "Merhaba " + user.getFullName() + ",\n\n"
+                    + "E-posta adresinizi doğrulamak için aşağıdaki bağlantıya tıklayın:\n"
+                    + verifyLink + "\n\n"
+                    + "öğret.io"
+            );
+            mailSender.send(message);
+        } catch (Exception e) {
+            // Mail altyapısı yapılandırılmamış olabilir, kayıt devam etsin
+        }
+
         return buildAuthResponse(user);
     }
 
@@ -111,13 +129,14 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    @Transactional
-    public void verifyPhone(VerifyPhoneRequest request) {
-        if (request.getCode() == null || request.getCode().isBlank()) {
-            throw ApiException.badRequest("Doğrulama kodu gerekli");
-        }
-        throw ApiException.badRequest("SMS doğrulama henüz yapılandırılmadı");
-    }
+    // TODO: Telefon doğrulama - Twilio entegrasyonu gerekiyor, şimdilik pasif
+    // @Transactional
+    // public void verifyPhone(VerifyPhoneRequest request) {
+    //     if (request.getCode() == null || request.getCode().isBlank()) {
+    //         throw ApiException.badRequest("Doğrulama kodu gerekli");
+    //     }
+    //     throw ApiException.badRequest("SMS doğrulama henüz yapılandırılmadı");
+    // }
 
     @Transactional
     public void forgotPassword(String email) {

@@ -6,7 +6,8 @@ import com.dersplatform.model.dto.request.RefreshTokenRequest;
 import com.dersplatform.model.dto.request.RegisterRequest;
 import com.dersplatform.model.dto.request.ResetPasswordRequest;
 import com.dersplatform.model.dto.request.VerifyEmailRequest;
-import com.dersplatform.model.dto.request.VerifyPhoneRequest;
+// TODO: Telefon doğrulama - Twilio entegrasyonu gerekiyor, şimdilik pasif
+// import com.dersplatform.model.dto.request.VerifyPhoneRequest;
 import com.dersplatform.model.dto.response.AuthResponse;
 import com.dersplatform.service.AuthService;
 import jakarta.validation.Valid;
@@ -45,11 +46,12 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "E-posta başarıyla doğrulandı"));
     }
 
-    @PostMapping("/verify-phone")
-    public ResponseEntity<Map<String, String>> verifyPhone(@Valid @RequestBody VerifyPhoneRequest request) {
-        authService.verifyPhone(request);
-        return ResponseEntity.ok(Map.of("message", "Telefon başarıyla doğrulandı"));
-    }
+    // TODO: Telefon doğrulama - Twilio entegrasyonu gerekiyor, şimdilik pasif
+    // @PostMapping("/verify-phone")
+    // public ResponseEntity<Map<String, String>> verifyPhone(@Valid @RequestBody VerifyPhoneRequest request) {
+    //     authService.verifyPhone(request);
+    //     return ResponseEntity.ok(Map.of("message", "Telefon başarıyla doğrulandı"));
+    // }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {

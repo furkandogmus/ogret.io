@@ -11,6 +11,8 @@ import { TutorDashboard } from "./pages/TutorDashboard";
 import { MessagesPage } from "./pages/MessagesPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { SubscriptionPage } from "./pages/SubscriptionPage";
 import { VerificationPage } from "./pages/VerificationPage";
@@ -28,6 +30,8 @@ export default function App() {
           <Routes>
             <Route path="/giris" element={<LoginPage />} />
             <Route path="/kayit" element={<RegisterPage />} />
+            <Route path="/sifre-unuttum" element={<ForgotPasswordPage />} />
+            <Route path="/sifre-sifirla" element={<ResetPasswordPage />} />
             <Route element={<RootLayout />}>
               <Route path="/" element={<LandingPage />} />
               <Route path="/arama" element={<SearchPage />} />
