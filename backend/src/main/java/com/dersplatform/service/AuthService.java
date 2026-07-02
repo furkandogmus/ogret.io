@@ -4,6 +4,8 @@ import com.dersplatform.exception.ApiException;
 import com.dersplatform.model.dto.request.LoginRequest;
 import com.dersplatform.model.dto.request.RefreshTokenRequest;
 import com.dersplatform.model.dto.request.RegisterRequest;
+import com.dersplatform.model.dto.request.VerifyEmailRequest;
+import com.dersplatform.model.dto.request.VerifyPhoneRequest;
 import com.dersplatform.model.dto.response.AuthResponse;
 import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.model.entity.User;
