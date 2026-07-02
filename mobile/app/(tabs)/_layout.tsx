@@ -29,13 +29,13 @@ function TabPager({ currentIndex }: { currentIndex: number }) {
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gs) =>
-        Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5 && Math.abs(gs.dx) > 10,
+        Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5 && Math.abs(gs.dx) > 5,
       onPanResponderMove: (_, gs) => {
         scrollX.setValue(indexRef.current * SCREEN_WIDTH - gs.dx);
       },
       onPanResponderRelease: (_, gs) => {
-        const offset = indexRef.current * SCREEN_WIDTH - gs.dx;
-        const idx = Math.max(0, Math.min(TAB_ROUTES.length - 1, Math.round(offset / SCREEN_WIDTH)));
+        const delta = -gs.dx / SCREEN_WIDTH + -gs.vx * 0.3;
+        const idx = Math.max(0, Math.min(TAB_ROUTES.length - 1, Math.round(indexRef.current + delta)));
         Animated.spring(scrollX, { toValue: idx * SCREEN_WIDTH, useNativeDriver: true }).start();
         if (idx !== indexRef.current) {
           router.replace(TAB_ROUTES[idx]);
