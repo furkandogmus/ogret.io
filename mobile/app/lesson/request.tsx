@@ -132,6 +132,7 @@ export default function LessonRequestScreen() {
               <Ionicons name="calendar-outline" size={20} color={colors.primary} />
               <Text style={{ color: colors.text, fontSize: 14 }}>
                 {(() => {
+                  if (!selectedDate) return "Seçilmedi";
                   const [y, m, d] = selectedDate.split("-").map(Number);
                   return new Date(y, m - 1, d).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
                 })()}

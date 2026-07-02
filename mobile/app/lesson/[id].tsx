@@ -70,6 +70,7 @@ export default function LessonDetailScreen() {
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: spacing.md }}>Ders Bilgileri</Text>
           <Row icon="book-outline" label="Konu" value={lesson.subject.name} />
           <Row icon="calendar-outline" label="Tarih" value={(() => {
+            if (!lesson.lessonDate) return "Belirtilmemiş";
             const [y, m, d] = lesson.lessonDate.split("-").map(Number);
             return new Date(y, m - 1, d).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
           })()} />
