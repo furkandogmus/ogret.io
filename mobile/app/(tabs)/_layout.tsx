@@ -35,33 +35,30 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="search" size={size} color={color} />,
         }}
       />
-      {isStudent && (
-        <Tabs.Screen
-          name="student"
-          options={{
-            title: "Paneli",
-            tabBarIcon: ({ color, size }) => <Ionicons name="school" size={size} color={color} />,
-          }}
-        />
-      )}
-      {isTutor && (
-        <Tabs.Screen
-          name="tutor-panel"
-          options={{
-            title: "Paneli",
-            tabBarIcon: ({ color, size }) => <Ionicons name="easel" size={size} color={color} />,
-          }}
-        />
-      )}
-      {isAdmin && (
-        <Tabs.Screen
-          name="admin"
-          options={{
-            title: "Admin",
-            tabBarIcon: ({ color, size }) => <Ionicons name="shield-checkmark" size={size} color={color} />,
-          }}
-        />
-      )}
+      <Tabs.Screen
+        name="student"
+        options={{
+          title: "Paneli",
+          tabBarIcon: ({ color, size }) => <Ionicons name="school" size={size} color={color} />,
+          href: isStudent ? undefined : null,
+        }}
+      />
+      <Tabs.Screen
+        name="tutor-panel"
+        options={{
+          title: "Paneli",
+          tabBarIcon: ({ color, size }) => <Ionicons name="easel" size={size} color={color} />,
+          href: isTutor ? undefined : null,
+        }}
+      />
+      <Tabs.Screen
+        name="admin"
+        options={{
+          title: "Admin",
+          tabBarIcon: ({ color, size }) => <Ionicons name="shield-checkmark" size={size} color={color} />,
+          href: isAdmin ? undefined : null,
+        }}
+      />
       <Tabs.Screen
         name="messages"
         options={{
