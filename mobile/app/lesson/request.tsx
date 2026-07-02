@@ -132,9 +132,19 @@ export default function LessonRequestScreen() {
               <Ionicons name="calendar-outline" size={20} color={colors.primary} />
               <Text style={{ color: colors.text, fontSize: 14 }}>
                 {(() => {
-                  if (!selectedDate) return "Seçilmedi";
-                  const [y, m, d] = selectedDate.split("-").map(Number);
-                  return new Date(y, m - 1, d).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+                  const val = selectedDate;
+                  if (!val) return "Seçilmedi";
+                  if (Array.isArray(val)) {
+                    return new Date(val[0], val[1] - 1, val[2]).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+                  }
+                  if (typeof val === "string") {
+                    const parts = val.split("-").map(Number);
+                    if (parts.length === 3 && !parts.some(isNaN)) {
+                      return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+                    }
+                    return new Date(val).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+                  }
+                  return "Seçilmedi";
                 })()}
                 {" • "}{selectedStart} - {selectedEnd}
               </Text>

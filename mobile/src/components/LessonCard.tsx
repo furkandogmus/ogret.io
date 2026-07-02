@@ -51,9 +51,19 @@ function LessonCardComponent({ lesson, userRole, onPress, onCancel, onComplete, 
           <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
           <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
             {(() => {
-              if (!lesson.lessonDate) return "Belirtilmemiş";
-              const [y, m, d] = lesson.lessonDate.split("-").map(Number);
-              return new Date(y, m - 1, d).toLocaleDateString("tr-TR");
+              const val = lesson.lessonDate;
+              if (!val) return "Belirtilmemiş";
+              if (Array.isArray(val)) {
+                return new Date(val[0], val[1] - 1, val[2]).toLocaleDateString("tr-TR");
+              }
+              if (typeof val === "string") {
+                const parts = val.split("-").map(Number);
+                if (parts.length === 3 && !parts.some(isNaN)) {
+                  return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString("tr-TR");
+                }
+                return new Date(val).toLocaleDateString("tr-TR");
+              }
+              return "Belirtilmemiş";
             })()}
           </Text>
         </View>
