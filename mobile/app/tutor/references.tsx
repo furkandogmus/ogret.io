@@ -1,11 +1,12 @@
-import { useState, useCallback } from "react";
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
+import { useState, useEffect, useCallback } from "react";
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as Clipboard from "expo-clipboard";
 import { Button } from "../../src/components/Button";
-import { Input } from "../../src/components/Input";
 import { useToast } from "../../src/components/Toast";
 import { useHaptics } from "../../src/hooks/useHaptics";
+import { useAuth } from "../../src/providers/AuthProvider";
 import { referenceApi } from "../../src/api/services";
 import type { Reference } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
@@ -14,112 +15,183 @@ export default function ReferencesScreen() {
   const router = useRouter();
   const toast = useToast();
   const haptics = useHaptics();
+  const { user } = useAuth();
+
   const [references, setReferences] = useState<Reference[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [title, setTitle] = useState("");
-  const [comment, setComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   const fetchReferences = useCallback(async () => {
     try {
       const { data } = await referenceApi.getMyReferences();
       setReferences(data);
-    } catch { /* */ }
-    setLoading(false);
-    setRefreshing(false);
+    } catch {
+      toast.show("Referanslar yüklenemedi", "error");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
-  useState(() => { fetchReferences(); });
+  useEffect(() => {
+    fetchReferences();
+  }, [fetchReferences]);
 
-  const handleSubmit = async () => {
-    if (!name || !email || !comment) {
-      toast.show("Ad, e-posta ve yorum zorunlu", "error");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await referenceApi.create("me", {
-        recommenderName: name,
-        recommenderEmail: email,
-        recommenderTitle: title,
-        comment,
-      });
-      haptics.success();
-      toast.show("Referans başvurusu gönderildi", "success");
-      setShowForm(false);
-      setName(""); setEmail(""); setTitle(""); setComment("");
-      fetchReferences();
-    } catch {
-      toast.show("Gönderilemedi", "error");
-    } finally {
-      setSubmitting(false);
-    }
+  const handleCopyLink = async () => {
+    haptics.success();
+    // Copy the tutor's reference submission URL
+    const refUrl = `http://192.168.1.141:5173/ogretmen/${user?.id}/referans-yaz`;
+    await Clipboard.setStringAsync(refUrl);
+    toast.show("Referans isteme linki kopyalandı!", "success");
   };
 
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ color: colors.textMuted }}>Yükleniyor...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.md }}>
+      {/* Header */}
+      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border }}>
         <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing.md }}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600", flex: 1 }}>Referanslar</Text>
-        <Button title="Ekle" onPress={() => setShowForm(!showForm)} size="sm" icon={<Ionicons name="add" size={16} color="#fff" />} />
+        <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600", flex: 1 }}>Referanslarım</Text>
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}
+        contentContainerStyle={{ padding: spacing.md, paddingBottom: 60 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchReferences(); }} tintColor={colors.primary} />}
       >
-        {showForm && (
-          <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.lg, borderWidth: 1, borderColor: colors.primary }}>
-            <Text style={{ color: colors.text, fontWeight: "600", marginBottom: spacing.md }}>Yeni Referans</Text>
-            <Input label="Ad Soyad" value={name} onChangeText={setName} placeholder="Referans kişinin adı" />
-            <Input label="E-posta" value={email} onChangeText={setEmail} placeholder="ornek@email.com" autoCapitalize="none" keyboardType="email-address" />
-            <Input label="Ünvan" value={title} onChangeText={setTitle} placeholder="Örn: Proje Yöneticisi" />
-            <Input label="Yorum" value={comment} onChangeText={setComment} multiline numberOfLines={3} placeholder="Referans hakkında yorum..." />
-            <Button title="Gönder" onPress={handleSubmit} loading={submitting} size="lg" />
+        {/* Info & Copy Link Card */}
+        <View
+          style={{
+            backgroundColor: colors.card,
+            borderRadius: radius.lg,
+            padding: spacing.lg,
+            marginBottom: spacing.lg,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.sm }}>
+            <Ionicons name="award" size={22} color={colors.primary} />
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}>Referanslar & Tavsiyeler</Text>
           </View>
-        )}
+          <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18, marginBottom: spacing.md }}>
+            Eski öğrencileriniz, velileriniz veya meslektaşlarınızdan tavsiye yazısı toplayarak profilinizin güvenilirliğini artırabilirsiniz. Aşağıdaki bağlantıyı kopyalayıp onlarla paylaşın. Yazılan tavsiyeler admin onayından geçtikten sonra profilinizde listelenir.
+          </Text>
 
-        {references.length === 0 && !showForm ? (
-          <View style={{ alignItems: "center", marginTop: 60 }}>
-            <Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
-            <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: spacing.sm }}>Henüz referans eklenmemiş</Text>
-            <Button title="Referans Ekle" onPress={() => setShowForm(true)} style={{ marginTop: spacing.md }} />
+          {/* Share Link Area */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: colors.surfaceLight,
+              borderRadius: radius.md,
+              borderWidth: 1,
+              borderColor: colors.border,
+              padding: spacing.sm,
+              gap: spacing.sm,
+            }}
+          >
+            <Text
+              style={{
+                flex: 1,
+                color: colors.textMuted,
+                fontSize: 12,
+                fontFamily: "monospace",
+              }}
+              numberOfLines={1}
+            >
+              http://192.168.1.141:5173/ogretmen/{user?.id.slice(0, 8)}.../referans-yaz
+            </Text>
+            <TouchableOpacity
+              onPress={handleCopyLink}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+                backgroundColor: colors.primary,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: radius.sm,
+              }}
+            >
+              <Ionicons name="copy-outline" size={14} color="#fff" />
+              <Text style={{ color: "#fff", fontSize: 12, fontWeight: "600" }}>Kopyala</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* References List Section */}
+        <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600", marginBottom: spacing.md }}>
+          Gelen Tavsiyeler
+        </Text>
+
+        {references.length === 0 ? (
+          <View style={{ alignItems: "center", paddingVertical: 40, borderStyle: "dashed", borderWidth: 1, borderColor: colors.border, borderRadius: radius.md }}>
+            <Ionicons name="ribbon-outline" size={40} color={colors.textMuted} />
+            <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: spacing.sm, textAlign: "center", paddingHorizontal: spacing.lg }}>
+              Henüz bir tavsiye almadınız. Yukarıdaki bağlantıyı paylaşarak ilk tavsiyenizi isteyin!
+            </Text>
           </View>
         ) : (
           references.map((ref) => (
-            <View key={ref.id} style={{ backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={{ color: colors.text, fontWeight: "600", fontSize: 15 }}>{ref.recommenderName}</Text>
-                <View style={{
-                  backgroundColor: ref.status === "APPROVED" ? colors.success + "20" : ref.status === "REJECTED" ? colors.error + "20" : colors.warning + "20",
-                  borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 3,
-                }}>
-                  <Text style={{
-                    color: ref.status === "APPROVED" ? colors.success : ref.status === "REJECTED" ? colors.error : colors.warning,
-                    fontSize: 11, fontWeight: "600",
-                  }}>
+            <View
+              key={ref.id}
+              style={{
+                backgroundColor: colors.card,
+                borderRadius: radius.md,
+                padding: spacing.md,
+                marginBottom: spacing.sm,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}
+            >
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: spacing.sm }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.text, fontWeight: "600", fontSize: 15 }}>{ref.recommenderName}</Text>
+                  {ref.recommenderTitle && (
+                    <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{ref.recommenderTitle}</Text>
+                  )}
+                </View>
+                <View
+                  style={{
+                    backgroundColor:
+                      ref.status === "APPROVED"
+                        ? colors.success + "20"
+                        : ref.status === "REJECTED"
+                        ? colors.error + "20"
+                        : colors.warning + "20",
+                    borderRadius: radius.full,
+                    paddingHorizontal: 10,
+                    paddingVertical: 3,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color:
+                        ref.status === "APPROVED"
+                          ? colors.success
+                          : ref.status === "REJECTED"
+                          ? colors.error
+                          : colors.warning,
+                      fontSize: 11,
+                      fontWeight: "600",
+                    }}
+                  >
                     {ref.status === "APPROVED" ? "Onaylı" : ref.status === "REJECTED" ? "Red" : "Bekliyor"}
                   </Text>
                 </View>
               </View>
-              {ref.recommenderTitle && (
-                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{ref.recommenderTitle}</Text>
-              )}
-              <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: spacing.sm }}>{ref.comment}</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: spacing.md, lineHeight: 18 }}>
+                {ref.comment}
+              </Text>
             </View>
           ))
         )}
