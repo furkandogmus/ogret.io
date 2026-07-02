@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "./Avatar";
@@ -12,7 +13,11 @@ interface Props {
   onFavoriteToggle?: () => void;
 }
 
-export function TutorCard({ tutor, onPress, favorited, onFavoriteToggle }: Props) {
+function TutorCardComponent({ tutor, onPress, favorited, onFavoriteToggle }: Props) {
+  const premiumLabel = (tutor as any).premiumPlan
+    ? (tutor as any).premiumPlan === "VIP" ? "VIP" : (tutor as any).premiumPlan === "PREMIUM" ? "Premium" : "Basic"
+    : null;
+
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border }}>
       <View style={{ flexDirection: "row", gap: spacing.md }}>
@@ -23,6 +28,11 @@ export function TutorCard({ tutor, onPress, favorited, onFavoriteToggle }: Props
               {tutor.fullName}
             </Text>
             {tutor.identityVerified && <Ionicons name="checkmark-circle" size={16} color={colors.verified} />}
+            {premiumLabel && (
+              <View style={{ backgroundColor: colors.premium + "30", borderRadius: radius.sm, paddingHorizontal: 6, paddingVertical: 1 }}>
+                <Text style={{ color: colors.premium, fontSize: 9, fontWeight: "700" }}>{premiumLabel}</Text>
+              </View>
+            )}
           </View>
           {tutor.title && (
             <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 2 }} numberOfLines={1}>
@@ -61,3 +71,9 @@ export function TutorCard({ tutor, onPress, favorited, onFavoriteToggle }: Props
     </TouchableOpacity>
   );
 }
+
+export const TutorCard = memo(TutorCardComponent, (prev, next) =>
+  prev.tutor.id === next.tutor.id &&
+  prev.favorited === next.favorited &&
+  prev.tutor.online === next.tutor.online
+);

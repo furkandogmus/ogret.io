@@ -5,9 +5,10 @@ interface Props extends TextInputProps {
   label?: string;
   error?: string;
   leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
-export function Input({ label, error, leftIcon, style, ...props }: Props) {
+export function Input({ label, error, leftIcon, rightIcon, style, ...props }: Props) {
   return (
     <View style={{ marginBottom: spacing.md }}>
       {label && (
@@ -41,6 +42,7 @@ export function Input({ label, error, leftIcon, style, ...props }: Props) {
           ]}
           {...props}
         />
+        {rightIcon && <View style={{ marginLeft: 10 }}>{rightIcon}</View>}
       </View>
       {error && (
         <Text style={{ color: colors.error, fontSize: 12, marginTop: 4 }}>{error}</Text>

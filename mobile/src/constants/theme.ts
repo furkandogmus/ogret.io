@@ -20,6 +20,22 @@ export const colors = {
   vip: "#ef4444",
 };
 
+export const statusColors: Record<string, string> = {
+  PENDING: colors.warning,
+  CONFIRMED: colors.primary,
+  IN_PROGRESS: colors.success,
+  COMPLETED: colors.textMuted,
+  CANCELLED: colors.error,
+};
+
+export const statusLabels: Record<string, string> = {
+  PENDING: "Bekliyor",
+  CONFIRMED: "Onaylandı",
+  IN_PROGRESS: "Devam Ediyor",
+  COMPLETED: "Tamamlandı",
+  CANCELLED: "İptal Edildi",
+};
+
 export const spacing = {
   xs: 4,
   sm: 8,

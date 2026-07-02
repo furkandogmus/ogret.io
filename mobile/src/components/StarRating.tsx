@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../constants/theme";
@@ -9,7 +10,7 @@ interface Props {
   onRate?: (rating: number) => void;
 }
 
-export function StarRating({ rating, size = 16, interactive = false, onRate }: Props) {
+function StarRatingComponent({ rating, size = 16, interactive = false, onRate }: Props) {
   const stars = [1, 2, 3, 4, 5];
 
   return (
@@ -35,3 +36,5 @@ export function StarRating({ rating, size = 16, interactive = false, onRate }: P
     </View>
   );
 }
+
+export const StarRating = memo(StarRatingComponent);

@@ -4,13 +4,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "../../src/components/Avatar";
 import { useToast } from "../../src/components/Toast";
 import { adminApi } from "../../src/api/services";
-import type { User } from "../../src/types";
+import type { User, DashboardStats } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
 
 export default function AdminPanel() {
   const toast = useToast();
   const [users, setUsers] = useState<User[]>([]);
-  const [stats, setStats] = useState<{ totalUsers: number; totalTutors: number; totalLessons: number } | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<"users" | "verifications">("users");

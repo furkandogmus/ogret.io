@@ -9,16 +9,7 @@ import { useAuth } from "../../src/providers/AuthProvider";
 import { useToast } from "../../src/components/Toast";
 import { lessonApi } from "../../src/api/services";
 import type { Lesson } from "../../src/types";
-import { colors, spacing, radius } from "../../src/constants/theme";
-
-const statusColors: Record<string, string> = {
-  PENDING: colors.warning, CONFIRMED: colors.primary, IN_PROGRESS: colors.success,
-  COMPLETED: colors.textMuted, CANCELLED: colors.error,
-};
-const statusLabels: Record<string, string> = {
-  PENDING: "Bekliyor", CONFIRMED: "Onaylandı", IN_PROGRESS: "Devam Ediyor",
-  COMPLETED: "Tamamlandı", CANCELLED: "İptal Edildi",
-};
+import { colors, spacing, radius, statusColors, statusLabels } from "../../src/constants/theme";
 
 export default function LessonDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

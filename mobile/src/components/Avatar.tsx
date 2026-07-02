@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { View, Text } from "react-native";
 import { Image } from "expo-image";
 import { colors } from "../constants/theme";
@@ -9,7 +10,7 @@ interface Props {
   online?: boolean;
 }
 
-export function Avatar({ uri, name, size = 48, online }: Props) {
+function AvatarComponent({ uri, name, size = 48, online }: Props) {
   const initials = name
     .split(" ")
     .map((n) => n[0])
@@ -44,3 +45,5 @@ export function Avatar({ uri, name, size = 48, online }: Props) {
     </View>
   );
 }
+
+export const Avatar = memo(AvatarComponent);

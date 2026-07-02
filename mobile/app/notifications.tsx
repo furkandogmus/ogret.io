@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, Platform } from "react-native";
+import { useState, useEffect, useCallback } from "react";
+import { View, Text, FlatList, TouchableOpacity, RefreshControl, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useWebSocket, type WsNotification } from "../src/providers/WebSocketProvider";
+import { useWebSocket } from "../src/providers/WebSocketProvider";
+import type { WsNotification } from "../src/types";
 import { colors, spacing, radius } from "../src/constants/theme";
 
 const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -29,18 +30,20 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const { incomingNotifications } = useWebSocket();
   const [notifications, setNotifications] = useState<WsNotification[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     setNotifications((prev) => {
-      const all = [...incomingNotifications];
-      incomingNotifications.forEach((n) => {
-        if (!prev.some((p) => p.id === n.id)) {
-          all.unshift(n);
-        }
-      });
-      return all.slice(0, 100);
+      const existingIds = new Set(prev.map((p) => p.id));
+      const newOnes = incomingNotifications.filter((n) => !existingIds.has(n.id));
+      return [...newOnes, ...prev].slice(0, 100);
     });
   }, [incomingNotifications]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 500);
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -58,6 +61,7 @@ export default function NotificationsScreen() {
         maxToRenderPerBatch={10}
         initialNumToRender={10}
         removeClippedSubviews={Platform.OS === "android"}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
         renderItem={({ item }) => (
           <View style={{ backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border, flexDirection: "row", gap: spacing.md }}>

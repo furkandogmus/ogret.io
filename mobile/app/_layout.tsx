@@ -7,6 +7,7 @@ import { WebSocketProvider } from "../src/providers/WebSocketProvider";
 import { NotificationProvider } from "../src/providers/NotificationProvider";
 import { ToastProvider } from "../src/components/Toast";
 import { NetworkBanner } from "../src/components/NetworkBanner";
+import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { colors } from "../src/constants/theme";
 import * as SplashScreen from "expo-splash-screen";
 
@@ -42,6 +43,7 @@ function RootLayoutInner() {
             <Stack.Screen name="lesson/review" options={{ headerShown: false, animation: "slide_from_bottom" }} />
           <Stack.Screen name="notifications" options={{ headerShown: false, animation: "slide_from_right" }} />
           <Stack.Screen name="tutor/availability" options={{ headerShown: false, animation: "slide_from_bottom" }} />
+          <Stack.Screen name="tutor/references" options={{ headerShown: false, animation: "slide_from_bottom" }} />
           <Stack.Screen name="settings" options={{ headerShown: false, animation: "slide_from_right" }} />
           <Stack.Screen name="payment/methods" options={{ headerShown: false, animation: "slide_from_right" }} />
           </>
@@ -58,16 +60,18 @@ function RootLayoutInner() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <ToastProvider>
-          <WebSocketProvider>
-            <StatusBar style="light" />
-            <NetworkBanner />
-            <RootLayoutInner />
-          </WebSocketProvider>
-        </ToastProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <WebSocketProvider>
+              <StatusBar style="light" />
+              <NetworkBanner />
+              <RootLayoutInner />
+            </WebSocketProvider>
+          </ToastProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }

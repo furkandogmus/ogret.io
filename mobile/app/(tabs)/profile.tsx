@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Alert, Modal } from "react-native";
+import { useState, useMemo, useCallback } from "react";
+import { View, Text, TouchableOpacity, ScrollView, Alert, Modal, RefreshControl } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -16,6 +16,13 @@ export default function ProfileScreen() {
   const toast = useToast();
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [showAvatarFull, setShowAvatarFull] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await refreshUser(); } catch { /* */ }
+    setRefreshing(false);
+  }, [refreshUser]);
 
   const handleAvatarPicked = async (uri: string) => {
     try {
@@ -40,6 +47,7 @@ export default function ProfileScreen() {
       { icon: "card-outline" as const, label: "Abonelik", route: "/subscription" },
       { icon: "id-card-outline" as const, label: "Kimlik Doğrulama", route: "/verification" },
       { icon: "calendar-outline" as const, label: "Müsaitlik", route: "/tutor/availability" },
+      { icon: "document-text-outline" as const, label: "Referanslar", route: "/tutor/references" },
     ] : []),
     { icon: "notifications-outline" as const, label: "Bildirimler", route: "/notifications" },
     { icon: "person-outline" as const, label: "Profili Düzenle", route: "/profile/edit" },
@@ -52,7 +60,9 @@ export default function ProfileScreen() {
   const roleLabels = { STUDENT: "Öğrenci", TUTOR: "Öğretmen", ADMIN: "Admin" };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
       <View style={{ paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.md }}>
         <Text style={{ color: colors.text, fontSize: 24, fontWeight: "700" }}>Profil</Text>
       </View>

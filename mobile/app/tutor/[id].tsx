@@ -7,10 +7,30 @@ import * as Clipboard from "expo-clipboard";
 import { Avatar } from "../../src/components/Avatar";
 import { StarRating } from "../../src/components/StarRating";
 import { Button } from "../../src/components/Button";
+import { Skeleton } from "../../src/components/Skeleton";
 import { useToast } from "../../src/components/Toast";
 import { tutorApi, subjectApi, reviewApi } from "../../src/api/services";
 import type { User, Subject, Review } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
+
+function ProfileSkeleton() {
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.md }}>
+      <View style={{ alignItems: "center", paddingVertical: spacing.xxl }}>
+        <Skeleton width={88} height={88} borderRadius={44} />
+        <Skeleton width="50%" height={22} style={{ marginTop: spacing.md }} />
+        <Skeleton width="30%" height={14} style={{ marginTop: spacing.sm }} />
+      </View>
+      <View style={{ flexDirection: "row", gap: spacing.md }}>
+        <Skeleton width="48%" height={80} borderRadius={radius.md} />
+        <Skeleton width="48%" height={80} borderRadius={radius.md} />
+      </View>
+      {[1, 2, 3].map((i) => (
+        <Skeleton key={i} width="100%" height={60} borderRadius={radius.md} style={{ marginTop: spacing.sm }} />
+      ))}
+    </View>
+  );
+}
 
 export default function TutorProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -39,11 +59,7 @@ export default function TutorProfileScreen() {
   }, [id]);
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (!tutor) {
