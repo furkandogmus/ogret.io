@@ -43,6 +43,9 @@ export default function TutorListingsScreen() {
   // Subject selector modal (only used in edit mode)
   const [showSubjectPicker, setShowSubjectPicker] = useState(false);
 
+  // Search filter for subjects
+  const [searchQuery, setSearchQuery] = useState("");
+
   const fetchListingsAndSubjects = async () => {
     try {
       const [listingsRes, subjectsRes] = await Promise.all([
@@ -87,6 +90,7 @@ export default function TutorListingsScreen() {
     setAllowsStudentHome(false);
     setMaxTravelDistanceKm("10");
     setSelectedLanguages(["Türkçe"]);
+    setSearchQuery("");
     setFormOpen(true);
   };
 
@@ -104,6 +108,7 @@ export default function TutorListingsScreen() {
     setAllowsStudentHome(listing.allowsStudentHome);
     setMaxTravelDistanceKm(listing.maxTravelDistanceKm?.toString() || "10");
     setSelectedLanguages(listing.languages || ["Türkçe"]);
+    setSearchQuery("");
     setFormOpen(true);
   };
 
@@ -446,9 +451,18 @@ export default function TutorListingsScreen() {
                   <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>Ders Konusu Seçin</Text>
                   <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Hangi alanda ders vermek istiyorsanız aşağıdaki konulardan birini seçin:</Text>
                   
+                  <Input
+                    placeholder="Ders konusu ara..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    leftIcon={<Ionicons name="search" size={18} color={colors.textMuted} />}
+                  />
+
                   <View style={{ gap: spacing.sm }}>
-                    {subjects.map((sub) => {
-                      const hasListing = listings.some(l => l.subjectId === sub.id);
+                    {subjects
+                      .filter(sub => sub.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                      .map((sub) => {
+                        const hasListing = listings.some(l => l.subjectId === sub.id);
                       return (
                         <TouchableOpacity
                           key={sub.id}
