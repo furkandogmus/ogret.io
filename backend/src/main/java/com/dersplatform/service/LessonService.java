@@ -196,6 +196,22 @@ public class LessonService {
     }
 
     @Transactional
+    public LessonResponse startLesson(UUID lessonId, UUID tutorId) {
+        Lesson lesson = lessonRepository.findByIdWithJoins(lessonId)
+                .orElseThrow(() -> ApiException.notFound("Ders bulunamadı"));
+
+        if (!lesson.getTutor().getId().equals(tutorId)) {
+            throw ApiException.forbidden("Bu dersi yalnızca öğretmen başlatabilir");
+        }
+
+        validateStatusTransition(lesson, LessonStatus.IN_PROGRESS);
+        lesson.setStatus(LessonStatus.IN_PROGRESS);
+        lesson = lessonRepository.save(lesson);
+
+        return LessonResponse.fromEntity(lesson);
+    }
+
+    @Transactional
     public LessonResponse completeLesson(UUID lessonId, UUID tutorId) {
         Lesson lesson = lessonRepository.findByIdWithJoins(lessonId)
                 .orElseThrow(() -> ApiException.notFound("Ders bulunamadı"));

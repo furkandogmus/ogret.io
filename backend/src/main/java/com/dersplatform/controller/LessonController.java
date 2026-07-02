@@ -76,6 +76,14 @@ public class LessonController {
         return ResponseEntity.ok(lessonService.cancelLesson(id, UUID.fromString(userDetails.getUsername()), reason));
     }
 
+    @PutMapping("/{id}/start")
+    @PreAuthorize("hasRole('TUTOR')")
+    public ResponseEntity<LessonResponse> startLesson(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(lessonService.startLesson(id, UUID.fromString(userDetails.getUsername())));
+    }
+
     @PutMapping("/{id}/complete")
     @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<LessonResponse> completeLesson(

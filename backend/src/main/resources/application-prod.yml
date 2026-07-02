@@ -37,6 +37,10 @@ logging:
     org.springframework: WARN
     org.hibernate: WARN
 
+app:
+  cors:
+    allowed-origins: ${CORS_ORIGINS:https://ogret.io,https://www.ogret.io}
+
 springdoc:
   api-docs:
     enabled: false

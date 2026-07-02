@@ -10,6 +10,9 @@ import com.dersplatform.model.enums.Role;
 import com.dersplatform.model.enums.VerificationStatus;
 import com.dersplatform.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,7 @@ public class AdminService {
     private final TutorVerificationRepository tutorVerificationRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final AuditLogRepository auditLogRepository;
+    private final ScoringService scoringService;
 
     public Map<String, Object> getDashboard() {
         long totalUsers = userRepository.count();
@@ -44,11 +48,9 @@ public class AdminService {
         );
     }
 
-    public List<UserResponse> getUsers() {
-        return userRepository.findAll()
-                .stream()
-                .map(UserResponse::fromEntity)
-                .toList();
+    public Page<UserResponse> getUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(UserResponse::fromEntity);
     }
 
     @Transactional
@@ -94,6 +96,7 @@ public class AdminService {
             User tutor = verification.getTutor();
             tutor.setIdentityVerified(true);
             userRepository.save(tutor);
+            scoringService.recompute(tutor.getId());
         }
 
         auditLogRepository.save(AuditLog.builder()
@@ -103,10 +106,15 @@ public class AdminService {
                 .build());
     }
 
-    public List<LessonResponse> getLessons() {
-        return lessonRepository.findAll()
-                .stream()
-                .map(LessonResponse::fromEntity)
-                .toList();
+    public Page<LessonResponse> getLessons(Pageable pageable) {
+        return lessonRepository.findAll(pageable)
+                .map(LessonResponse::fromEntity);
+    }
+
+    @Scheduled(cron = "0 0 4 * * ?")
+    @Transactional
+    public void cleanupAuditLogs() {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(90);
+        auditLogRepository.deleteByCreatedAtBefore(cutoff);
     }
 }

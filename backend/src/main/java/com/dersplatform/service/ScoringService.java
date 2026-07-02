@@ -91,7 +91,7 @@ public class ScoringService {
 
         double multiplier = computeSubscriptionMultiplier(id);
 
-        return Math.min(base * multiplier, 100.0);
+        return Math.min(Math.min(base, 85.0) * multiplier, 100.0);
     }
 
     private double computeRatingScore(UUID tutorId) {

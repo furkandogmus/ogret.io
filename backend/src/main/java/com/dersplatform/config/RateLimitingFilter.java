@@ -3,9 +3,12 @@ package com.dersplatform.config;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.annotation.Order;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,6 +43,18 @@ public class RateLimitingFilter implements Filter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    @Scheduled(fixedRate = 60_000)
+    public void evictStaleWindows() {
+        long now = System.currentTimeMillis();
+        Iterator<Map.Entry<String, Window>> it = windows.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Window> entry = it.next();
+            if (now - entry.getValue().start > WINDOW_MS * 2) {
+                it.remove();
+            }
+        }
     }
 
     private static class Window {

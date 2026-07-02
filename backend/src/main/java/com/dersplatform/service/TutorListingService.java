@@ -11,10 +11,14 @@ import com.dersplatform.repository.SubjectRepository;
 import com.dersplatform.repository.TutorListingRepository;
 import com.dersplatform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -130,22 +134,19 @@ public class TutorListingService {
         return ListingResponse.fromEntity(listing);
     }
 
-    public List<ListingResponse> searchListings(UUID subjectId, BigDecimal minPrice, BigDecimal maxPrice,
-                                                BigDecimal minRating, Boolean online, String sort, String q) {
-        List<TutorListing> all = tutorListingRepository.findByStatusOrderByCreatedAtDesc("ACTIVE");
+    public Page<ListingResponse> searchListings(UUID subjectId, BigDecimal minPrice, BigDecimal maxPrice,
+                                                BigDecimal minRating, Boolean online, String sort, String q,
+                                                Pageable pageable) {
+        List<TutorListing> all = tutorListingRepository.searchActiveListings(subjectId, minPrice, maxPrice, online);
 
         var locale = new java.util.Locale("tr", "TR");
 
-        return all.stream()
-                .filter(l -> subjectId == null || l.getSubject().getId().equals(subjectId))
-                .filter(l -> minPrice == null || l.getHourlyRate().compareTo(minPrice) >= 0)
-                .filter(l -> maxPrice == null || l.getHourlyRate().compareTo(maxPrice) <= 0)
+        var filtered = all.stream()
                 .filter(l -> {
                     if (minRating == null) return true;
                     BigDecimal rating = l.getTutor().getRatingAvg();
                     return rating != null && rating.compareTo(minRating) >= 0;
                 })
-                .filter(l -> online == null || !online || l.isAllowsOnline())
                 .filter(l -> {
                     if (q == null || q.isBlank()) return true;
                     String query = q.toLowerCase(locale);
@@ -169,8 +170,15 @@ public class TutorListingService {
                         return p2.compareTo(p1);
                     }
                 })
-                .map(ListingResponse::fromEntity)
                 .toList();
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), filtered.size());
+        List<ListingResponse> pageContent = start >= filtered.size()
+                ? List.of()
+                : filtered.subList(start, end).stream().map(ListingResponse::fromEntity).toList();
+
+        return new PageImpl<>(pageContent, pageable, filtered.size());
     }
 
     private void validateListingContent(String lessonDesc, String aboutTutor) {

@@ -6,6 +6,8 @@ import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.service.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +30,8 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getUsers() {
-        return ResponseEntity.ok(adminService.getUsers());
+    public ResponseEntity<Page<UserResponse>> getUsers(Pageable pageable) {
+        return ResponseEntity.ok(adminService.getUsers(pageable));
     }
 
     @PutMapping("/users/{id}/verify")
@@ -54,7 +56,7 @@ public class AdminController {
     }
 
     @GetMapping("/lessons")
-    public ResponseEntity<List<LessonResponse>> getLessons() {
-        return ResponseEntity.ok(adminService.getLessons());
+    public ResponseEntity<Page<LessonResponse>> getLessons(Pageable pageable) {
+        return ResponseEntity.ok(adminService.getLessons(pageable));
     }
 }

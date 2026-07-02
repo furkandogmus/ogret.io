@@ -6,6 +6,8 @@ import com.dersplatform.model.dto.response.ListingResponse;
 import com.dersplatform.service.TutorListingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -87,14 +89,15 @@ public class TutorListingController {
     }
 
     @GetMapping("/tutors/listings")
-    public ResponseEntity<List<ListingResponse>> searchListings(
+    public ResponseEntity<Page<ListingResponse>> searchListings(
             @RequestParam(required = false) UUID subjectId,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) BigDecimal minRating,
             @RequestParam(required = false) Boolean online,
             @RequestParam(required = false) String sort,
-            @RequestParam(required = false) String q) {
-        return ResponseEntity.ok(tutorListingService.searchListings(subjectId, minPrice, maxPrice, minRating, online, sort, q));
+            @RequestParam(required = false) String q,
+            Pageable pageable) {
+        return ResponseEntity.ok(tutorListingService.searchListings(subjectId, minPrice, maxPrice, minRating, online, sort, q, pageable));
     }
 }
