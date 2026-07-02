@@ -21,4 +21,6 @@ public interface BlogPostRepository extends JpaRepository<BlogPost, UUID> {
     Page<BlogPost> findFeatured(Pageable pageable);
 
     long countByStatus(String status);
+
+    long count();
 }

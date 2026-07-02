@@ -11,4 +11,5 @@ public interface DisputeRepository extends JpaRepository<Dispute, UUID> {
     Page<Dispute> findByComplainantIdOrderByCreatedAtDesc(UUID complainantId, Pageable pageable);
     Page<Dispute> findByRespondentIdOrderByCreatedAtDesc(UUID respondentId, Pageable pageable);
     Page<Dispute> findByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
+    long countByStatus(String status);
 }
