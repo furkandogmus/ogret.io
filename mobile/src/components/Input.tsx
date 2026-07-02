@@ -12,7 +12,7 @@ export function Input({ label, error, leftIcon, rightIcon, style, ...props }: Pr
   return (
     <View style={{ marginBottom: spacing.md }}>
       {label && (
-        <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: 6 }}>
+        <Text nativeID={`input-label-${label}`} style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: 6 }}>
           {label}
         </Text>
       )}
@@ -31,6 +31,9 @@ export function Input({ label, error, leftIcon, rightIcon, style, ...props }: Pr
         {leftIcon && <View style={{ marginRight: 10 }}>{leftIcon}</View>}
         <TextInput
           placeholderTextColor={colors.textMuted}
+          accessibilityLabel={label || props.placeholder || "Giriş alanı"}
+          accessibilityState={{ disabled: props.editable === false }}
+          {...(label ? { accessibilityLabelledBy: `input-label-${label}` } : {})}
           style={[
             {
               flex: 1,
@@ -45,7 +48,7 @@ export function Input({ label, error, leftIcon, rightIcon, style, ...props }: Pr
         {rightIcon && <View style={{ marginLeft: 10 }}>{rightIcon}</View>}
       </View>
       {error && (
-        <Text style={{ color: colors.error, fontSize: 12, marginTop: 4 }}>{error}</Text>
+        <Text style={{ color: colors.error, fontSize: 12, marginTop: 4 }} accessibilityRole="alert">{error}</Text>
       )}
     </View>
   );

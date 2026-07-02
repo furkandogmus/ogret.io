@@ -19,7 +19,7 @@ function AvatarComponent({ uri, name, size = 48, online }: Props) {
     .slice(0, 2);
 
   return (
-    <View style={{ position: "relative" }}>
+    <View style={{ position: "relative" }} accessibilityLabel={name} accessibilityRole="image">
       {uri ? (
         <Image
           source={{ uri }}

@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshContr
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { LessonCard } from "../../src/components/LessonCard";
+import { EmptyState } from "../../src/components/EmptyState";
 import { useAuth } from "../../src/providers/AuthProvider";
 import { useToast } from "../../src/components/Toast";
 import { lessonApi } from "../../src/api/services";
@@ -98,10 +99,7 @@ export default function StudentDashboard() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchLessons(); }} tintColor={colors.primary} />}
         ListEmptyComponent={
           loading ? <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
-          : <View style={{ alignItems: "center", marginTop: 40 }}>
-              <Ionicons name="calendar-outline" size={48} color={colors.textMuted} />
-              <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: spacing.sm }}>Henüz dersin yok</Text>
-            </View>
+          : <EmptyState icon="calendar-outline" title="Henüz dersin yok" subtitle="Bir öğretmen bulup ders talebi gönder" />
         }
       />
     </View>

@@ -40,6 +40,10 @@ export function Button({ title, onPress, variant = "primary", size = "md", loadi
       onPress={handlePress}
       disabled={disabled || loading}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading }}
+      accessibilityHint={loading ? "Yükleniyor" : undefined}
       style={{
         height, borderRadius: radius.md,
         backgroundColor: isPrimary ? colors.primary : isOutline ? "transparent" : colors.surfaceLight,

@@ -152,3 +152,16 @@ export interface DashboardStats {
   totalLessons: number;
   totalRevenue?: number;
 }
+
+export interface CreateListingRequest {
+  subjectId: string;
+  title: string;
+  lessonDescription: string;
+  aboutTutor: string;
+  hourlyRate: number;
+  allowsTutorHome: boolean;
+  allowsStudentHome: boolean;
+  allowsOnline: boolean;
+  maxTravelDistanceKm?: number;
+  languages: string[];
+}

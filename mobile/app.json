@@ -6,10 +6,10 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "ogret",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "backgroundColor": "#0f0f0f"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true,

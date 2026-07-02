@@ -65,7 +65,7 @@ export default function RootLayout() {
         <AuthProvider>
           <ToastProvider>
             <WebSocketProvider>
-              <StatusBar style="light" />
+              <StatusBar style="dark" />
               <NetworkBanner />
               <RootLayoutInner />
             </WebSocketProvider>
