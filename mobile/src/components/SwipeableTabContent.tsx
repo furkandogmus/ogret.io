@@ -1,5 +1,5 @@
-import { type ReactNode } from "react";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { useRef, type ReactNode } from "react";
+import { View, PanResponder } from "react-native";
 import { router, useSegments } from "expo-router";
 
 const TAB_ORDER = ["index", "messages", "profile"];
@@ -9,17 +9,23 @@ export function SwipeableTabContent({ children }: { children: ReactNode }) {
   const currentTab = segments[segments.length - 1] || "index";
   const currentIndex = TAB_ORDER.indexOf(currentTab);
 
-  const pan = Gesture.Pan()
-    .minDistance(10)
-    .onEnd((event) => {
-      if (Math.abs(event.translationX) > Math.abs(event.translationY) * 1.5 && Math.abs(event.translationX) > 50) {
-        if (event.translationX < 0 && currentIndex < TAB_ORDER.length - 1) {
-          router.replace(`/(tabs)/${TAB_ORDER[currentIndex + 1]}`);
-        } else if (event.translationX > 0 && currentIndex > 0) {
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gs) =>
+        Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5 && Math.abs(gs.dx) > 15,
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dx > 50 && currentIndex > 0) {
           router.replace(`/(tabs)/${TAB_ORDER[currentIndex - 1]}`);
+        } else if (gs.dx < -50 && currentIndex < TAB_ORDER.length - 1) {
+          router.replace(`/(tabs)/${TAB_ORDER[currentIndex + 1]}`);
         }
-      }
-    });
+      },
+    }),
+  ).current;
 
-  return <GestureDetector gesture={pan}>{children}</GestureDetector>;
+  return (
+    <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+      {children}
+    </View>
+  );
 }
