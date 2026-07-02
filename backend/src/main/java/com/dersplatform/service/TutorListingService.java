@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -141,21 +142,13 @@ public class TutorListingService {
         var locale = new java.util.Locale("tr", "TR");
 
         if (minRating != null || (q != null && !q.isBlank())) {
-            List<TutorListing> all = tutorListingRepository.searchActiveListings(subjectId, minPrice, maxPrice, online);
+            List<TutorListing> all = tutorListingRepository.searchActiveListings(subjectId, minPrice, maxPrice, online, q);
 
             var filtered = all.stream()
                     .filter(l -> {
                         if (minRating == null) return true;
                         BigDecimal rating = l.getTutor().getRatingAvg();
                         return rating != null && rating.compareTo(minRating) >= 0;
-                    })
-                    .filter(l -> {
-                        if (q == null || q.isBlank()) return true;
-                        String query = q.toLowerCase(locale);
-                        return l.getTitle().toLowerCase(locale).contains(query)
-                                || l.getSubject().getName().toLowerCase(locale).contains(query)
-                                || l.getTutor().getFullName().toLowerCase(locale).contains(query)
-                                || (l.getLessonDescription() != null && l.getLessonDescription().toLowerCase(locale).contains(query));
                     })
                     .sorted(getComparator(sort))
                     .toList();
@@ -169,7 +162,7 @@ public class TutorListingService {
             return new PageImpl<>(pageContent, pageable, filtered.size());
         }
 
-        Page<TutorListing> paged = tutorListingRepository.searchActiveListingsPaged(subjectId, minPrice, maxPrice, online, pageable);
+        Page<TutorListing> paged = tutorListingRepository.searchActiveListingsPaged(subjectId, minPrice, maxPrice, online, q, pageable);
         return paged.map(ListingResponse::fromEntity);
     }
 
@@ -189,6 +182,22 @@ public class TutorListingService {
                 return p2.compareTo(p1);
             }
         };
+    }
+
+    public List<ListingResponse> searchByTrigramSimilarity(String query) {
+        return tutorListingRepository.searchByTrigramSimilarity(query)
+                .stream().map(ListingResponse::fromEntity).toList();
+    }
+
+    public List<Map<String, Object>> searchSubjectsByName(String query) {
+        return subjectRepository.searchByName(query).stream()
+                .map(s -> Map.<String, Object>of(
+                    "id", s.getId().toString(),
+                    "name", s.getName(),
+                    "slug", s.getSlug(),
+                    "category", s.getCategory().name()
+                ))
+                .toList();
     }
 
     private void validateListingContent(String lessonDesc, String aboutTutor) {

@@ -11,6 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,6 +42,11 @@ class LessonControllerTest {
 
     private final String userId = UUID.randomUUID().toString();
     private final String tutorId = UUID.randomUUID().toString();
+    @MockitoBean private StringRedisTemplate stringRedisTemplate;
+    @MockitoBean private RedisTemplate<String, Object> redisTemplate;
+    @MockitoBean private S3Client s3Client;
+    @MockitoBean private S3Presigner s3Presigner;
+    @MockitoBean private RedisConnectionFactory redisConnectionFactory;
 
     @Test
     void createLesson_ShouldReturn201() throws Exception {

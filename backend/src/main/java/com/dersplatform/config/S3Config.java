@@ -2,9 +2,12 @@ package com.dersplatform.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.retry.RetryPolicy;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -36,6 +39,7 @@ public class S3Config {
     private String privateBucket;
 
     @Bean
+    @ConditionalOnProperty(name = "aws.s3.endpoint")
     public S3Client s3Client() {
         S3Client s3Client = S3Client.builder()
                 .endpointOverride(URI.create(endpoint))

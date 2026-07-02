@@ -4,6 +4,7 @@ import com.dersplatform.exception.ApiException;
 import com.dersplatform.model.entity.User;
 import com.dersplatform.model.entity.TutorListing;
 import com.dersplatform.model.entity.Subject;
+import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ public class TutorOnboardingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
 
-        if (user.getRole() != null && !user.getRole().equals("TUTOR")) {
+        if (user.getRole() != Role.TUTOR) {
             throw ApiException.forbidden("Bu sayfa yalnızca öğretmenler içindir");
         }
 

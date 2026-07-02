@@ -30,6 +30,8 @@ public class AdminService {
     private final TutorVerificationRepository tutorVerificationRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final AuditLogRepository auditLogRepository;
+    private final BlogPostRepository blogPostRepository;
+    private final DisputeRepository disputeRepository;
     private final ScoringService scoringService;
 
     public Map<String, Object> getDashboard() {
@@ -38,13 +40,19 @@ public class AdminService {
         long totalStudents = userRepository.countByRole(Role.STUDENT);
         long totalLessons = lessonRepository.count();
         long pendingVerifications = tutorVerificationRepository.findByStatusOrderByCreatedAtDesc(VerificationStatus.PENDING).size();
+        long totalBlogPosts = blogPostRepository.count();
+        long publishedPosts = blogPostRepository.countByStatus("PUBLISHED");
+        long openDisputes = disputeRepository.countByStatus("OPEN");
 
         return Map.of(
                 "totalUsers", totalUsers,
                 "totalTutors", totalTutors,
                 "totalStudents", totalStudents,
                 "totalLessons", totalLessons,
-                "pendingVerifications", pendingVerifications
+                "pendingVerifications", pendingVerifications,
+                "totalBlogPosts", totalBlogPosts,
+                "publishedPosts", publishedPosts,
+                "openDisputes", openDisputes
         );
     }
 

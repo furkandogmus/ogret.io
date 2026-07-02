@@ -5,6 +5,7 @@ import { AuthProvider } from "./providers/AuthProvider";
 import { NotificationProvider } from "./providers/NotificationProvider";
 import { RootLayout } from "./components/layout/RootLayout";
 import { AuthGuard } from "./components/shared/AuthGuard";
+import { CookieConsent } from "./components/shared/CookieConsent";
 
 const LandingPage = lazy(() => import("./pages/LandingPage").then(m => ({ default: m.LandingPage })));
 const SearchPage = lazy(() => import("./pages/SearchPage").then(m => ({ default: m.SearchPage })));
@@ -46,6 +47,7 @@ export default function App() {
               <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
           }>
+          <CookieConsent />
           <Routes>
             <Route path="/giris" element={<LoginPage />} />
             <Route path="/kayit" element={<RegisterPage />} />

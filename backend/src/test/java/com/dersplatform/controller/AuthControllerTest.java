@@ -13,6 +13,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.util.UUID;
 
@@ -30,6 +35,11 @@ class AuthControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockitoBean private AuthService authService;
+    @MockitoBean private StringRedisTemplate stringRedisTemplate;
+    @MockitoBean private RedisTemplate<String, Object> redisTemplate;
+    @MockitoBean private S3Client s3Client;
+    @MockitoBean private S3Presigner s3Presigner;
+    @MockitoBean private RedisConnectionFactory redisConnectionFactory;
 
     @Test
     void register_ShouldReturn201() throws Exception {
