@@ -19,16 +19,18 @@ export function Input({ label, error, leftIcon, rightIcon, style, ...props }: Pr
       <View
         style={{
           flexDirection: "row",
-          alignItems: "center",
+          alignItems: props.multiline ? "flex-start" : "center",
           backgroundColor: colors.surface,
           borderRadius: radius.md,
           borderWidth: 1,
           borderColor: error ? colors.error : colors.border,
           paddingHorizontal: spacing.md,
-          height: 48,
+          paddingVertical: props.multiline ? spacing.sm : 0,
+          height: props.multiline ? undefined : 48,
+          minHeight: props.multiline ? 100 : undefined,
         }}
       >
-        {leftIcon && <View style={{ marginRight: 10 }}>{leftIcon}</View>}
+        {leftIcon && <View style={{ marginRight: 10, marginTop: props.multiline ? 4 : 0 }}>{leftIcon}</View>}
         <TextInput
           placeholderTextColor={colors.textMuted}
           accessibilityLabel={label || props.placeholder || "Giriş alanı"}
@@ -39,13 +41,14 @@ export function Input({ label, error, leftIcon, rightIcon, style, ...props }: Pr
               flex: 1,
               color: colors.text,
               fontSize: 15,
-              height: "100%",
+              height: props.multiline ? undefined : "100%",
+              textAlignVertical: props.multiline ? "top" : "center",
             },
             style,
           ]}
           {...props}
         />
-        {rightIcon && <View style={{ marginLeft: 10 }}>{rightIcon}</View>}
+        {rightIcon && <View style={{ marginLeft: 10, marginTop: props.multiline ? 4 : 0 }}>{rightIcon}</View>}
       </View>
       {error && (
         <Text style={{ color: colors.error, fontSize: 12, marginTop: 4 }} accessibilityRole="alert">{error}</Text>
