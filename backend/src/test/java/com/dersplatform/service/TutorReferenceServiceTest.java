@@ -28,6 +28,7 @@ class TutorReferenceServiceTest {
 
     @Mock private TutorReferenceRepository tutorReferenceRepository;
     @Mock private UserRepository userRepository;
+    @Mock private NotificationService notificationService;
 
     private TutorReferenceService tutorReferenceService;
     private User tutor;
@@ -36,7 +37,7 @@ class TutorReferenceServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        tutorReferenceService = new TutorReferenceService(tutorReferenceRepository, userRepository);
+        tutorReferenceService = new TutorReferenceService(tutorReferenceRepository, userRepository, notificationService);
 
         tutor = User.builder().id(UUID.randomUUID()).fullName("Zeynep Kaya").role(Role.TUTOR).build();
         student = User.builder().id(UUID.randomUUID()).fullName("Ahmet Öğrenci").role(Role.STUDENT).build();

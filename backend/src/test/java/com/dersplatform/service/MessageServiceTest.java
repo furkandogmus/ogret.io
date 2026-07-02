@@ -27,6 +27,7 @@ class MessageServiceTest {
 
     @Mock private MessageRepository messageRepository;
     @Mock private UserRepository userRepository;
+    @Mock private NotificationService notificationService;
 
     private MessageService messageService;
     private User sender;
@@ -36,7 +37,7 @@ class MessageServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        messageService = new MessageService(messageRepository, userRepository);
+        messageService = new MessageService(messageRepository, userRepository, notificationService);
 
         sender = User.builder().id(UUID.randomUUID()).fullName("Alice").build();
         receiver = User.builder().id(UUID.randomUUID()).fullName("Bob").build();

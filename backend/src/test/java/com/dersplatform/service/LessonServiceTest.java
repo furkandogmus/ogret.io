@@ -37,6 +37,7 @@ class LessonServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private SubjectRepository subjectRepository;
     @Mock private TutorListingRepository tutorListingRepository;
+    @Mock private NotificationService notificationService;
 
     private LessonService lessonService;
     private User student;
@@ -48,7 +49,7 @@ class LessonServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        lessonService = new LessonService(lessonRepository, userRepository, subjectRepository, tutorListingRepository);
+        lessonService = new LessonService(lessonRepository, userRepository, subjectRepository, tutorListingRepository, notificationService);
 
         student = User.builder()
                 .id(UUID.randomUUID())

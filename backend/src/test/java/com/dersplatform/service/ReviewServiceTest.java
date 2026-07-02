@@ -37,6 +37,7 @@ class ReviewServiceTest {
     @Mock private LessonRepository lessonRepository;
     @Mock private UserRepository userRepository;
     @Mock private TutorService tutorService;
+    @Mock private NotificationService notificationService;
 
     private ReviewService reviewService;
     private User student;
@@ -47,7 +48,7 @@ class ReviewServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        reviewService = new ReviewService(reviewRepository, lessonRepository, userRepository, tutorService);
+        reviewService = new ReviewService(reviewRepository, lessonRepository, userRepository, tutorService, notificationService);
 
 
         student = User.builder().id(UUID.randomUUID()).fullName("Student").role(Role.STUDENT).build();
