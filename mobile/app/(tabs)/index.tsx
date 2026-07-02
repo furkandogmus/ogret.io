@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { View, Text, FlatList, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { SwipeableTabContent } from "../../src/components/SwipeableTabContent";
 import { TutorCard } from "../../src/components/TutorCard";
 import { TutorCardSkeleton } from "../../src/components/Skeleton";
 import { EmptyState } from "../../src/components/EmptyState";
@@ -95,7 +96,7 @@ export default function SearchScreen() {
   }), [tutors, search, selectedCategory, onlineOnly, minPrice, maxPrice]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <SwipeableTabContent><View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.sm }}>
         <Text style={{ color: colors.text, fontSize: 28, fontWeight: "700" }}>öğret.io</Text>
         <Text style={{ color: colors.textSecondary, fontSize: 14, marginTop: 2 }}>
@@ -243,6 +244,6 @@ export default function SearchScreen() {
           )
         }
       />
-    </View>
+    </View></SwipeableTabContent>
   );
 }

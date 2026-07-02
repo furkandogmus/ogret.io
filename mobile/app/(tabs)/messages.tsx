@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshContr
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Avatar } from "../../src/components/Avatar";
+import { SwipeableTabContent } from "../../src/components/SwipeableTabContent";
 import { EmptyState } from "../../src/components/EmptyState";
 import { useAuth } from "../../src/providers/AuthProvider";
 import { useWebSocket } from "../../src/providers/WebSocketProvider";
@@ -99,7 +100,7 @@ export default function MessagesScreen() {
   const keyExtractor = useCallback((item: Conversation) => item.userId, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <SwipeableTabContent><View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.md }}>
         <Text style={{ color: colors.text, fontSize: 28, fontWeight: "700" }}>ögret.io</Text>
         <Text style={{ color: colors.textSecondary, fontSize: 14, marginTop: 2 }}>Mesajların</Text>
@@ -120,6 +121,6 @@ export default function MessagesScreen() {
           : <EmptyState icon="chatbubbles-outline" title="Henüz mesajın yok" subtitle="Bir öğretmene ders talebi göndererek sohbet başlatabilirsin" />
         }
       />
-    </View>
+    </View></SwipeableTabContent>
   );
 }

@@ -1,6 +1,7 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "../src/providers/AuthProvider";
@@ -73,18 +74,20 @@ function RootLayoutInner() {
 
 export default function RootLayout() {
   return (
-    <ErrorBoundary>
-      <SafeAreaProvider>
-        <AuthProvider>
-          <ToastProvider>
-          <WebSocketProvider>
-              <StatusBar style="dark" />
-              <NetworkBanner />
-              <RootLayoutInner />
-            </WebSocketProvider>
-        </ToastProvider>
-        </AuthProvider>
-      </SafeAreaProvider>
-    </ErrorBoundary>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ErrorBoundary>
+        <SafeAreaProvider>
+          <AuthProvider>
+            <ToastProvider>
+            <WebSocketProvider>
+                <StatusBar style="dark" />
+                <NetworkBanner />
+                <RootLayoutInner />
+              </WebSocketProvider>
+          </ToastProvider>
+          </AuthProvider>
+        </SafeAreaProvider>
+      </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 }
