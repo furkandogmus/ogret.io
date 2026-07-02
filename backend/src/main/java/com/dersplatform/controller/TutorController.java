@@ -4,8 +4,6 @@ import com.dersplatform.model.dto.response.TutorSummaryResponse;
 import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.service.TutorService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -44,7 +42,6 @@ public class TutorController {
     }
 
     @GetMapping("/{id}")
-    @Cacheable(value = "tutorDetail", key = "#id", unless = "#result.body == null")
     public ResponseEntity<UserResponse> getTutorDetail(@PathVariable UUID id) {
         return ResponseEntity.ok(tutorService.getTutorDetail(id));
     }

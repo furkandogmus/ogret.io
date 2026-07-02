@@ -29,6 +29,7 @@ public class UserService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"tutorDetail", "userById"}, allEntries = true)
     public UserResponse updateProfile(UUID userId, UpdateProfileRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
@@ -47,6 +48,7 @@ public class UserService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"tutorDetail", "userById"}, allEntries = true)
     public UserResponse updateAvatar(UUID userId, String avatarUrl) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
@@ -74,6 +76,7 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @org.springframework.cache.annotation.Cacheable(value = "userById", key = "#id", unless = "#result == null")
     public UserResponse getUserById(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));

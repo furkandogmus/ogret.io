@@ -2,11 +2,9 @@ package com.dersplatform.controller;
 
 import com.dersplatform.model.dto.response.SubjectResponse;
 import com.dersplatform.model.dto.response.TutorSummaryResponse;
-import com.dersplatform.repository.SubjectRepository;
+import com.dersplatform.service.SubjectService;
 import com.dersplatform.service.TutorService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,14 +16,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SubjectController {
 
-    private final SubjectRepository subjectRepository;
+    private final SubjectService subjectService;
     private final TutorService tutorService;
 
     @GetMapping
-    @Cacheable(value = "subjects", unless = "#result.body.isEmpty()")
     public ResponseEntity<List<SubjectResponse>> getSubjects() {
         return ResponseEntity.ok(
-                subjectRepository.findByIsActiveTrueOrderByName()
+                subjectService.getAllActiveSubjects()
                         .stream()
                         .map(SubjectResponse::fromEntity)
                         .toList()

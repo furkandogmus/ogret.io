@@ -38,4 +38,13 @@ public class RedisConfig {
     public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
         return new StringRedisTemplate(connectionFactory);
     }
+
+    @Bean
+    public org.springframework.data.redis.cache.RedisCacheConfiguration cacheConfiguration(ObjectMapper redisObjectMapper) {
+        return org.springframework.data.redis.cache.RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(java.time.Duration.ofMinutes(60))
+                .disableCachingNullValues()
+                .serializeKeysWith(org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair.fromSerializer(new org.springframework.data.redis.serializer.StringRedisSerializer()))
+                .serializeValuesWith(org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair.fromSerializer(new org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer(redisObjectMapper)));
+    }
 }
