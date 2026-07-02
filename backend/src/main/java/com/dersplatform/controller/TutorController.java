@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,7 +48,10 @@ public class TutorController {
     }
 
     @GetMapping("/{id}/availability")
-    public ResponseEntity<List<Map<String, Object>>> getAvailability(@PathVariable UUID id) {
-        return ResponseEntity.ok(tutorService.getAvailability(id));
+    public ResponseEntity<List<Map<String, Object>>> getAvailability(
+            @PathVariable UUID id,
+            @RequestParam(required = false) String date) {
+        LocalDate localDate = date != null ? LocalDate.parse(date) : null;
+        return ResponseEntity.ok(tutorService.getAvailability(id, localDate));
     }
 }

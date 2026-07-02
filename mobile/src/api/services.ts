@@ -27,7 +27,7 @@ export const tutorApi = {
   getById: (id: string) => api.get<User>(`/tutors/${id}`),
   getMySubjects: () => api.get<{ subjectId: string; subjectName: string; id: string }[]>("/tutors/me/subjects"),
   updateSubjects: (subjectIds: string[]) => api.put("/tutors/me/subjects", subjectIds),
-  getAvailability: (id: string) => api.get<{ id: string; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }[]>(`/tutors/${id}/availability`),
+  getAvailability: (id: string, date?: string) => api.get<{ dayOfWeek: number; startTime: string; endTime: string }[]>(`/tutors/${id}/availability`, { params: { date } }),
   getMyAvailability: () => api.get<{ id: string; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }[]>("/tutors/me/availability"),
   updateAvailability: (slots: { dayOfWeek: number; startTime: string; endTime: string }[]) =>
     api.put("/tutors/me/availability", slots),

@@ -3,9 +3,11 @@ package com.dersplatform.service;
 import com.dersplatform.exception.ApiException;
 import com.dersplatform.model.dto.response.TutorSummaryResponse;
 import com.dersplatform.model.dto.response.UserResponse;
+import com.dersplatform.model.entity.Lesson;
 import com.dersplatform.model.entity.TutorAvailability;
 import com.dersplatform.model.entity.User;
 import com.dersplatform.model.enums.Role;
+import com.dersplatform.repository.LessonRepository;
 import com.dersplatform.repository.SubscriptionRepository;
 import com.dersplatform.repository.TutorAvailabilityRepository;
 import com.dersplatform.repository.TutorListingRepository;
@@ -17,7 +19,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +35,7 @@ public class TutorService {
     private final UserRepository userRepository;
     private final TutorSubjectRepository tutorSubjectRepository;
     private final TutorAvailabilityRepository tutorAvailabilityRepository;
+    private final LessonRepository lessonRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final TutorListingRepository tutorListingRepository;
     private final ScoringService scoringService;
@@ -109,15 +114,67 @@ public class TutorService {
                 .toList();
     }
 
-    public List<Map<String, Object>> getAvailability(UUID tutorId) {
-        return tutorAvailabilityRepository.findByTutorIdAndIsActiveTrue(tutorId)
-                .stream()
-                .map(a -> Map.<String, Object>of(
-                        "dayOfWeek", a.getDayOfWeek(),
-                        "startTime", a.getStartTime().toString(),
-                        "endTime", a.getEndTime().toString()
-                ))
-                .toList();
+    public List<Map<String, Object>> getAvailability(UUID tutorId, LocalDate date) {
+        List<TutorAvailability> slots = tutorAvailabilityRepository.findByTutorIdAndIsActiveTrue(tutorId);
+
+        if (date == null) {
+            return slots.stream()
+                    .map(a -> Map.<String, Object>of(
+                            "dayOfWeek", a.getDayOfWeek(),
+                            "startTime", a.getStartTime().toString(),
+                            "endTime", a.getEndTime().toString()
+                    ))
+                    .toList();
+        }
+
+        int dayOfWeek = date.getDayOfWeek().getValue() - 1;
+        List<Lesson> bookedLessons = lessonRepository.findByTutorIdAndDateNotCancelled(tutorId, date);
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (TutorAvailability slot : slots) {
+            if (slot.getDayOfWeek() != dayOfWeek) continue;
+            LocalTime slotStart = slot.getStartTime();
+            LocalTime slotEnd = slot.getEndTime();
+
+            // Collect booked time ranges for this day
+            List<LocalTime[]> bookedRanges = new ArrayList<>();
+            for (Lesson lesson : bookedLessons) {
+                LocalTime ls = lesson.getStartTime();
+                LocalTime le = lesson.getEndTime();
+                // Only include overlaps with this slot
+                if (ls.isBefore(slotEnd) && le.isAfter(slotStart)) {
+                    bookedRanges.add(new LocalTime[]{
+                        ls.isAfter(slotStart) ? ls : slotStart,
+                        le.isBefore(slotEnd) ? le : slotEnd
+                    });
+                }
+            }
+
+            bookedRanges.sort((a, b) -> a[0].compareTo(b[0]));
+
+            // Subtract booked ranges from the slot
+            LocalTime cursor = slotStart;
+            for (LocalTime[] booked : bookedRanges) {
+                if (booked[0].isAfter(cursor)) {
+                    result.add(Map.of(
+                        "dayOfWeek", dayOfWeek,
+                        "startTime", cursor.toString(),
+                        "endTime", booked[0].toString()
+                    ));
+                }
+                if (booked[1].isAfter(cursor)) {
+                    cursor = booked[1];
+                }
+            }
+            if (cursor.isBefore(slotEnd)) {
+                result.add(Map.of(
+                    "dayOfWeek", dayOfWeek,
+                    "startTime", cursor.toString(),
+                    "endTime", slotEnd.toString()
+                ));
+            }
+        }
+        return result;
     }
 
     public UserResponse getTutorDetail(UUID tutorId) {
