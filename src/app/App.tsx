@@ -31,6 +31,8 @@ const PrivacyPage = lazy(() => import("./pages/PrivacyPage").then(m => ({ defaul
 const TermsPage = lazy(() => import("./pages/TermsPage").then(m => ({ default: m.TermsPage })));
 const BlogIndexPage = lazy(() => import("./pages/blog/BlogIndexPage").then(m => ({ default: m.BlogIndexPage })));
 const BlogPostPage = lazy(() => import("./pages/blog/BlogPostPage").then(m => ({ default: m.BlogPostPage })));
+const DisputesPage = lazy(() => import("./pages/DisputesPage").then(m => ({ default: m.DisputesPage })));
+const LegalPage = lazy(() => import("./pages/LegalPage").then(m => ({ default: m.LegalPage })));
 
 export default function App() {
   return (
@@ -70,6 +72,8 @@ export default function App() {
               <Route path="/iletisim" element={<ContactPage />} />
               <Route path="/gizlilik" element={<PrivacyPage />} />
               <Route path="/kullanim-kosullari" element={<TermsPage />} />
+              <Route path="/anlasmazlik" element={<DisputesPage />} />
+              <Route path="/yasal" element={<LegalPage />} />
               <Route path="/dogrulama" element={<VerificationPage />} />
               <Route path="/profil/duzenle" element={<AuthGuard><ProfileEditPage /></AuthGuard>} />
               <Route path="*" element={<NotFoundPage />} />

@@ -3,6 +3,7 @@ import { Navbar } from "./Navbar";
 import { LessonRequestModal } from "../shared/LessonRequestModal";
 import { useModal } from "../../providers/ModalProvider";
 import { JsonLd } from "../shared/JsonLd";
+import { CookieConsent } from "../shared/CookieConsent";
 
 export function RootLayout() {
   const { selectedTutor, closeModal } = useModal();
@@ -37,6 +38,7 @@ export function RootLayout() {
           <LessonRequestModal tutor={selectedTutor} onClose={closeModal} />
         )}
       </main>
+      <CookieConsent />
     </div>
   );
 }
