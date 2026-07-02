@@ -25,6 +25,7 @@ const CreateListingWizardPage = lazy(() => import("./pages/CreateListingWizardPa
 const BlogListPage = lazy(() => import("./pages/BlogListPage"));
 const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
+const DisputesPage = lazy(() => import("./pages/DisputesPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 function PageLoader() {
