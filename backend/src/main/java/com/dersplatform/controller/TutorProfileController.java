@@ -36,13 +36,17 @@ public class TutorProfileController {
                 .orElseThrow();
         return ResponseEntity.ok(tutorSubjectRepository.findByTutorId(tutor.getId())
                 .stream()
-                .map(ts -> Map.<String, Object>of(
-                        "id", ts.getId().toString(),
-                        "subjectId", ts.getSubject().getId().toString(),
-                        "subjectName", ts.getSubject().getName(),
-                        "description", ts.getDescription() != null ? ts.getDescription() : "",
-                        "hourlyRate", ts.getHourlyRate()
-                ))
+                .map(ts -> {
+                    var map = new java.util.HashMap<String, Object>();
+                    map.put("id", ts.getId().toString());
+                    map.put("subjectId", ts.getSubject().getId().toString());
+                    map.put("subjectName", ts.getSubject().getName());
+                    map.put("description", ts.getDescription() != null ? ts.getDescription() : "");
+                    if (ts.getHourlyRate() != null) {
+                        map.put("hourlyRate", ts.getHourlyRate());
+                    }
+                    return map;
+                })
                 .toList());
     }
 

@@ -44,17 +44,21 @@ export default function ProfileEditScreen() {
       (async () => {
         setFetchingData(true);
         try {
-          const [subjectsRes, mySubjectsRes] = await Promise.all([
-            subjectApi.list(),
-            tutorApi.getMySubjects(),
-          ]);
+          const subjectsRes = await subjectApi.list();
           setAllSubjects(subjectsRes.data);
-          setSelectedSubjectIds(mySubjectsRes.data.map((s) => s.subjectId));
-        } catch {
+        } catch (e) {
           toast.show("Ders konuları yüklenemedi", "error");
-        } finally {
+          console.warn("subjectApi.list() error:", e);
           setFetchingData(false);
+          return;
         }
+        try {
+          const mySubjectsRes = await tutorApi.getMySubjects();
+          setSelectedSubjectIds(mySubjectsRes.data.map((s) => s.subjectId));
+        } catch (e) {
+          console.warn("tutorApi.getMySubjects() error:", e);
+        }
+        setFetchingData(false);
       })();
     }
   }, [user]);
