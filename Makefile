@@ -124,8 +124,16 @@ clean-docker: ## Remove Docker volumes (⚠️ deletes data)
 	$(DC) down -v
 
 # ─── Lint / Format ──────────────────────────────────────────────────
-lint: ## Lint frontend code
-	@echo "No linter configured yet"
+lint: ## Lint frontend code (ESLint, warnings only — does NOT block build)
+	pnpm lint
+
+lint-fix: ## Auto-fix lint issues
+	pnpm lint:fix
+
+typecheck: ## Run TypeScript type checking (does NOT block build)
+	pnpm typecheck
+
+check: lint typecheck ## Run all static analysis (lint + typecheck)
 
 # ─── Git ────────────────────────────────────────────────────────────
 pr: ## Create a GitHub PR (requires gh CLI)
