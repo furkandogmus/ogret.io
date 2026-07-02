@@ -47,6 +47,7 @@ export default function ProfileScreen() {
       { icon: "card-outline" as const, label: "Abonelik", route: "/subscription" },
       { icon: "id-card-outline" as const, label: "Kimlik Doğrulama", route: "/verification" },
       { icon: "calendar-outline" as const, label: "Müsaitlik", route: "/tutor/availability" },
+      { icon: "list-outline" as const, label: "İlanlarım", route: "/tutor/listings" },
       { icon: "document-text-outline" as const, label: "Referanslar", route: "/tutor/references" },
     ] : []),
     { icon: "notifications-outline" as const, label: "Bildirimler", route: "/notifications" },

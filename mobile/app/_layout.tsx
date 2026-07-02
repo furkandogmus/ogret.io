@@ -58,6 +58,7 @@ function RootLayoutInner() {
         <Stack.Screen name="lesson/review" options={{ headerShown: false, animation: "slide_from_bottom" }} />
         <Stack.Screen name="notifications" options={{ headerShown: false, animation: "slide_from_right" }} />
         <Stack.Screen name="tutor/availability" options={{ headerShown: false, animation: "slide_from_bottom" }} />
+        <Stack.Screen name="tutor/listings" options={{ headerShown: false, animation: "slide_from_right" }} />
         <Stack.Screen name="tutor/references" options={{ headerShown: false, animation: "slide_from_bottom" }} />
         <Stack.Screen name="settings" options={{ headerShown: false, animation: "slide_from_right" }} />
         <Stack.Screen name="payment/methods" options={{ headerShown: false, animation: "slide_from_right" }} />
