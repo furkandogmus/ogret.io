@@ -4,6 +4,7 @@ import { ModalProvider } from "./providers/ModalProvider";
 import { AuthProvider } from "./providers/AuthProvider";
 import { NotificationProvider } from "./providers/NotificationProvider";
 import { RootLayout } from "./components/layout/RootLayout";
+import { CookieConsent } from "./components/shared/CookieConsent";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
@@ -23,6 +24,7 @@ const WriteReferencePage = lazy(() => import("./pages/WriteReferencePage"));
 const CreateListingWizardPage = lazy(() => import("./pages/CreateListingWizardPage"));
 const BlogListPage = lazy(() => import("./pages/BlogListPage"));
 const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
+const LegalPage = lazy(() => import("./pages/LegalPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 function PageLoader() {
@@ -43,6 +45,7 @@ export default function App() {
         <NotificationProvider>
           <ModalProvider>
           <Suspense fallback={<PageLoader />}>
+          <CookieConsent />
           <Routes>
             <Route path="/giris" element={<LoginPage />} />
             <Route path="/kayit" element={<RegisterPage />} />
@@ -65,6 +68,7 @@ export default function App() {
               <Route path="/profil/duzenle" element={<ProfileEditPage />} />
               <Route path="/blog" element={<BlogListPage />} />
               <Route path="/blog/:slug" element={<BlogPostPage />} />
+              <Route path="/legal/:slug" element={<LegalPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
