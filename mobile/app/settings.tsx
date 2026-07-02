@@ -23,7 +23,6 @@ export default function SettingsScreen() {
     {
       title: "Genel",
       items: [
-        { icon: "notifications-outline" as const, label: "Bildirimler", route: "/notifications" },
         { icon: "language-outline" as const, label: "Dil", value: "Türkçe", disabled: true },
         { icon: "lock-closed-outline" as const, label: "Şifre Değiştir", disabled: true },
       ],
