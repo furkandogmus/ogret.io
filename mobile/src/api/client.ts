@@ -1,11 +1,24 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
+import Constants from "expo-constants";
 
 const TOKEN_KEY = "accessToken";
 const REFRESH_KEY = "refreshToken";
 
+export function getApiBaseUrl() {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const ip = hostUri.split(":")[0];
+    return `http://${ip}:8080/api/v1`;
+  }
+  return "http://localhost:8080/api/v1";
+}
+
 const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:8080/api/v1",
+  baseURL: getApiBaseUrl(),
   headers: { "Content-Type": "application/json" },
   timeout: 15000,
 });

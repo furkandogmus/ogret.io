@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from "react";
 import * as SecureStore from "expo-secure-store";
-import { TOKEN_KEY } from "../api/client";
+import { TOKEN_KEY, getApiBaseUrl } from "../api/client";
 import type { WsMessage, WsNotification } from "../types";
 
 interface WebSocketContextType {
@@ -18,7 +18,7 @@ const MAX_RECONNECT_DELAY = 30000;
 const INITIAL_RECONNECT_DELAY = 1000;
 
 function getWsUrl() {
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:8080/api/v1";
+  const apiUrl = getApiBaseUrl();
   const baseUrl = apiUrl.replace("/api/v1", "").replace("http://", "ws://").replace("https://", "wss://");
   return `${baseUrl}/ws/chat`;
 }
