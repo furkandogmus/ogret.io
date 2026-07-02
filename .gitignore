@@ -1,3 +1,5 @@
 node_modules/
 backend/.gradle/
 backend/build/
+.env
+dist/
