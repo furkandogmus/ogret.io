@@ -33,7 +33,21 @@ export default function SubscriptionScreen() {
           subscriptionApi.getPlans().catch(() => ({ data: null })),
           subscriptionApi.getMy().catch(() => ({ data: null })),
         ]);
-        if (plansRes.data) setPlans(plansRes.data);
+        if (plansRes.data) {
+          const mapped = (plansRes.data as any[]).map((p: any) => {
+            const planType = (p.id || p.type || "").toUpperCase();
+            const def = defaultPlans.find((dp) => dp.type === planType);
+            return {
+              type: planType,
+              name: p.name || def?.name || p.id,
+              price: p.price || def?.price || 0,
+              features: p.features || def?.features || [],
+              icon: def?.icon || "rocket-outline",
+              popular: def?.popular || false,
+            };
+          });
+          setPlans(mapped);
+        }
         if (mySubRes.data) setCurrentPlan(mySubRes.data.planType);
       } catch { /* */ }
       setLoading(false);
