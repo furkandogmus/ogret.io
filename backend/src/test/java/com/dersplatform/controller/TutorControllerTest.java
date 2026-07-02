@@ -40,6 +40,13 @@ class TutorControllerTest {
     @MockitoBean private S3Presigner s3Presigner;
     @MockitoBean private RedisConnectionFactory redisConnectionFactory;
 
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        var valueOps = org.mockito.Mockito.mock(org.springframework.data.redis.core.ValueOperations.class);
+        org.mockito.Mockito.when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
+        org.mockito.Mockito.when(valueOps.increment(org.mockito.Mockito.any())).thenReturn(1L);
+    }
+
     @Test
     void listTutors_ShouldReturn200() throws Exception {
         var tutor = TutorSummaryResponse.builder()

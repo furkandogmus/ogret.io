@@ -1,4 +1,8 @@
 spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+  cache:
+    type: none
   data:
     redis:
       repositories:
