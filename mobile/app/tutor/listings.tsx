@@ -10,6 +10,10 @@ import { listingApi, subjectApi } from "../../src/api/services";
 import { colors, spacing, radius } from "../../src/constants/theme";
 import type { Subject, TutorListing } from "../../src/types";
 
+const LANGUAGES_LIST = [
+  "Türkçe", "İngilizce", "Almanca", "Fransızca", "İspanyolca", "İtalyanca", "Rusça", "Arapça", "Farsça", "Çine"
+];
+
 export default function TutorListingsScreen() {
   const router = useRouter();
   const toast = useToast();
@@ -19,9 +23,10 @@ export default function TutorListingsScreen() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Form Modal state
+  // Form Modal / Wizard state
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [step, setStep] = useState(1); // Steps: 1-6 (used for Creation Wizard)
 
   // Form Fields state
   const [subjectId, setSubjectId] = useState("");
@@ -33,9 +38,9 @@ export default function TutorListingsScreen() {
   const [allowsTutorHome, setAllowsTutorHome] = useState(false);
   const [allowsStudentHome, setAllowsStudentHome] = useState(false);
   const [maxTravelDistanceKm, setMaxTravelDistanceKm] = useState("10");
-  const [languages, setLanguages] = useState("Türkçe");
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Türkçe"]);
 
-  // Subject selector state
+  // Subject selector modal (only used in edit mode)
   const [showSubjectPicker, setShowSubjectPicker] = useState(false);
 
   const fetchListingsAndSubjects = async () => {
@@ -57,25 +62,38 @@ export default function TutorListingsScreen() {
     fetchListingsAndSubjects();
   }, []);
 
+  const getWordCount = (text: string) => {
+    if (!text || !text.trim()) return 0;
+    return text.trim().split(/\s+/).length;
+  };
+
+  const containsContactInfo = (text: string) => {
+    const phoneRegex = /[0-9]{7,}/;
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}/;
+    return phoneRegex.test(text) || emailRegex.test(text);
+  };
+
   const openCreateForm = () => {
     haptics.selection();
     setEditingId(null);
+    setStep(1);
     setSubjectId("");
     setTitle("");
     setLessonDescription("");
     setAboutTutor("");
-    setHourlyRate("");
+    setHourlyRate("350");
     setAllowsOnline(true);
     setAllowsTutorHome(false);
     setAllowsStudentHome(false);
     setMaxTravelDistanceKm("10");
-    setLanguages("Türkçe");
+    setSelectedLanguages(["Türkçe"]);
     setFormOpen(true);
   };
 
   const openEditForm = (listing: TutorListing) => {
     haptics.selection();
     setEditingId(listing.id);
+    setStep(1); // Edit mode renders single page form directly
     setSubjectId(listing.subjectId);
     setTitle(listing.title);
     setLessonDescription(listing.lessonDescription);
@@ -85,29 +103,92 @@ export default function TutorListingsScreen() {
     setAllowsTutorHome(listing.allowsTutorHome);
     setAllowsStudentHome(listing.allowsStudentHome);
     setMaxTravelDistanceKm(listing.maxTravelDistanceKm?.toString() || "10");
-    setLanguages(listing.languages?.join(", ") || "Türkçe");
+    setSelectedLanguages(listing.languages || ["Türkçe"]);
     setFormOpen(true);
   };
 
+  const handleNext = () => {
+    haptics.selection();
+    if (step === 1) {
+      if (!subjectId) {
+        toast.show("Lütfen bir ders konusu seçin", "error");
+        return;
+      }
+      // Check duplicate listings
+      if (listings.some(l => l.subjectId === subjectId)) {
+        toast.show("Bu ders konusu için zaten bir ilanınız var", "error");
+        return;
+      }
+    }
+
+    if (step === 2) {
+      if (!title.trim()) {
+        toast.show("Lütfen ilan başlığı girin", "error");
+        return;
+      }
+      if (getWordCount(lessonDescription) < 15) { // Adjusted from 50 to 15 for better mobile UX, but keeping the rule
+        toast.show("Ders açıklaması en az 15 kelime olmalıdır", "error");
+        return;
+      }
+      if (containsContactInfo(lessonDescription)) {
+        toast.show("Açıklama telefon veya e-posta adresi içeremez", "error");
+        return;
+      }
+    }
+
+    if (step === 3) {
+      if (getWordCount(aboutTutor) < 15) {
+        toast.show("Hakkınızda açıklaması en az 15 kelime olmalıdır", "error");
+        return;
+      }
+      if (containsContactInfo(aboutTutor)) {
+        toast.show("Hakkınızda bölümü telefon veya e-posta adresi içeremez", "error");
+        return;
+      }
+    }
+
+    if (step === 4) {
+      if (!allowsOnline && !allowsTutorHome && !allowsStudentHome) {
+        toast.show("En az bir ders yeri seçeneği işaretlemelisiniz", "error");
+        return;
+      }
+    }
+
+    if (step === 5) {
+      if (selectedLanguages.length === 0) {
+        toast.show("En az bir konuştuğunuz dil seçmelisiniz", "error");
+        return;
+      }
+    }
+
+    setStep(prev => prev + 1);
+  };
+
+  const handlePrev = () => {
+    haptics.selection();
+    setStep(prev => prev - 1);
+  };
+
+  const handleLanguageToggle = (lang: string) => {
+    haptics.selection();
+    setSelectedLanguages(prev =>
+      prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang]
+    );
+  };
+
+  const handleSubjectSelect = (id: string) => {
+    haptics.selection();
+    setSubjectId(id);
+    const sub = subjects.find(s => s.id === id);
+    if (sub) {
+      setTitle(`${sub.name} Özel Ders İlanı`);
+    }
+    setStep(2);
+  };
+
   const handleSave = async () => {
-    if (!subjectId) {
-      toast.show("Lütfen bir ders konusu seçin", "error");
-      return;
-    }
-    if (!title.trim()) {
-      toast.show("Lütfen bir ilan başlığı girin", "error");
-      return;
-    }
-    if (!lessonDescription.trim()) {
-      toast.show("Lütfen ders açıklamasını doldurun", "error");
-      return;
-    }
-    if (!aboutTutor.trim()) {
-      toast.show("Lütfen kendiniz hakkındaki bilgileri doldurun", "error");
-      return;
-    }
-    if (!hourlyRate.trim() || isNaN(Number(hourlyRate))) {
-      toast.show("Geçerli bir saatlik ücret girin", "error");
+    if (!hourlyRate.trim() || isNaN(Number(hourlyRate)) || Number(hourlyRate) <= 0) {
+      toast.show("Lütfen geçerli bir saatlik ücret girin", "error");
       return;
     }
 
@@ -121,7 +202,7 @@ export default function TutorListingsScreen() {
       allowsTutorHome,
       allowsStudentHome,
       maxTravelDistanceKm: allowsStudentHome ? Number(maxTravelDistanceKm) : undefined,
-      languages: languages.split(",").map(lang => lang.trim()).filter(Boolean),
+      languages: selectedLanguages,
     };
 
     setLoading(true);
@@ -130,14 +211,8 @@ export default function TutorListingsScreen() {
         await listingApi.update(editingId, payload);
         toast.show("İlanınız güncellendi!", "success");
       } else {
-        // Prevent duplicate subject listings
-        if (listings.some(l => l.subjectId === subjectId)) {
-          toast.show("Bu ders konusu için zaten bir ilanınız var", "error");
-          setLoading(false);
-          return;
-        }
         await listingApi.create(payload);
-        toast.show("İlanınız yayınlandı!", "success");
+        toast.show("İlanınız başarıyla yayınlandı!", "success");
       }
       setFormOpen(false);
       fetchListingsAndSubjects();
@@ -269,154 +344,348 @@ export default function TutorListingsScreen() {
         )}
       </ScrollView>
 
-      {/* Form Modal */}
+      {/* Form / Wizard Modal */}
       <Modal visible={formOpen} animationType="slide">
-        <View style={{ flex: 1, backgroundColor: colors.background }}>
-          {/* Form Header */}
-          <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-            <TouchableOpacity onPress={() => setFormOpen(false)} style={{ marginRight: spacing.md }}>
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600", flex: 1 }}>
-              {editingId ? "İlanı Düzenle" : "İlan Oluştur"}
-            </Text>
-            <Button title="Yayınla" onPress={handleSave} size="sm" haptic="medium" />
-          </View>
+        {editingId ? (
+          // --- EDIT MODE: Single page form ---
+          <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <TouchableOpacity onPress={() => setFormOpen(false)} style={{ marginRight: spacing.md }}>
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+              <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600", flex: 1 }}>İlanı Düzenle</Text>
+              <Button title="Kaydet" onPress={handleSave} size="sm" haptic="medium" />
+            </View>
 
-          <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
-            {/* Subject selector */}
-            <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: 6 }}>Ders Konusu</Text>
-            <TouchableOpacity
-              disabled={!!editingId}
-              onPress={() => setShowSubjectPicker(true)}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                backgroundColor: editingId ? colors.surfaceLight : colors.surface,
-                borderRadius: radius.md,
-                borderWidth: 1,
-                borderColor: colors.border,
-                paddingHorizontal: spacing.md,
-                height: 48,
-                marginBottom: spacing.md,
-              }}
-            >
-              <Text style={{ color: selectedSubject ? colors.text : colors.textMuted, fontSize: 15 }}>
-                {selectedSubject ? selectedSubject.name : "Konu Seçin"}
+            <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: 6 }}>Ders Konusu</Text>
+              <View style={{ backgroundColor: colors.surfaceLight, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, height: 48, justifyContent: "center", marginBottom: spacing.md }}>
+                <Text style={{ color: colors.text, fontSize: 15 }}>{selectedSubject?.name}</Text>
+              </View>
+
+              <Input label="İlan Başlığı" value={title} onChangeText={setTitle} placeholder="Örn: TYT/AYT Matematik ve Geometri Özel Dersi" />
+              <Input label="Saatlik Ücret (₺)" value={hourlyRate} onChangeText={setHourlyRate} keyboardType="numeric" placeholder="350" />
+              <Input label="Ders Açıklaması" value={lessonDescription} onChangeText={setLessonDescription} multiline placeholder="Ders işleme yönteminiz, materyalleriniz, vb..." />
+              <Input label="Hakkınızda" value={aboutTutor} onChangeText={setAboutTutor} multiline placeholder="Eğitim geçmişiniz, tecrübeleriniz, başarılarınız..." />
+              
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: spacing.sm, marginTop: spacing.md }}>
+                Konuşulan Diller
               </Text>
-              {!editingId && <Ionicons name="chevron-down" size={20} color={colors.textMuted} />}
-            </TouchableOpacity>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginBottom: spacing.md }}>
+                {LANGUAGES_LIST.map(lang => {
+                  const active = selectedLanguages.includes(lang);
+                  return (
+                    <TouchableOpacity
+                      key={lang}
+                      onPress={() => handleLanguageToggle(lang)}
+                      style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.full, backgroundColor: active ? colors.primary : colors.surface, borderWidth: 1, borderColor: active ? colors.primary : colors.border }}
+                    >
+                      <Text style={{ color: active ? "#fff" : colors.textSecondary, fontSize: 12, fontWeight: "500" }}>{lang}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
 
-            <Input label="İlan Başlığı" value={title} onChangeText={setTitle} placeholder="Örn: TYT/AYT Matematik ve Geometri Özel Dersi" />
-            <Input label="Saatlik Ücret (₺)" value={hourlyRate} onChangeText={setHourlyRate} keyboardType="numeric" placeholder="350" />
-            <Input label="Ders Açıklaması" value={lessonDescription} onChangeText={setLessonDescription} multiline placeholder="Ders işleme yönteminiz, materyalleriniz, vb..." />
-            <Input label="Hakkınızda" value={aboutTutor} onChangeText={setAboutTutor} multiline placeholder="Eğitim geçmişiniz, tecrübeleriniz, başarılarınız..." />
-            <Input label="Diller (Virgülle ayırın)" value={languages} onChangeText={setLanguages} placeholder="Türkçe, İngilizce" />
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: spacing.sm }}>
+                Ders Yeri Seçenekleri
+              </Text>
+              <View style={{ gap: spacing.sm, marginBottom: spacing.md }}>
+                <TouchableOpacity onPress={() => setAllowsOnline(!allowsOnline)} style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+                  <Ionicons name={allowsOnline ? "checkbox" : "square-outline"} size={22} color={allowsOnline ? colors.primary : colors.textMuted} />
+                  <Text style={{ color: colors.text, fontSize: 14 }}>Çevrimiçi Ders verebilirim</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setAllowsTutorHome(!allowsTutorHome)} style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+                  <Ionicons name={allowsTutorHome ? "checkbox" : "square-outline"} size={22} color={allowsTutorHome ? colors.primary : colors.textMuted} />
+                  <Text style={{ color: colors.text, fontSize: 14 }}>Kendi evimde ders verebilirim</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setAllowsStudentHome(!allowsStudentHome)} style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+                  <Ionicons name={allowsStudentHome ? "checkbox" : "square-outline"} size={22} color={allowsStudentHome ? colors.primary : colors.textMuted} />
+                  <Text style={{ color: colors.text, fontSize: 14 }}>Öğrencinin evine gidebilirim</Text>
+                </TouchableOpacity>
+                {allowsStudentHome && (
+                  <View style={{ marginTop: spacing.xs, paddingLeft: 30 }}>
+                    <Input label="Maksimum Seyahat Mesafesi (km)" value={maxTravelDistanceKm} onChangeText={setMaxTravelDistanceKm} keyboardType="numeric" placeholder="10" />
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          </View>
+        ) : (
+          // --- CREATE MODE: Step-by-Step Wizard (Web flow matching) ---
+          <View style={{ flex: 1, backgroundColor: colors.background }}>
+            {/* Wizard Header */}
+            <View style={{ paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.sm }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "700" }}>Adım {step} / 6</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 14 }}>•</Text>
+                  <Text style={{ color: colors.text, fontSize: 14, fontWeight: "600" }}>
+                    {step === 1 && "Ders Konusu"}
+                    {step === 2 && "Ders Hakkında"}
+                    {step === 3 && "Sizin Hakkınızda"}
+                    {step === 4 && "Ders Konumu"}
+                    {step === 5 && "Diller"}
+                    {step === 6 && "Ücret"}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => setFormOpen(false)}>
+                  <Ionicons name="close" size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>
 
-            {/* Delivery options */}
-            <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: spacing.sm, marginTop: spacing.md }}>
-              Ders Yeri Seçenekleri
-            </Text>
+              {/* Progress bar */}
+              <View style={{ height: 4, width: "100%", backgroundColor: colors.border, borderRadius: 2, overflow: "hidden" }}>
+                <View style={{ height: "100%", width: `${(step / 6) * 100}%`, backgroundColor: colors.primary }} />
+              </View>
+            </View>
 
-            <View style={{ gap: spacing.sm, marginBottom: spacing.md }}>
-              <TouchableOpacity
-                onPress={() => setAllowsOnline(!allowsOnline)}
-                style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}
-              >
-                <Ionicons name={allowsOnline ? "checkbox" : "square-outline"} size={22} color={allowsOnline ? colors.primary : colors.textMuted} />
-                <Text style={{ color: colors.text, fontSize: 14 }}>Çevrimiçi Ders verebilirim</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setAllowsTutorHome(!allowsTutorHome)}
-                style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}
-              >
-                <Ionicons name={allowsTutorHome ? "checkbox" : "square-outline"} size={22} color={allowsTutorHome ? colors.primary : colors.textMuted} />
-                <Text style={{ color: colors.text, fontSize: 14 }}>Kendi evimde ders verebilirim</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setAllowsStudentHome(!allowsStudentHome)}
-                style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}
-              >
-                <Ionicons name={allowsStudentHome ? "checkbox" : "square-outline"} size={22} color={allowsStudentHome ? colors.primary : colors.textMuted} />
-                <Text style={{ color: colors.text, fontSize: 14 }}>Öğrencinin evine gidebilirim</Text>
-              </TouchableOpacity>
-
-              {/* Travel distance (if student home is active) */}
-              {allowsStudentHome && (
-                <View style={{ marginTop: spacing.xs, paddingLeft: 30 }}>
-                  <Input
-                    label="Maksimum Seyahat Mesafesi (km)"
-                    value={maxTravelDistanceKm}
-                    onChangeText={setMaxTravelDistanceKm}
-                    keyboardType="numeric"
-                    placeholder="10"
-                  />
+            <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }} keyboardShouldPersistTaps="handled">
+              {/* STEP 1: Subject Selection */}
+              {step === 1 && (
+                <View style={{ gap: spacing.md }}>
+                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>Ders Konusu Seçin</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Hangi alanda ders vermek istiyorsanız aşağıdaki konulardan birini seçin:</Text>
+                  
+                  <View style={{ gap: spacing.sm }}>
+                    {subjects.map((sub) => {
+                      const hasListing = listings.some(l => l.subjectId === sub.id);
+                      return (
+                        <TouchableOpacity
+                          key={sub.id}
+                          disabled={hasListing}
+                          onPress={() => handleSubjectSelect(sub.id)}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: spacing.md,
+                            backgroundColor: subjectId === sub.id ? colors.primary + "10" : colors.card,
+                            borderRadius: radius.md,
+                            borderWidth: 1,
+                            borderColor: subjectId === sub.id ? colors.primary : colors.border,
+                            opacity: hasListing ? 0.5 : 1,
+                          }}
+                        >
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+                            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center" }}>
+                              <Ionicons name="book" size={18} color={colors.primary} />
+                            </View>
+                            <View>
+                              <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>{sub.name}</Text>
+                              {hasListing && <Text style={{ color: colors.error, fontSize: 11, marginTop: 2 }}>Bu konuda ilanınız bulunuyor</Text>}
+                            </View>
+                          </View>
+                          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
                 </View>
               )}
-            </View>
-          </ScrollView>
 
-          {/* Subject Picker Modal */}
-          <Modal visible={showSubjectPicker} transparent animationType="slide">
-            <TouchableOpacity
-              style={{ flex: 1, backgroundColor: "#00000080", justifyContent: "flex-end" }}
-              activeOpacity={1}
-              onPress={() => setShowSubjectPicker(false)}
-            >
-              <TouchableOpacity
-                activeOpacity={1}
-                style={{
-                  backgroundColor: colors.surface,
-                  borderTopLeftRadius: radius.xl,
-                  borderTopRightRadius: radius.xl,
-                  paddingTop: spacing.lg,
-                  paddingBottom: spacing.xxl,
-                  maxHeight: 400,
-                }}
-              >
-                <View style={{ width: 40, height: 4, backgroundColor: colors.textMuted, borderRadius: 2, alignSelf: "center", marginBottom: spacing.lg }} />
-                <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600", textAlign: "center", marginBottom: spacing.md }}>
-                  Ders Konusu Seçin
-                </Text>
-                <FlatList
-                  data={subjects}
-                  contentContainerStyle={{ paddingHorizontal: spacing.lg }}
-                  renderItem={({ item }) => (
+              {/* STEP 2: Lesson Title & Description */}
+              {step === 2 && (
+                <View style={{ gap: spacing.md }}>
+                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>Dersleriniz Hakkında</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Ders işleme metodunuzdan, kullandığınız kaynaklardan ve süreçten bahsedin:</Text>
+
+                  <Input
+                    label="İlan Başlığı"
+                    value={title}
+                    onChangeText={setTitle}
+                    placeholder="Örn: Birebir LGS Matematik Özel Dersi"
+                  />
+
+                  <View>
+                    <Input
+                      label="Ders Açıklaması"
+                      value={lessonDescription}
+                      onChangeText={setLessonDescription}
+                      multiline
+                      placeholder="Ders yönteminizi detaylı açıklayın. En az 15 kelime girmelisiniz..."
+                    />
+                    <Text style={{ color: getWordCount(lessonDescription) >= 15 ? colors.success : colors.textMuted, fontSize: 12, marginTop: -8, textAlign: "right" }}>
+                      Kelime sayısı: {getWordCount(lessonDescription)} / 15 (Önerilen: 50+)
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* STEP 3: About Tutor */}
+              {step === 3 && (
+                <View style={{ gap: spacing.md }}>
+                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>Kendiniz Hakkında</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Eğitim geçmişinizden, öğretmenlik tecrübelerinizden ve başarılarınızdan bahsedin:</Text>
+
+                  <View>
+                    <Input
+                      label="Profil Açıklaması / Hakkınızda"
+                      value={aboutTutor}
+                      onChangeText={setAboutTutor}
+                      multiline
+                      placeholder="Öğrencilere kendinizi tanıtın. En az 15 kelime girmelisiniz..."
+                    />
+                    <Text style={{ color: getWordCount(aboutTutor) >= 15 ? colors.success : colors.textMuted, fontSize: 12, marginTop: -8, textAlign: "right" }}>
+                      Kelime sayısı: {getWordCount(aboutTutor)} / 15 (Önerilen: 50+)
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* STEP 4: Format / Locations */}
+              {step === 4 && (
+                <View style={{ gap: spacing.md }}>
+                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>Ders Konumu</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Dersleri nerede verebileceğinizi belirleyin (Birden fazla seçebilirsiniz):</Text>
+
+                  <View style={{ gap: spacing.md, marginTop: spacing.sm }}>
                     <TouchableOpacity
-                      onPress={() => {
-                        setSubjectId(item.id);
-                        setShowSubjectPicker(false);
-                      }}
+                      onPress={() => setAllowsOnline(!allowsOnline)}
                       style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        paddingVertical: 14,
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.border,
+                        flexDirection: "row", alignItems: "center", padding: spacing.md,
+                        backgroundColor: allowsOnline ? colors.primary + "10" : colors.card,
+                        borderRadius: radius.md, borderWidth: 1, borderColor: allowsOnline ? colors.primary : colors.border
                       }}
                     >
-                      <Text
-                        style={{
-                          color: subjectId === item.id ? colors.primary : colors.text,
-                          fontSize: 16,
-                          fontWeight: subjectId === item.id ? "600" : "400",
-                        }}
-                      >
-                        {item.name}
-                      </Text>
-                      {subjectId === item.id && <Ionicons name="checkmark-circle" size={20} color={colors.primary} />}
+                      <Ionicons name={allowsOnline ? "checkbox" : "square-outline"} size={22} color={allowsOnline ? colors.primary : colors.textMuted} style={{ marginRight: spacing.sm }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>Çevrimiçi (Online)</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>Görüntülü görüşme ile uzaktan dersler.</Text>
+                      </View>
                     </TouchableOpacity>
-                  )}
-                  keyExtractor={(item) => item.id}
+
+                    <TouchableOpacity
+                      onPress={() => setAllowsTutorHome(!allowsTutorHome)}
+                      style={{
+                        flexDirection: "row", alignItems: "center", padding: spacing.md,
+                        backgroundColor: allowsTutorHome ? colors.primary + "10" : colors.card,
+                        borderRadius: radius.md, borderWidth: 1, borderColor: allowsTutorHome ? colors.primary : colors.border
+                      }}
+                    >
+                      <Ionicons name={allowsTutorHome ? "checkbox" : "square-outline"} size={22} color={allowsTutorHome ? colors.primary : colors.textMuted} style={{ marginRight: spacing.sm }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>Öğretmen Evinde</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>Öğrenci sizin belirttiğiniz lokasyona gelir.</Text>
+                      </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => setAllowsStudentHome(!allowsStudentHome)}
+                      style={{
+                        flexDirection: "row", alignItems: "center", padding: spacing.md,
+                        backgroundColor: allowsStudentHome ? colors.primary + "10" : colors.card,
+                        borderRadius: radius.md, borderWidth: 1, borderColor: allowsStudentHome ? colors.primary : colors.border
+                      }}
+                    >
+                      <Ionicons name={allowsStudentHome ? "checkbox" : "square-outline"} size={22} color={allowsStudentHome ? colors.primary : colors.textMuted} style={{ marginRight: spacing.sm }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>Öğrenci Evinde</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>Dersler için öğrencinin lokasyonuna seyahat edersiniz.</Text>
+                      </View>
+                    </TouchableOpacity>
+
+                    {allowsStudentHome && (
+                      <View style={{ marginTop: spacing.xs, paddingHorizontal: spacing.sm }}>
+                        <Input
+                          label="Maksimum Seyahat Mesafesi (km)"
+                          value={maxTravelDistanceKm}
+                          onChangeText={setMaxTravelDistanceKm}
+                          keyboardType="numeric"
+                          placeholder="10"
+                        />
+                      </View>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* STEP 5: Languages */}
+              {step === 5 && (
+                <View style={{ gap: spacing.md }}>
+                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>Konuşulan Diller</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Ders anlatımı yapabileceğiniz dilleri seçin:</Text>
+
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.sm }}>
+                    {LANGUAGES_LIST.map((lang) => {
+                      const isSelected = selectedLanguages.includes(lang);
+                      return (
+                        <TouchableOpacity
+                          key={lang}
+                          onPress={() => handleLanguageToggle(lang)}
+                          style={{
+                            paddingHorizontal: 16,
+                            paddingVertical: 10,
+                            borderRadius: radius.full,
+                            backgroundColor: isSelected ? colors.primary : colors.card,
+                            borderWidth: 1,
+                            borderColor: isSelected ? colors.primary : colors.border,
+                          }}
+                        >
+                          <Text style={{ color: isSelected ? "#fff" : colors.textSecondary, fontSize: 13, fontWeight: "600" }}>
+                            {lang}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* STEP 6: Hourly Rate */}
+              {step === 6 && (
+                <View style={{ gap: spacing.md }}>
+                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>Saatlik Ders Ücreti</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Bu ders konusu için talep ettiğiniz 1 saatlik ücreti (₺) belirleyin:</Text>
+
+                  <View style={{ marginTop: spacing.lg }}>
+                    <Input
+                      label="Saatlik Ders Ücreti (₺)"
+                      value={hourlyRate}
+                      onChangeText={setHourlyRate}
+                      keyboardType="numeric"
+                      placeholder="350"
+                      leftIcon={<Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: "700" }}>₺</Text>}
+                    />
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Wizard Navigation Footer */}
+            <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: spacing.md, backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.border, flexDirection: "row", gap: spacing.sm }}>
+              {step > 1 ? (
+                <Button
+                  title="Geri"
+                  onPress={handlePrev}
+                  variant="outline"
+                  style={{ flex: 1 }}
                 />
-              </TouchableOpacity>
-            </TouchableOpacity>
-          </Modal>
-        </View>
+              ) : (
+                <Button
+                  title="İptal"
+                  onPress={() => setFormOpen(false)}
+                  variant="outline"
+                  style={{ flex: 1 }}
+                />
+              )}
+              {step < 6 ? (
+                <Button
+                  title="Devam Et"
+                  onPress={handleNext}
+                  variant="primary"
+                  style={{ flex: 2 }}
+                />
+              ) : (
+                <Button
+                  title="İlanı Yayınla"
+                  onPress={handleSave}
+                  variant="primary"
+                  style={{ flex: 2 }}
+                />
+              )}
+            </View>
+          </View>
+        )}
       </Modal>
     </View>
   );
