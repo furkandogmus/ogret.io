@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "./Avatar";
 import { colors, spacing, radius, statusColors, statusLabels } from "../constants/theme";
+import { formatLocalDateShort, formatTimeRange } from "../utils/dateFormat";
 import type { Lesson } from "../types";
 
 interface Props {
@@ -25,7 +26,7 @@ const statusIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
 function LessonCardComponent({ lesson, userRole, onPress, onCancel, onComplete, onMeetingLink }: Props) {
   const otherUser = userRole === "STUDENT" ? lesson.tutor : lesson.student;
   const canCancel = lesson.status === "PENDING";
-  const canComplete = lesson.status === "CONFIRMED" || lesson.status === "IN_PROGRESS";
+  const canComplete = lesson.status === "CONFIRMED" || lesson.status === "IN_PROGRESS" || (lesson.status === "PENDING" && userRole === "TUTOR");
   const showActions = (onCancel && canCancel) || (onComplete && canComplete);
 
   return (
@@ -50,41 +51,13 @@ function LessonCardComponent({ lesson, userRole, onPress, onCancel, onComplete, 
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
           <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-            {(() => {
-              const val = lesson.lessonDate;
-              if (!val) return "Belirtilmemiş";
-              if (Array.isArray(val)) {
-                return new Date(val[0], val[1] - 1, val[2]).toLocaleDateString("tr-TR");
-              }
-              if (typeof val === "string") {
-                const parts = val.split("-").map(Number);
-                if (parts.length === 3 && !parts.some(isNaN)) {
-                  return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString("tr-TR");
-                }
-                return new Date(val).toLocaleDateString("tr-TR");
-              }
-              return "Belirtilmemiş";
-            })()}
+            {formatLocalDateShort(lesson.lessonDate)}
           </Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Ionicons name="time-outline" size={14} color={colors.textMuted} />
           <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-            {(() => {
-              const formatTime = (val: any) => {
-                if (!val) return "";
-                if (Array.isArray(val)) {
-                  const h = String(val[0]).padStart(2, "0");
-                  const m = String(val[1] ?? 0).padStart(2, "0");
-                  return `${h}:${m}`;
-                }
-                if (typeof val === "string") {
-                  return val.slice(0, 5);
-                }
-                return String(val);
-              };
-              return `${formatTime(lesson.startTime)} - ${formatTime(lesson.endTime)}`;
-            })()}
+            {formatTimeRange(lesson.startTime, lesson.endTime)}
           </Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -109,7 +82,9 @@ function LessonCardComponent({ lesson, userRole, onPress, onCancel, onComplete, 
           )}
           {canComplete && onComplete && (
             <TouchableOpacity onPress={onComplete} style={{ flex: 1, backgroundColor: colors.success + "20", borderRadius: radius.sm, padding: spacing.sm, alignItems: "center" }}>
-              <Text style={{ color: colors.success, fontWeight: "600", fontSize: 13 }}>Tamamla</Text>
+              <Text style={{ color: colors.success, fontWeight: "600", fontSize: 13 }}>
+                {lesson.status === "PENDING" ? "Onayla" : lesson.status === "CONFIRMED" && userRole === "TUTOR" ? "Başlat" : "Tamamla"}
+              </Text>
             </TouchableOpacity>
           )}
         </View>

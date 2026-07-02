@@ -10,6 +10,7 @@ import { useToast } from "../../src/components/Toast";
 import { lessonApi } from "../../src/api/services";
 import type { Lesson } from "../../src/types";
 import { colors, spacing, radius, statusColors, statusLabels } from "../../src/constants/theme";
+import { formatLocalDate, formatLocalTime } from "../../src/utils/dateFormat";
 
 export default function LessonDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -69,36 +70,8 @@ export default function LessonDetailScreen() {
         <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border }}>
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: spacing.md }}>Ders Bilgileri</Text>
           <Row icon="book-outline" label="Konu" value={lesson.subject.name} />
-          <Row icon="calendar-outline" label="Tarih" value={(() => {
-            const val = lesson.lessonDate;
-            if (!val) return "Belirtilmemiş";
-            if (Array.isArray(val)) {
-              return new Date(val[0], val[1] - 1, val[2]).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
-            }
-            if (typeof val === "string") {
-              const parts = val.split("-").map(Number);
-              if (parts.length === 3 && !parts.some(isNaN)) {
-                return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
-              }
-              return new Date(val).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
-            }
-            return "Belirtilmemiş";
-          })()} />
-          <Row icon="time-outline" label="Saat" value={(() => {
-            const formatTime = (val: any) => {
-              if (!val) return "";
-              if (Array.isArray(val)) {
-                const h = String(val[0]).padStart(2, "0");
-                const m = String(val[1] ?? 0).padStart(2, "0");
-                return `${h}:${m}`;
-              }
-              if (typeof val === "string") {
-                return val.slice(0, 5);
-              }
-              return String(val);
-            };
-            return `${formatTime(lesson.startTime)} - ${formatTime(lesson.endTime)} (${lesson.durationMinutes} dk)`;
-          })()} />
+          <Row icon="calendar-outline" label="Tarih" value={formatLocalDate(lesson.lessonDate)} />
+          <Row icon="time-outline" label="Saat" value={`${formatLocalTime(lesson.startTime)} - ${formatLocalTime(lesson.endTime)} (${lesson.durationMinutes} dk)`} />
           <Row icon="cash-outline" label="Ücret" value={`₺${lesson.price}`} />
           {lesson.notes && <Row icon="document-text-outline" label="Notlar" value={lesson.notes} />}
           {lesson.cancellationReason && <Row icon="alert-circle-outline" label="İptal Nedeni" value={lesson.cancellationReason} color={colors.error} />}

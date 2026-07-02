@@ -47,6 +47,22 @@ export default function TutorPanel() {
     } catch { toast.show("Onaylanamadı", "error"); }
   };
 
+  const handleStart = async (id: string) => {
+    try {
+      await lessonApi.start(id);
+      toast.show("Ders başlatıldı", "success");
+      fetchLessons();
+    } catch { toast.show("Ders başlatılamadı", "error"); }
+  };
+
+  const handleComplete = async (id: string) => {
+    try {
+      await lessonApi.complete(id);
+      toast.show("Ders tamamlandı", "success");
+      fetchLessons();
+    } catch { toast.show("Ders tamamlanamadı", "error"); }
+  };
+
   const handleCancel = (id: string) => {
     Alert.alert("İptal Et", "Dersi iptal etmek istediğine emin misin?", [
       { text: "Vazgeç", style: "cancel" },

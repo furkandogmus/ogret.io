@@ -15,6 +15,8 @@ export interface User {
   verified: boolean;
   profileComplete: boolean;
   identityVerified: boolean;
+  popularityScore?: number;
+  responseTimeHours?: number;
 }
 
 export interface TutorSummary {
@@ -29,6 +31,9 @@ export interface TutorSummary {
   experienceYears: number;
   online: boolean;
   identityVerified: boolean;
+  popularityScore?: number;
+  responseTimeHours?: number;
+  premiumPlan?: "BASIC" | "PREMIUM" | "VIP" | null;
   subjects: string[];
   tags: string[];
 }

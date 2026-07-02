@@ -3,7 +3,6 @@ import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndic
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
-import { Button } from "../../src/components/Button";
 import { useToast } from "../../src/components/Toast";
 import { useHaptics } from "../../src/hooks/useHaptics";
 import { useAuth } from "../../src/providers/AuthProvider";
@@ -40,7 +39,7 @@ export default function ReferencesScreen() {
   const handleCopyLink = async () => {
     haptics.success();
     // Copy the tutor's reference submission URL
-    const refUrl = `http://192.168.1.141:5173/ogretmen/${user?.id}/referans-yaz`;
+    const refUrl = `https://ogret.io/ogretmen/${user?.id}/referans-yaz`;
     await Clipboard.setStringAsync(refUrl);
     toast.show("Referans isteme linki kopyalandı!", "success");
   };
@@ -108,7 +107,7 @@ export default function ReferencesScreen() {
               }}
               numberOfLines={1}
             >
-              http://192.168.1.141:5173/ogretmen/{user?.id.slice(0, 8)}.../referans-yaz
+              ogret.io/ogretmen/{user?.id.slice(0, 8)}.../referans-yaz
             </Text>
             <TouchableOpacity
               onPress={handleCopyLink}

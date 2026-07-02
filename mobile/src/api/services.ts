@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { User, TutorSummary, Lesson, Subject, Review, Message, Subscription, Reference, DashboardStats } from "../types";
+import type { User, TutorSummary, Lesson, Subject, Review, Message, Subscription, Reference, DashboardStats, TutorListing, CreateListingRequest } from "../types";
 
 export const authApi = {
   login: (email: string, password: string) =>
@@ -16,7 +16,7 @@ export const authApi = {
 export const userApi = {
   getMe: () => api.get<User>("/users/me"),
   getById: (id: string) => api.get<User>(`/users/${id}`),
-  updateProfile: (data: Partial<{ fullName: string; bio: string; education: string; hourlyRate: number }>) => api.put<User>("/users/me", data),
+  updateProfile: (data: Partial<{ fullName: string; bio: string; education: string; hourlyRate: number; experienceYears: number; phone: string }>) => api.put<User>("/users/me", data),
   updateAvatar: (avatarUrl: string) => api.put<User>("/users/me/avatar", { avatarUrl }),
   search: (q: string) => api.get<User[]>("/users", { params: { q } }),
 };
@@ -44,6 +44,7 @@ export const lessonApi = {
     api.post<Lesson>("/lessons", data),
   confirm: (id: string) => api.put<Lesson>(`/lessons/${id}/confirm`),
   cancel: (id: string, reason?: string) => api.put<Lesson>(`/lessons/${id}/cancel`, null, { params: { reason } }),
+  start: (id: string) => api.put<Lesson>(`/lessons/${id}/start`),
   complete: (id: string) => api.put<Lesson>(`/lessons/${id}/complete`),
   updateMeetingLink: (id: string, link: string) => api.put<Lesson>(`/lessons/${id}/meeting-link`, { meetingLink: link }),
 };
@@ -103,20 +104,20 @@ export const fileApi = {
 };
 
 export const adminApi = {
-  getUsers: () => api.get<User[]>("/admin/users"),
+  getUsers: () => api.get<{ content: User[] }>("/admin/users"),
   getDashboard: () => api.get<DashboardStats>("/admin/dashboard"),
   verifyUser: (userId: string) => api.put(`/admin/users/${userId}/verify`),
   getVerifications: () => api.get<{ id: string; userId: string; documentType: string; status: string }[]>("/admin/verifications"),
   reviewVerification: (id: string, approved: boolean, adminNote?: string) => api.put(`/admin/verifications/${id}`, { approved, adminNote }),
-  getLessons: () => api.get<Lesson[]>("/admin/lessons"),
+  getLessons: () => api.get<{ content: Lesson[] }>("/admin/lessons"),
 };
 
 export const listingApi = {
-  create: (data: import("../types").CreateListingRequest) => api.post("/tutors/me/listings", data),
-  getMyListings: (status?: string) => api.get("/tutors/me/listings", { params: { status } }),
-  update: (id: string, data: import("../types").CreateListingRequest) => api.put(`/tutors/me/listings/${id}`, data),
+  create: (data: CreateListingRequest) => api.post<TutorListing>("/tutors/me/listings", data),
+  getMyListings: (status?: string) => api.get<TutorListing[]>("/tutors/me/listings", { params: { status } }),
+  update: (id: string, data: CreateListingRequest) => api.put<TutorListing>(`/tutors/me/listings/${id}`, data),
   delete: (id: string) => api.delete(`/tutors/me/listings/${id}`),
-  getTutorListings: (tutorId: string) => api.get(`/tutors/${tutorId}/listings`),
+  getTutorListings: (tutorId: string) => api.get<TutorListing[]>(`/tutors/${tutorId}/listings`),
   searchListings: (params?: { q?: string; subjectId?: string; minPrice?: number; maxPrice?: number; online?: boolean }) =>
-    api.get("/tutors/listings", { params }),
+    api.get<TutorListing[]>("/tutors/listings", { params }),
 };

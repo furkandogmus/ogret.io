@@ -16,6 +16,7 @@ export default function ProfileEditScreen() {
   const toast = useToast();
 
   const [fullName, setFullName] = useState(user?.fullName || "");
+  const [phone, setPhone] = useState(user?.phone || "");
   const [bio, setBio] = useState(user?.bio || "");
   const [education, setEducation] = useState(user?.education || "");
   const [hourlyRate, setHourlyRate] = useState(user?.hourlyRate?.toString() || "");
@@ -69,6 +70,7 @@ export default function ProfileEditScreen() {
       // 1. Update basic profile info
       await userApi.updateProfile({
         fullName,
+        phone,
         bio,
         education,
         experienceYears: experienceYears ? Number(experienceYears) : undefined,
@@ -117,6 +119,7 @@ export default function ProfileEditScreen() {
         
         <View style={{ gap: spacing.sm, marginBottom: spacing.lg }}>
           <Input label="Ad Soyad" value={fullName} onChangeText={setFullName} placeholder="Adınız ve soyadınız" />
+          <Input label="Telefon" value={phone} onChangeText={setPhone} placeholder="Örn: +905555555555" keyboardType="phone-pad" />
           <Input label="Eğitim" value={education} onChangeText={setEducation} placeholder="Örn: Boğaziçi Üniversitesi Matematik mezunu" />
           <Input label="Biyografi" value={bio} onChangeText={setBio} multiline placeholder="Kendinizden bahsedin, öğrencilerin sizi tanımasını sağlayın..." />
         </View>

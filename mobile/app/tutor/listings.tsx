@@ -11,7 +11,7 @@ import { colors, spacing, radius } from "../../src/constants/theme";
 import type { Subject, TutorListing } from "../../src/types";
 
 const LANGUAGES_LIST = [
-  "Türkçe", "İngilizce", "Almanca", "Fransızca", "İspanyolca", "İtalyanca", "Rusça", "Arapça", "Farsça", "Çine"
+  "Türkçe", "İngilizce", "Almanca", "Fransızca", "İspanyolca", "İtalyanca", "Rusça", "Arapça", "Farsça", "Çince"
 ];
 
 export default function TutorListingsScreen() {

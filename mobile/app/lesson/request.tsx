@@ -6,9 +6,10 @@ import { Input } from "../../src/components/Input";
 import { Button } from "../../src/components/Button";
 import { DateTimePicker } from "../../src/components/DateTimePicker";
 import { useToast } from "../../src/components/Toast";
-import { tutorApi, subjectApi, lessonApi } from "../../src/api/services";
+import { tutorApi, subjectApi, lessonApi, listingApi } from "../../src/api/services";
 import type { Subject } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
+import { formatLocalDate } from "../../src/utils/dateFormat";
 
 export default function LessonRequestScreen() {
   const { tutorId } = useLocalSearchParams<{ tutorId: string }>();
@@ -28,12 +29,14 @@ export default function LessonRequestScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const [subjectsRes, tutorRes] = await Promise.all([
+        const [subjectsRes, listingsRes] = await Promise.all([
           subjectApi.list(),
-          tutorApi.getById(tutorId),
+          listingApi.getTutorListings(tutorId),
         ]);
         setSubjects(subjectsRes.data);
-        setTutorSubjectIds(tutorRes.data?.subjects?.map((s: any) => typeof s === "string" ? s : s.id) || []);
+        // Extract subject IDs from the tutor's published listings
+        const ids = (listingsRes.data || []).map((l: any) => l.subjectId);
+        setTutorSubjectIds(ids);
       } catch {
         toast.show("Bilgiler yüklenemedi", "error");
       }
@@ -132,19 +135,7 @@ export default function LessonRequestScreen() {
               <Ionicons name="calendar-outline" size={20} color={colors.primary} />
               <Text style={{ color: colors.text, fontSize: 14 }}>
                 {(() => {
-                  const val = selectedDate;
-                  if (!val) return "Seçilmedi";
-                  if (Array.isArray(val)) {
-                    return new Date(val[0], val[1] - 1, val[2]).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
-                  }
-                  if (typeof val === "string") {
-                    const parts = val.split("-").map(Number);
-                    if (parts.length === 3 && !parts.some(isNaN)) {
-                      return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
-                    }
-                    return new Date(val).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
-                  }
-                  return "Seçilmedi";
+                  return formatLocalDate(selectedDate);
                 })()}
                 {" • "}{selectedStart} - {selectedEnd}
               </Text>
