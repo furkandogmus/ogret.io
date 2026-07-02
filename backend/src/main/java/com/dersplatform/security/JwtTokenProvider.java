@@ -65,6 +65,18 @@ public class JwtTokenProvider {
         return UUID.fromString(parseClaims(token).getSubject());
     }
 
+    public UUID getUserIdFromRefreshToken(String token) {
+        return UUID.fromString(parseClaims(token, refreshSecretKey).getSubject());
+    }
+
+    public UUID getUserIdFromPasswordResetToken(String token) {
+        Claims claims = parseClaims(token, passwordResetSecretKey);
+        if (!"password_reset".equals(claims.get("purpose"))) {
+            throw new JwtException("Geçersiz token amacı");
+        }
+        return UUID.fromString(claims.getSubject());
+    }
+
     public boolean validateToken(String token) {
         return validateTokenWithKey(token, accessSecretKey);
     }

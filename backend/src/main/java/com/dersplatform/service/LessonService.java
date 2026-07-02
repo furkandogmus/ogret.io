@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dersplatform.model.entity.TutorAvailability;
+import com.dersplatform.repository.TutorAvailabilityRepository;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
@@ -29,6 +31,7 @@ public class LessonService {
     private final UserRepository userRepository;
     private final SubjectRepository subjectRepository;
     private final TutorListingRepository tutorListingRepository;
+    private final TutorAvailabilityRepository tutorAvailabilityRepository;
     private final NotificationService notificationService;
 
     @Transactional
@@ -44,6 +47,9 @@ public class LessonService {
         if (minutes <= 0) {
             throw ApiException.badRequest("Bitiş saati başlangıç saatinden sonra olmalıdır");
         }
+
+        checkTutorAvailability(tutor.getId(), request.getLessonDate(), request.getStartTime(), request.getEndTime());
+        checkLessonOverlap(tutor.getId(), request.getLessonDate(), request.getStartTime(), request.getEndTime());
 
         BigDecimal hourlyRate = tutor.getHourlyRate();
         if (hourlyRate == null) {
@@ -105,13 +111,14 @@ public class LessonService {
 
     @Transactional
     public LessonResponse confirmLesson(UUID lessonId, UUID tutorId) {
-        Lesson lesson = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findByIdWithJoins(lessonId)
                 .orElseThrow(() -> ApiException.notFound("Ders bulunamadı"));
 
         if (!lesson.getTutor().getId().equals(tutorId)) {
             throw ApiException.forbidden("Bu dersi yalnızca öğretmen onaylayabilir");
         }
 
+        validateStatusTransition(lesson, LessonStatus.CONFIRMED);
         lesson.setStatus(LessonStatus.CONFIRMED);
         lesson = lessonRepository.save(lesson);
 
@@ -124,7 +131,7 @@ public class LessonService {
 
     @Transactional
     public LessonResponse cancelLesson(UUID lessonId, UUID userId, String reason) {
-        Lesson lesson = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findByIdWithJoins(lessonId)
                 .orElseThrow(() -> ApiException.notFound("Ders bulunamadı"));
 
         boolean isStudent = lesson.getStudent().getId().equals(userId);
@@ -134,6 +141,7 @@ public class LessonService {
             throw ApiException.forbidden("Bu dersi iptal etme yetkiniz yok");
         }
 
+        validateStatusTransition(lesson, LessonStatus.CANCELLED);
         lesson.setStatus(LessonStatus.CANCELLED);
         lesson.setStudentCancelled(isStudent);
         lesson.setCancellationReason(reason);
@@ -148,8 +156,9 @@ public class LessonService {
         return LessonResponse.fromEntity(lesson);
     }
 
+    @Transactional(readOnly = true)
     public LessonResponse getLessonById(UUID lessonId, UUID userId) {
-        Lesson lesson = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findByIdWithJoins(lessonId)
                 .orElseThrow(() -> ApiException.notFound("Ders bulunamadı"));
 
         boolean isStudent = lesson.getStudent().getId().equals(userId);
@@ -163,7 +172,7 @@ public class LessonService {
 
     @Transactional
     public LessonResponse updateMeetingLink(UUID lessonId, UUID tutorId, String meetingLink) {
-        Lesson lesson = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findByIdWithJoins(lessonId)
                 .orElseThrow(() -> ApiException.notFound("Ders bulunamadı"));
 
         if (!lesson.getTutor().getId().equals(tutorId)) {
@@ -177,13 +186,14 @@ public class LessonService {
 
     @Transactional
     public LessonResponse completeLesson(UUID lessonId, UUID tutorId) {
-        Lesson lesson = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findByIdWithJoins(lessonId)
                 .orElseThrow(() -> ApiException.notFound("Ders bulunamadı"));
 
         if (!lesson.getTutor().getId().equals(tutorId)) {
             throw ApiException.forbidden("Bu dersi yalnızca öğretmen tamamlayabilir");
         }
 
+        validateStatusTransition(lesson, LessonStatus.COMPLETED);
         lesson.setStatus(LessonStatus.COMPLETED);
         lesson = lessonRepository.save(lesson);
 
@@ -192,5 +202,43 @@ public class LessonService {
                 lesson.getTutor(), lesson.getStudent(), lesson.getSubject().getName());
 
         return LessonResponse.fromEntity(lesson);
+    }
+
+    private void validateStatusTransition(Lesson lesson, LessonStatus target) {
+        LessonStatus current = lesson.getStatus();
+        boolean valid = switch (current) {
+            case PENDING -> target == LessonStatus.CONFIRMED || target == LessonStatus.CANCELLED;
+            case CONFIRMED -> target == LessonStatus.COMPLETED || target == LessonStatus.CANCELLED;
+            case IN_PROGRESS -> target == LessonStatus.COMPLETED || target == LessonStatus.CANCELLED;
+            default -> false;
+        };
+        if (!valid) {
+            throw ApiException.badRequest(
+                "Ders durumu '" + current + "' iken '" + target + "' durumuna geçirilemez"
+            );
+        }
+    }
+
+    private void checkTutorAvailability(UUID tutorId, java.time.LocalDate date,
+                                          java.time.LocalTime start, java.time.LocalTime end) {
+        List<TutorAvailability> slots = tutorAvailabilityRepository
+                .findByTutorIdAndIsActiveTrue(tutorId);
+        if (slots.isEmpty()) return;
+
+        int dayOfWeek = date.getDayOfWeek().getValue() % 7;
+        boolean available = slots.stream()
+                .anyMatch(s -> s.getDayOfWeek().equals(dayOfWeek)
+                        && !s.getStartTime().isAfter(start)
+                        && !s.getEndTime().isBefore(end));
+        if (!available) {
+            throw ApiException.badRequest("Öğretmen bu tarih ve saat aralığında müsait değil");
+        }
+    }
+
+    private void checkLessonOverlap(UUID tutorId, java.time.LocalDate date,
+                                     java.time.LocalTime start, java.time.LocalTime end) {
+        if (lessonRepository.existsOverlappingLesson(tutorId, date, start, end)) {
+            throw ApiException.conflict("Bu saat aralığında öğretmenin başka bir dersi var");
+        }
     }
 }

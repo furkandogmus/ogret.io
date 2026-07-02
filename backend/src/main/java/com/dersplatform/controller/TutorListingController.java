@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ public class TutorListingController {
     private final TutorListingService tutorListingService;
 
     @PostMapping("/tutors/me/listings")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<ListingResponse> createListing(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody CreateListingRequest request) {
@@ -36,6 +38,7 @@ public class TutorListingController {
     }
 
     @GetMapping("/tutors/me/listings")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<List<ListingResponse>> getMyListings(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) String status) {
@@ -47,6 +50,7 @@ public class TutorListingController {
     }
 
     @PutMapping("/tutors/me/listings/{id}")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<ListingResponse> updateListing(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID id,
@@ -59,6 +63,7 @@ public class TutorListingController {
     }
 
     @DeleteMapping("/tutors/me/listings/{id}")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<Void> deleteListing(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID id) {

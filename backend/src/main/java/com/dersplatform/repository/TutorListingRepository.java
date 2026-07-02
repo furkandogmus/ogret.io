@@ -21,4 +21,7 @@ public interface TutorListingRepository extends JpaRepository<TutorListing, UUID
 
     @Query("SELECT l FROM TutorListing l JOIN FETCH l.tutor JOIN FETCH l.subject WHERE l.status = :status ORDER BY l.createdAt DESC")
     List<TutorListing> findByStatusOrderByCreatedAtDesc(String status);
+
+    @Query("SELECT DISTINCT l.tutor.id FROM TutorListing l WHERE l.status = 'ACTIVE'")
+    List<UUID> findDistinctTutorIdsWithActiveListings();
 }

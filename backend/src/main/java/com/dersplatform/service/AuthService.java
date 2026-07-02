@@ -84,7 +84,7 @@ public class AuthService {
             throw ApiException.unauthorized("Geçersiz refresh token");
         }
 
-        var userId = jwtTokenProvider.getUserIdFromToken(request.getRefreshToken());
+        var userId = jwtTokenProvider.getUserIdFromRefreshToken(request.getRefreshToken());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
 
@@ -116,9 +116,13 @@ public class AuthService {
         if (email == null || email.isBlank()) {
             throw ApiException.badRequest("E-posta adresi gerekli");
         }
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> ApiException.notFound("Bu e-posta ile kayıtlı kullanıcı bulunamadı"));
+        var userOpt = userRepository.findByEmail(email);
 
+        if (userOpt.isEmpty()) {
+            return;
+        }
+
+        User user = userOpt.get();
         String resetToken = jwtTokenProvider.generatePasswordResetToken(user.getId());
         String resetLink = baseUrl + "/sifre-sifirla?token=" + resetToken;
 
@@ -145,7 +149,7 @@ public class AuthService {
         if (token == null || password == null || token.isBlank() || password.isBlank()) {
             throw ApiException.badRequest("Token ve yeni şifre gerekli");
         }
-        UUID userId = jwtTokenProvider.getUserIdFromToken(token);
+        UUID userId = jwtTokenProvider.getUserIdFromPasswordResetToken(token);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
         user.setPasswordHash(passwordEncoder.encode(password));

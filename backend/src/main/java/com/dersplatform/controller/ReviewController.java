@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @PostMapping("/lessons/{lessonId}/review")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ReviewResponse> createReview(
             @PathVariable UUID lessonId,
             @Valid @RequestBody CreateReviewRequest request,
@@ -37,6 +39,7 @@ public class ReviewController {
     }
 
     @GetMapping("/reviews")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<List<ReviewResponse>> getMyReviews(
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(reviewService.getStudentReviews(UUID.fromString(userDetails.getUsername())));

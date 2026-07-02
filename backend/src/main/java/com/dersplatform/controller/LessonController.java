@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ public class LessonController {
     private final LessonService lessonService;
 
     @PostMapping
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<LessonResponse> createLesson(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody CreateLessonRequest request) {
@@ -42,6 +44,7 @@ public class LessonController {
     }
 
     @PutMapping("/{id}/confirm")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<LessonResponse> confirmLesson(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -56,6 +59,7 @@ public class LessonController {
     }
 
     @PutMapping("/{id}/meeting-link")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<LessonResponse> updateMeetingLink(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateMeetingLinkRequest request,
@@ -73,6 +77,7 @@ public class LessonController {
     }
 
     @PutMapping("/{id}/complete")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<LessonResponse> completeLesson(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails userDetails) {

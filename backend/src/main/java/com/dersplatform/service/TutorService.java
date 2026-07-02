@@ -3,7 +3,6 @@ package com.dersplatform.service;
 import com.dersplatform.exception.ApiException;
 import com.dersplatform.model.dto.response.TutorSummaryResponse;
 import com.dersplatform.model.dto.response.UserResponse;
-import com.dersplatform.model.entity.Subscription;
 import com.dersplatform.model.entity.TutorAvailability;
 import com.dersplatform.model.entity.TutorSubject;
 import com.dersplatform.model.entity.User;
@@ -58,16 +57,20 @@ public class TutorService {
             tutors = userRepository.findByRoleAndIdIn(Role.TUTOR, activeListingTutorIds, pageable);
         }
 
-        Map<UUID, String> premiumPlans = subscriptionRepository.findAll().stream()
-                .filter(Subscription::isActive)
+        Map<UUID, String> premiumPlans = subscriptionRepository.findAllActiveWithTutor().stream()
                 .collect(Collectors.toMap(s -> s.getTutor().getId(), s -> s.getPlanType().name()));
 
+        List<UUID> tutorIds = tutors.getContent().stream().map(User::getId).toList();
+        Map<UUID, List<String>> subjectsByTutor = tutorSubjectRepository.findByTutorIdIn(tutorIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        ts -> ts.getTutor().getId(),
+                        Collectors.mapping(ts -> ts.getSubject().getName(), Collectors.toList())
+                ));
+
         return tutors.map(tutor -> {
-            List<String> subjects = tutorSubjectRepository.findByTutorId(tutor.getId())
-                    .stream()
-                    .map(ts -> ts.getSubject().getName())
-                    .distinct()
-                    .toList();
+            List<String> subjects = subjectsByTutor.getOrDefault(tutor.getId(), List.of())
+                    .stream().distinct().toList();
             String plan = premiumPlans.getOrDefault(tutor.getId(), null);
             return TutorSummaryResponse.fromEntity(tutor, subjects, plan);
         });
@@ -81,18 +84,27 @@ public class TutorService {
 
         Set<UUID> activeSet = Set.copyOf(activeListingTutorIds);
 
-        Map<UUID, String> premiumPlans = subscriptionRepository.findAll().stream()
-                .filter(Subscription::isActive)
+        Map<UUID, String> premiumPlans = subscriptionRepository.findAllActiveWithTutor().stream()
                 .collect(Collectors.toMap(s -> s.getTutor().getId(), s -> s.getPlanType().name()));
 
-        return tutorSubjectRepository.findBySubjectId(subjectId)
+        List<User> tutors = tutorSubjectRepository.findBySubjectId(subjectId)
                 .stream()
                 .map(ts -> ts.getTutor())
                 .filter(tutor -> activeSet.contains(tutor.getId()))
                 .distinct()
+                .toList();
+
+        List<UUID> tutorIds = tutors.stream().map(User::getId).toList();
+        Map<UUID, List<String>> subjectsByTutor = tutorSubjectRepository.findByTutorIdIn(tutorIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        ts -> ts.getTutor().getId(),
+                        Collectors.mapping(ts -> ts.getSubject().getName(), Collectors.toList())
+                ));
+
+        return tutors.stream()
                 .map(tutor -> {
-                    List<String> subjects = tutorSubjectRepository.findByTutorId(tutor.getId())
-                            .stream().map(s -> s.getSubject().getName()).toList();
+                    List<String> subjects = subjectsByTutor.getOrDefault(tutor.getId(), List.of());
                     String plan = premiumPlans.getOrDefault(tutor.getId(), null);
                     return TutorSummaryResponse.fromEntity(tutor, subjects, plan);
                 })

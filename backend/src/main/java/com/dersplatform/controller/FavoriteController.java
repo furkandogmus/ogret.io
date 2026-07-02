@@ -8,6 +8,7 @@ import com.dersplatform.repository.UserRepository;
 import com.dersplatform.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ public class FavoriteController {
     private final UserRepository userRepository;
 
     @GetMapping
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<List<UserResponse>> getFavorites(@AuthenticationPrincipal UserDetails userDetails) {
         UUID studentId = UUID.fromString(userDetails.getUsername());
         List<UserResponse> tutors = favoriteRepository.findByStudentId(studentId)
@@ -34,6 +36,7 @@ public class FavoriteController {
     }
 
     @PostMapping("/{tutorId}")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<Void> addFavorite(
             @PathVariable UUID tutorId,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -47,6 +50,7 @@ public class FavoriteController {
     }
 
     @DeleteMapping("/{tutorId}")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<Void> removeFavorite(
             @PathVariable UUID tutorId,
             @AuthenticationPrincipal UserDetails userDetails) {

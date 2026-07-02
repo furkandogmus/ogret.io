@@ -6,6 +6,7 @@ import com.dersplatform.repository.*;
 import com.dersplatform.service.TutorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,7 @@ public class TutorProfileController {
     private final TutorService tutorService;
 
     @GetMapping("/subjects")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<List<Map<String, Object>>> getMySubjects(
             @AuthenticationPrincipal UserDetails userDetails) {
         User tutor = userRepository.findById(UUID.fromString(userDetails.getUsername()))
@@ -44,6 +46,7 @@ public class TutorProfileController {
     }
 
     @PutMapping("/subjects")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<Void> updateMySubjects(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody List<UUID> subjectIds) {
@@ -59,6 +62,7 @@ public class TutorProfileController {
     }
 
     @GetMapping("/availability")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<List<Map<String, Object>>> getMyAvailability(
             @AuthenticationPrincipal UserDetails userDetails) {
         User tutor = userRepository.findById(UUID.fromString(userDetails.getUsername()))
@@ -76,6 +80,7 @@ public class TutorProfileController {
     }
 
     @PutMapping("/availability")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<Void> updateMyAvailability(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody List<Map<String, Object>> slots) {
