@@ -10,6 +10,7 @@ interface SeoProps {
   publishedTime?: string;
   modifiedTime?: string;
   article?: boolean;
+  rss?: { title: string; href: string };
 }
 
 const BASE_TITLE = "öğret.io";
@@ -71,9 +72,21 @@ export function useSeo(props: SeoProps) {
       link.setAttribute("href", props.canonical);
     }
 
+    if (props.rss) {
+      let link = document.querySelector("link[rel='alternate'][type='application/rss+xml']");
+      if (!link) {
+        link = document.createElement("link");
+        link.setAttribute("rel", "alternate");
+        link.setAttribute("type", "application/rss+xml");
+        document.head.appendChild(link);
+      }
+      link.setAttribute("title", props.rss.title);
+      link.setAttribute("href", props.rss.href);
+    }
+
     return () => {
       document.title = BASE_TITLE;
       setMeta("description", BASE_DESCRIPTION);
     };
-  }, [props.title, props.description, props.ogTitle, props.ogDescription, props.ogImage, props.canonical, props.publishedTime, props.modifiedTime, props.article]);
+  }, [props.title, props.description, props.ogTitle, props.ogDescription, props.ogImage, props.canonical, props.publishedTime, props.modifiedTime, props.article, props.rss]);
 }

@@ -35,7 +35,6 @@ export function ContactPage() {
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "ContactPoint",
-        telephone: "",
         email: "info@ogret.io",
         contactType: "customer service",
         availableLanguage: ["Turkish"],

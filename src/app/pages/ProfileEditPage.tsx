@@ -365,7 +365,7 @@ export function ProfileEditPage() {
                     disabled
                     className="w-full bg-stone-50/30 rounded-xl px-4 py-2.5 pr-10 text-xs font-bold text-stone-500 outline-none border border-stone-200/40 cursor-not-allowed"
                   />
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-[emerald] text-white p-0.5 rounded-full">
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-emerald-500 text-white p-0.5 rounded-full">
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </div>
                 </div>
@@ -380,7 +380,7 @@ export function ProfileEditPage() {
                     placeholder="Telefon"
                     className="w-full bg-white rounded-xl pl-14 pr-10 py-2.5 text-xs font-bold text-stone-700 outline-none border border-stone-200/80 focus:border-rose-450 transition-colors"
                   />
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-[emerald] text-white p-0.5 rounded-full">
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-emerald-500 text-white p-0.5 rounded-full">
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </div>
                 </div>
@@ -405,13 +405,13 @@ export function ProfileEditPage() {
               <div className="flex flex-col items-center justify-center p-3">
                 <div className="relative w-24 h-24 bg-stone-50 rounded-full flex items-center justify-center border border-stone-100/60 shadow-inner">
                   <GraduationCap className="w-10 h-10 text-stone-400" />
-                  <div className="absolute bottom-0 right-0 bg-[emerald] text-white p-1 rounded-full border-4 border-white">
+                  <div className="absolute bottom-0 right-0 bg-emerald-500 text-white p-1 rounded-full border-4 border-white">
                     <Check className="w-3 h-3 stroke-[3]" />
                   </div>
                 </div>
               </div>
 
-              <button className="w-full bg-[emerald] text-white py-3 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-default">
+              <button className="w-full bg-emerald-500 text-white py-3 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-default">
                 Diploma onaylandı
               </button>
             </div>
@@ -426,10 +426,10 @@ export function ProfileEditPage() {
                   <button
                     onClick={() => setSmsLessons(!smsLessons)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
-                      smsLessons ? "bg-[emerald] text-white shadow-sm" : "bg-stone-50 text-stone-400 border border-stone-200/60"
+                      smsLessons ? "bg-emerald-500 text-white shadow-sm" : "bg-stone-50 text-stone-400 border border-stone-200/60"
                     }`}
                   >
-                    <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${smsLessons ? "border-white bg-white text-[emerald]" : "border-stone-300 bg-white"}`}>
+                    <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${smsLessons ? "border-white bg-white text-emerald-500" : "border-stone-300 bg-white"}`}>
                       {smsLessons && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                     </div>
                     <span className="text-xs font-bold">Ders talepleri</span>
@@ -449,10 +449,10 @@ export function ProfileEditPage() {
                         key={idx}
                         onClick={() => item.setState(!item.state)}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
-                          item.state ? "bg-[emerald] text-white shadow-sm" : "bg-stone-50 text-stone-400 border border-stone-200/60"
+                          item.state ? "bg-emerald-500 text-white shadow-sm" : "bg-stone-50 text-stone-400 border border-stone-200/60"
                         }`}
                       >
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${item.state ? "border-white bg-white text-[emerald]" : "border-stone-300 bg-white"}`}>
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${item.state ? "border-white bg-white text-emerald-500" : "border-stone-300 bg-white"}`}>
                           {item.state && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                         </div>
                         <span className="text-xs font-bold">{item.label}</span>
@@ -509,13 +509,13 @@ export function ProfileEditPage() {
               <div className="flex flex-col items-center justify-center p-3">
                 <div className="relative w-24 h-24 bg-stone-50 rounded-full flex items-center justify-center border border-stone-100/60 shadow-inner">
                   <ShieldCheck className="w-10 h-10 text-stone-400" />
-                  <div className="absolute bottom-0 right-0 bg-[emerald] text-white p-1 rounded-full border-4 border-white">
+                  <div className="absolute bottom-0 right-0 bg-emerald-500 text-white p-1 rounded-full border-4 border-white">
                     <Check className="w-3 h-3 stroke-[3]" />
                   </div>
                 </div>
               </div>
 
-              <button className="w-full bg-[emerald] text-white py-3 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-default">
+              <button className="w-full bg-emerald-500 text-white py-3 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-default">
                 Kimlik onaylandı
               </button>
             </div>

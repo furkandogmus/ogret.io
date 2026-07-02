@@ -3,12 +3,13 @@ import { useNavigate, Link } from "react-router";
 import { toast } from "sonner";
 import { useSeo } from "../hooks/useSeo";
 import {
-  Search, ArrowRight, Star, BookOpen, Calculator, Globe, Code2, Music, GraduationCap, Zap,
+  Search, ArrowRight, Star, BookOpen, Calculator, Globe, Code2, Music, Zap,
   Dna, Beaker, Map, Hourglass, Camera, Palette, Mic
 } from "lucide-react";
 import { tutorApi, subjectApi } from "../api/services";
 import type { TutorSummaryResponse, SubjectResponse } from "../api/services";
 import { TutorCard } from "../components/shared/TutorCard";
+import { HeroIllustration } from "../components/shared/HeroIllustration";
 
 const SUBJECT_ICONS: Record<string, any> = {
   matematik: Calculator,
@@ -77,7 +78,8 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-stone-50/30">
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-[#FFF2F2] to-white rounded-b-[40px] md:rounded-b-[56px] border-b border-stone-100/80 pb-16 pt-20 shadow-sm">
+      <section className="relative bg-gradient-to-b from-[#FFF2F2] to-white rounded-b-[40px] md:rounded-b-[56px] border-b border-stone-100/80 pb-16 pt-20 shadow-sm overflow-hidden">
+        <HeroIllustration />
         <div className="max-w-4xl mx-auto px-4 text-center">
 
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-stone-900 tracking-tight leading-[1.1] mb-8">
@@ -260,8 +262,8 @@ export function LandingPage() {
                 <h4 className="text-white font-medium mb-4 text-xs uppercase tracking-wider">{heading}</h4>
                 {links.map((l) => {
                   const routeMap: Record<string, string> = {
-                    "Nasıl Çalışır": "/nasil-calisir",
-                    "Fiyatlandırma": "/fiyatlandirma",
+                    "Nasıl Çalışır": "#",
+                    "Fiyatlandırma": "#",
                     "Öğretmenler": "/arama",
                     "Öğrenciler": "#",
                     "Blog": "/blog",

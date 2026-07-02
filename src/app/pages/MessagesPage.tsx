@@ -68,7 +68,7 @@ export function MessagesPage() {
         })
         .catch(() => console.error("Kullanici detaylari alinamadi"));
     }
-  }, [selectUserId, conversations.length, user]);
+  }, [selectUserId, user]);
 
   useEffect(() => {
     if (!activeId) return;

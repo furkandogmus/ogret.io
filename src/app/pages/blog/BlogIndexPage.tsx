@@ -1,28 +1,16 @@
-import { useEffect } from "react";
 import { Link } from "react-router";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
 import { useSeo } from "../../hooks/useSeo";
 import { JsonLd } from "../../components/shared/JsonLd";
+import { BlogIllustration } from "../../components/shared/BlogIllustration";
 import { blogPosts } from "./blogData";
 
 export function BlogIndexPage() {
-  useEffect(() => {
-    let link = document.querySelector("link[rel='alternate'][type='application/rss+xml']");
-    if (!link) {
-      link = document.createElement("link");
-      link.setAttribute("rel", "alternate");
-      link.setAttribute("type", "application/rss+xml");
-      link.setAttribute("title", "öğret.io Blog RSS");
-      link.setAttribute("href", "https://ogret.io/feed.xml");
-      document.head.appendChild(link);
-    }
-    return () => { link?.remove(); };
-  }, []);
-
   useSeo({
     title: "Blog - Özel Ders Rehberi",
     description: "Özel ders, sınav hazırlığı, yabancı dil öğrenimi ve eğitim üzerine faydalı içerikler. öğret.io blog rehberi.",
     canonical: "https://ogret.io/blog",
+    rss: { title: "öğret.io Blog RSS", href: "https://ogret.io/feed.xml" },
   });
 
   return (
@@ -36,8 +24,10 @@ export function BlogIndexPage() {
 
       <div className="space-y-6">
         {blogPosts.map((post) => (
-          <article key={post.slug} className="bg-white border border-stone-100 rounded-2xl p-6 hover:shadow-md transition-shadow">
+          <article key={post.slug} className="bg-white border border-stone-100 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
             <Link to={`/blog/${post.slug}`} className="block">
+              {post.image && <BlogIllustration slug={post.image} className="w-full h-44 object-cover" />}
+              <div className="p-6">
               <div className="flex items-center gap-3 text-xs text-stone-400 font-medium mb-3">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
@@ -57,6 +47,7 @@ export function BlogIndexPage() {
               <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 mt-4 hover:gap-2 transition-all">
                 Devamını Oku <ArrowRight className="w-3.5 h-3.5" />
               </span>
+              </div>
             </Link>
           </article>
         ))}
