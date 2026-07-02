@@ -438,7 +438,7 @@ export function TutorDashboard() {
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-foreground text-sm">{req.student.fullName}</div>
                         <div className="text-xs text-muted-foreground">{req.subject.name} · {req.durationMinutes} dk</div>
-                        <div className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">{formatDate(req)}</div>
+                        <div className="text-xs text-emerald-700 mt-0.5">{formatDate(req)}</div>
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
                         <button

@@ -5,7 +5,7 @@
 - Frontend: React 18 + Vite + Tailwind CSS v4 + shadcn/ui
 - State management: React Context (provider pattern)
 - Routing: react-router v7
-- Tema: next-themes (class attribute, dark/light)
+- Tema: Light-only (CSS variables ile)
 - Animasyon opsiyonel: motion (eski framer-motion)
 
 ### Dosya Düzeni
@@ -36,8 +36,7 @@ src/
 - Import sırası: react → kütüphaneler → proje içi absolute import → relative
 
 ### Tema
-- CSS değişkenleri theme.css'te tanılı
-- Dark mode: html'e `.dark` class'ı eklenir (next-themes)
+- CSS değişkenleri theme.css'te tanılı (light-only)
 - Renkleri hardcode etme, CSS variable kullan: `bg-background`, `text-foreground`, `bg-card`, `text-muted-foreground`, `border-border`, `bg-primary`
 
 ### Dallar & Commit

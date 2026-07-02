@@ -259,7 +259,7 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
                 />
               </div>
               {error && (
-                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">{error}</div>
+                <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">{error}</div>
               )}
             </div>
           )}
@@ -300,7 +300,7 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
 
         {stepError && (
           <div className="px-5 pb-2">
-            <div className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs">{stepError}</div>
+            <div className="p-2 rounded-lg bg-red-50 text-red-600 text-xs">{stepError}</div>
           </div>
         )}
         <div className="flex items-center justify-between px-5 pb-5">
