@@ -56,6 +56,15 @@ public class LessonController {
         return ResponseEntity.ok(lessonService.confirmLesson(id, UUID.fromString(userDetails.getUsername())));
     }
 
+    @GetMapping("/has-active-with/{userId}")
+    public ResponseEntity<Map<String, Boolean>> hasActiveLesson(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID userId) {
+        UUID myId = UUID.fromString(userDetails.getUsername());
+        boolean hasActive = lessonService.hasActiveLessonBetween(myId, userId);
+        return ResponseEntity.ok(Map.of("hasActiveLesson", hasActive));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<LessonResponse> getLesson(
             @PathVariable UUID id,
@@ -79,15 +88,6 @@ public class LessonController {
             @RequestParam(required = false) String reason,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(lessonService.cancelLesson(id, UUID.fromString(userDetails.getUsername()), reason));
-    }
-
-    @GetMapping("/has-active-with/{userId}")
-    public ResponseEntity<Map<String, Boolean>> hasActiveLesson(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID userId) {
-        UUID myId = UUID.fromString(userDetails.getUsername());
-        boolean hasActive = lessonService.hasActiveLessonBetween(myId, userId);
-        return ResponseEntity.ok(Map.of("hasActiveLesson", hasActive));
     }
 
     @PutMapping("/{id}/start")

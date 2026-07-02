@@ -29,16 +29,13 @@ export default function ChatScreen() {
 
   useEffect(() => {
     (async () => {
-      try {
-        const [userRes, msgRes, lessonRes] = await Promise.all([
-          userApi.getById(id),
-          messageApi.getConversation(id),
-          lessonApi.hasActiveLesson(id).catch(() => ({ data: { hasActiveLesson: false } })),
-        ]);
-        setOtherUser(userRes.data);
-        setMessages(msgRes.data);
-        setHasActiveLesson(lessonRes.data.hasActiveLesson);
-      } catch (e) { console.warn("ChatScreen init error:", e); }
+      let userRes, msgRes, lessonRes;
+      try { userRes = await userApi.getById(id); } catch (e) { console.warn("getById failed:", e?.response?.status, e?.config?.url); }
+      try { msgRes = await messageApi.getConversation(id); } catch (e) { console.warn("getConversation failed:", e?.response?.status, e?.config?.url); }
+      try { lessonRes = await lessonApi.hasActiveLesson(id); } catch (e) { console.warn("hasActiveLesson failed:", e?.response?.status, e?.config?.url); }
+      if (userRes) setOtherUser(userRes.data);
+      if (msgRes) setMessages(msgRes.data);
+      setHasActiveLesson(lessonRes?.data?.hasActiveLesson ?? false);
     })();
   }, [id]);
 
