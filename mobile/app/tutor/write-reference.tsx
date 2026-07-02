@@ -6,12 +6,14 @@ import { tutorApi, referenceApi } from "../../src/api/services";
 import type { User } from "../../src/types";
 import { Avatar } from "../../src/components/Avatar";
 import { useToast } from "../../src/components/Toast";
+import { useAuth } from "../../src/providers/AuthProvider";
 import { colors, spacing, radius } from "../../src/constants/theme";
 
 export default function WriteReferenceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const toast = useToast();
+  const { user: me } = useAuth();
 
   const [tutor, setTutor] = useState<User | null>(null);
   const [loadingTutor, setLoadingTutor] = useState(true);
@@ -26,14 +28,22 @@ export default function WriteReferenceScreen() {
   useEffect(() => {
     if (!id) return;
     tutorApi.getById(id)
-      .then(({ data }) => setTutor(data))
+      .then(({ data }) => {
+        setTutor(data);
+        if (me?.id === data.id) {
+          setError("Kendinize referans yazamazsınız.");
+        }
+      })
       .catch(() => setError("Öğretmen bilgisi alınamadı"))
       .finally(() => setLoadingTutor(false));
-  }, [id]);
+  }, [id, me?.id]);
+
+  const isSelfReference = me?.id === id;
 
   const handleSubmit = async () => {
     if (!id) return;
     setError("");
+    if (isSelfReference) { setError("Kendinize referans yazamazsınız."); return; }
 
     if (!recommenderName.trim()) { setError("Adınızı ve soyadınızı girin."); return; }
     if (!recommenderEmail.trim() || !recommenderEmail.includes("@")) { setError("Geçerli bir e-posta girin."); return; }
@@ -174,8 +184,8 @@ export default function WriteReferenceScreen() {
               </View>
               <TouchableOpacity
                 onPress={handleSubmit}
-                disabled={submitting}
-                style={{ backgroundColor: colors.primary, borderRadius: radius.lg, paddingVertical: 12, alignItems: "center", opacity: submitting ? 0.5 : 1 }}
+                disabled={submitting || isSelfReference}
+                style={{ backgroundColor: colors.primary, borderRadius: radius.lg, paddingVertical: 12, alignItems: "center", opacity: (submitting || isSelfReference) ? 0.5 : 1 }}
               >
                 <Text style={{ color: colors.buttonText, fontSize: 14, fontWeight: "700" }}>
                   {submitting ? "Gönderiliyor..." : "Tavsiye Gönder"}

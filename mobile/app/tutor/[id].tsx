@@ -9,7 +9,7 @@ import { StarRating } from "../../src/components/StarRating";
 import { Button } from "../../src/components/Button";
 import { Skeleton } from "../../src/components/Skeleton";
 import { useToast } from "../../src/components/Toast";
-import { tutorApi, subjectApi, reviewApi, referenceApi } from "../../src/api/services";
+import { tutorApi, reviewApi, referenceApi } from "../../src/api/services";
 import type { User, Subject, Review, Reference } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
 
@@ -46,20 +46,14 @@ export default function TutorProfileScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const [tutorRes, subjectsRes, reviewsRes, refsRes] = await Promise.all([
+        const [tutorRes, reviewsRes, refsRes] = await Promise.all([
           tutorApi.getById(id),
-          subjectApi.list(),
           reviewApi.getTutorReviews(id),
           referenceApi.getApproved(id).catch(() => ({ data: [] })),
         ]);
         const tutorData = tutorRes.data;
         setTutor(tutorData);
-        if (tutorData.subjects && tutorData.subjects.length > 0) {
-          const tutorSubjectIds = tutorData.subjects.map(s => s.id || s.name);
-          setSubjects(subjectsRes.data.filter(s => tutorSubjectIds.includes(s.id) || tutorSubjectIds.includes(s.name)));
-        } else {
-          setSubjects(subjectsRes.data);
-        }
+        setSubjects(tutorData.subjects || []);
         setReviews(reviewsRes.data);
         setReferences(refsRes.data);
       } catch {
@@ -82,7 +76,7 @@ export default function TutorProfileScreen() {
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: spacing.md, paddingTop: 56 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" }}>
           <Ionicons name="arrow-back" size={20} color={colors.text} />
@@ -157,13 +151,17 @@ export default function TutorProfileScreen() {
               <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{tutor.education}</Text>
             </View>
           )}
-          <Text style={{ color: colors.text, fontWeight: "600", marginBottom: spacing.sm }}>Ders Konuları</Text>
+          <Text style={{ color: colors.text, fontWeight: "600", marginBottom: spacing.sm }}>Verdiği Dersler</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
-            {subjects.map((s) => (
-              <View key={s.id} style={{ backgroundColor: colors.surfaceLight, borderRadius: radius.full, paddingHorizontal: 14, paddingVertical: 6 }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{s.name}</Text>
-              </View>
-            ))}
+            {subjects.length === 0 ? (
+              <Text style={{ color: colors.textMuted, fontSize: 13 }}>Henüz ders konusu belirtilmemiş</Text>
+            ) : (
+              subjects.map((s) => (
+                <View key={s.id} style={{ backgroundColor: colors.surfaceLight, borderRadius: radius.full, paddingHorizontal: 14, paddingVertical: 6 }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{s.name}</Text>
+                </View>
+              ))
+            )}
           </View>
         </View>
       ) : activeTab === "reviews" ? (

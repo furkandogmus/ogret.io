@@ -37,8 +37,7 @@ export default function LessonDetailScreen() {
   const canReschedule = ["PENDING", "CONFIRMED"].includes(lesson.status) && isStudent;
   const canTutorCancel = lesson.status === "CONFIRMED" && isTutor;
   const showConfirmButtons = lesson.status === "PENDING" && isTutor;
-  const canStart = lesson.status === "CONFIRMED" && isTutor;
-  const canComplete = lesson.status === "IN_PROGRESS" && isTutor;
+  const canComplete = lesson.status === "CONFIRMED" && isTutor;
 
   const handleCopyLink = async () => {
     if (lesson.meetingLink) {
@@ -150,16 +149,6 @@ export default function LessonDetailScreen() {
               ]);
             }} variant="outline" size="md" style={{ flex: 1 }} haptic="medium" />
           </View>
-        )}
-
-        {canStart && (
-          <Button title="Dersi Başlat" onPress={async () => {
-            try {
-              const { data } = await lessonApi.start(id);
-              setLesson(data);
-              toast.show("Ders başlatıldı", "success");
-            } catch { toast.show("Ders başlatılamadı", "error"); }
-          }} variant="primary" size="lg" icon={<Ionicons name="play" size={18} color="#fff" />} haptic="medium" />
         )}
 
         {canComplete && (
