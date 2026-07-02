@@ -34,7 +34,13 @@ export default function ChatScreen() {
       try { msgRes = await messageApi.getConversation(id); } catch (e) { console.warn("getConversation failed:", e?.response?.status, e?.config?.url); }
       try { lessonRes = await lessonApi.hasActiveLesson(id); } catch (e) { console.warn("hasActiveLesson failed:", e?.response?.status, e?.config?.url); }
       if (userRes) setOtherUser(userRes.data);
-      if (msgRes) setMessages(msgRes.data);
+      if (msgRes) {
+        setMessages(msgRes.data);
+        const unreadIds = msgRes.data.filter((m: Message) => m.senderId === id && !m.read).map((m: Message) => m.id);
+        for (const mid of unreadIds) {
+          messageApi.markAsRead(mid).catch(() => {});
+        }
+      }
       setHasActiveLesson(lessonRes?.data?.hasActiveLesson ?? false);
     })();
   }, [id]);
@@ -53,6 +59,7 @@ export default function ChatScreen() {
     if (last && last.senderId === id) {
       setMessages((prev) => {
         if (prev.some((m) => m.id === last.id)) return prev;
+        messageApi.markAsRead(last.id).catch(() => {});
         return [...prev, last as unknown as Message];
       });
     }

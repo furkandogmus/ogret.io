@@ -76,7 +76,6 @@ public class UserService {
         userRepository.save(user);
     }
 
-    @org.springframework.cache.annotation.Cacheable(value = "userById", key = "#id", unless = "#result == null")
     public UserResponse getUserById(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
