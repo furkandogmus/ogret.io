@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../src/providers/AuthProvider";
 import { useHaptics } from "../src/hooks/useHaptics";
 import { useToast } from "../src/components/Toast";
-import { useTheme } from "../src/providers/ThemeProvider";
+
 import { Button } from "../src/components/Button";
 import { authApi } from "../src/api/services";
 import { colors, spacing, radius } from "../src/constants/theme";
@@ -16,7 +16,6 @@ export default function SettingsScreen() {
   const haptics = useHaptics();
   const toast = useToast();
 
-  const { isDark, toggle: toggleTheme } = useTheme();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -64,7 +63,6 @@ export default function SettingsScreen() {
       title: "Genel",
       items: [
         { icon: "language-outline" as const, label: "Dil", value: "Türkçe", disabled: true },
-        { icon: isDark ? "moon-outline" as const : "sunny-outline" as const, label: "Görünüm", value: isDark ? "Karanlık" : "Aydınlık", onPress: toggleTheme },
         { icon: "lock-closed-outline" as const, label: "Şifre Değiştir", onPress: () => { setShowPasswordModal(true); setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); } },
         { icon: "mail-outline" as const, label: "E-posta Doğrulama", onPress: () => Linking.openURL("https://ogret.io/email-dogrula") },
       ],
@@ -97,7 +95,7 @@ export default function SettingsScreen() {
         { icon: "log-out-outline" as const, label: "Çıkış Yap", onPress: handleLogout, danger: true },
       ],
     },
-  ], [handleLogout, user?.role, isDark, toggleTheme]);
+  ], [handleLogout, user?.role]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
