@@ -122,8 +122,8 @@ class AuthServiceTest {
     @Test
     void refresh_ShouldReturnNewTokens() {
         String refreshToken = "valid-refresh-token";
-        when(jwtTokenProvider.validateToken(refreshToken)).thenReturn(true);
-        when(jwtTokenProvider.getUserIdFromToken(refreshToken)).thenReturn(testUser.getId());
+        when(jwtTokenProvider.validateRefreshToken(refreshToken)).thenReturn(true);
+        when(jwtTokenProvider.getUserIdFromRefreshToken(refreshToken)).thenReturn(testUser.getId());
         when(userRepository.findById(testUser.getId())).thenReturn(Optional.of(testUser));
         when(jwtTokenProvider.generateAccessToken(any(), anyString(), anyString())).thenReturn("new-access-token");
         when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("new-refresh-token");

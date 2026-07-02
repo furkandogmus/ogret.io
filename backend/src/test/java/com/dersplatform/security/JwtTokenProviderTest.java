@@ -36,8 +36,8 @@ class JwtTokenProviderTest {
         String token = tokenProvider.generateRefreshToken(userId);
 
         assertNotNull(token);
-        assertTrue(tokenProvider.validateToken(token));
-        assertEquals(userId, tokenProvider.getUserIdFromToken(token));
+        assertTrue(tokenProvider.validateRefreshToken(token));
+        assertEquals(userId, tokenProvider.getUserIdFromRefreshToken(token));
     }
 
     @Test

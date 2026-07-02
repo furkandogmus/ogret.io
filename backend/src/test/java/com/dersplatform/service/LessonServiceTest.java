@@ -98,6 +98,7 @@ class LessonServiceTest {
         when(userRepository.findById(student.getId())).thenReturn(Optional.of(student));
         when(userRepository.findById(tutor.getId())).thenReturn(Optional.of(tutor));
         when(subjectRepository.findById(subject.getId())).thenReturn(Optional.of(subject));
+        when(tutorAvailabilityRepository.findByTutorIdAndIsActiveTrue(tutor.getId())).thenReturn(List.of());
         when(lessonRepository.save(any(Lesson.class))).thenReturn(lesson);
 
         LessonResponse response = lessonService.createLesson(student.getId(), createRequest);
@@ -112,8 +113,9 @@ class LessonServiceTest {
 
     @Test
     void confirmLesson_ShouldUpdateStatus() {
-        when(lessonRepository.findById(lesson.getId())).thenReturn(Optional.of(lesson));
+        when(lessonRepository.findByIdWithJoins(lesson.getId())).thenReturn(Optional.of(lesson));
         when(lessonRepository.save(any(Lesson.class))).thenAnswer(i -> i.getArgument(0));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
         LessonResponse response = lessonService.confirmLesson(lesson.getId(), tutor.getId());
 
@@ -123,7 +125,7 @@ class LessonServiceTest {
     @Test
     void confirmLesson_ShouldThrow_whenNotTutor() {
         UUID wrongUserId = UUID.randomUUID();
-        when(lessonRepository.findById(lesson.getId())).thenReturn(Optional.of(lesson));
+        when(lessonRepository.findByIdWithJoins(lesson.getId())).thenReturn(Optional.of(lesson));
 
         assertThrows(RuntimeException.class,
                 () -> lessonService.confirmLesson(lesson.getId(), wrongUserId));
@@ -131,8 +133,9 @@ class LessonServiceTest {
 
     @Test
     void cancelLesson_ShouldUpdateStatus() {
-        when(lessonRepository.findById(lesson.getId())).thenReturn(Optional.of(lesson));
+        when(lessonRepository.findByIdWithJoins(lesson.getId())).thenReturn(Optional.of(lesson));
         when(lessonRepository.save(any(Lesson.class))).thenAnswer(i -> i.getArgument(0));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
         LessonResponse response = lessonService.cancelLesson(lesson.getId(), student.getId(), "Müsait değilim");
 
@@ -141,8 +144,10 @@ class LessonServiceTest {
 
     @Test
     void completeLesson_ShouldUpdateStatus() {
-        when(lessonRepository.findById(lesson.getId())).thenReturn(Optional.of(lesson));
+        lesson.setStatus(LessonStatus.CONFIRMED);
+        when(lessonRepository.findByIdWithJoins(lesson.getId())).thenReturn(Optional.of(lesson));
         when(lessonRepository.save(any(Lesson.class))).thenAnswer(i -> i.getArgument(0));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
         LessonResponse response = lessonService.completeLesson(lesson.getId(), tutor.getId());
 
