@@ -19,7 +19,15 @@ test.describe('Search Page E2E Tests', () => {
   test('should search by tutor name or subject text input', async ({ page }) => {
     const searchInput = page.locator('input[placeholder="İlan veya ders ara..."]');
     
-    // Search for "Selim"
+    // Search for "Selim" — mock returns only matching listing
+    await page.route(/\/api\/v1\/tutors\/listings(\?|$)/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ content: [mockListings[0]], page: 0, totalPages: 1, totalElements: 1 }),
+      });
+    });
+
     await searchInput.fill('Selim');
     await searchInput.press('Enter');
 
@@ -46,7 +54,7 @@ test.describe('Search Page E2E Tests', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([mockListings[1]]), // returns only Elif İngilizce listing
+        body: JSON.stringify({ content: [mockListings[1]], page: 0, totalPages: 1, totalElements: 1 }), // returns only Elif İngilizce listing
       });
     });
 
@@ -81,7 +89,7 @@ test.describe('Search Page E2E Tests', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([mockListings[1], mockListings[0]]), // Elif (400) first, then Selim (500)
+        body: JSON.stringify({ content: [mockListings[1], mockListings[0]], page: 0, totalPages: 1, totalElements: 2 }), // Elif (400) first, then Selim (500)
       });
     });
 

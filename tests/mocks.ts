@@ -358,7 +358,7 @@ export async function setupDefaultMocks(page: Page) {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(listings),
+      body: JSON.stringify({ content: listings, page: 0, totalPages: 1, totalElements: listings.length }),
     });
   });
 
