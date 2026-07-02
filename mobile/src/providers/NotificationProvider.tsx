@@ -1,18 +1,28 @@
 import { useEffect, useRef, createContext, useContext, type ReactNode } from "react";
 import { Platform } from "react-native";
-import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import { useAuth } from "./AuthProvider";
 import { useWebSocket } from "./WebSocketProvider";
 import { api } from "../api/client";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+const isExpoGo = Constants.appOwnership === "expo";
+let Notifications: any = null;
+
+if (!isExpoGo) {
+  try {
+    Notifications = require("expo-notifications");
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
+  } catch (e) {
+    console.warn("Failed to load expo-notifications:", e);
+  }
+}
 
 interface NotificationContextType {
   expoPushToken: string | null;
@@ -41,11 +51,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const expoPushTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !Notifications) return;
 
-    Notifications.requestPermissionsAsync().then(({ status }) => {
+    Notifications.requestPermissionsAsync().then(({ status }: any) => {
       if (status !== "granted") return;
-      Notifications.getExpoPushTokenAsync().then(({ data: token }) => {
+      Notifications.getExpoPushTokenAsync().then(({ data: token }: any) => {
         expoPushTokenRef.current = token;
         api.post("/notifications/register", { token, platform: Platform.OS }).catch(() => {});
       }).catch(() => {});
@@ -53,7 +63,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     notificationListener.current = Notifications.addNotificationReceivedListener(() => {});
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+    responseListener.current = Notifications.addNotificationResponseReceivedListener((response: any) => {
       const link = response.notification.request.content.data?.link as string | undefined;
       router.push(mapLink(link) as any);
     });
@@ -65,7 +75,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (incomingNotifications.length === 0) return;
+    if (incomingNotifications.length === 0 || !Notifications) return;
     const last = incomingNotifications[incomingNotifications.length - 1];
     Notifications.scheduleNotificationAsync({
       content: {
