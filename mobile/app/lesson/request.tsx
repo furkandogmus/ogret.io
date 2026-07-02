@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -10,6 +10,12 @@ import { tutorApi, subjectApi, lessonApi, listingApi } from "../../src/api/servi
 import type { Subject, TutorListing } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
 import { formatLocalDate } from "../../src/utils/dateFormat";
+
+interface AvailabilitySlot {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+}
 
 export default function LessonRequestScreen() {
   const { tutorId } = useLocalSearchParams<{ tutorId: string }>();
@@ -23,20 +29,27 @@ export default function LessonRequestScreen() {
   const [selectedEnd, setSelectedEnd] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
+
+  const availableDaysOfWeek = useMemo(
+    () => [...new Set(availability.map(s => s.dayOfWeek))],
+    [availability]
+  );
 
   useEffect(() => {
     (async () => {
       try {
-        const [subjectsRes, listingsRes] = await Promise.all([
+        const [subjectsRes, listingsRes, availRes] = await Promise.all([
           subjectApi.list(),
           listingApi.getTutorListings(tutorId),
+          tutorApi.getAvailability(tutorId).catch(() => ({ data: [] })),
         ]);
         setSubjects(subjectsRes.data);
-        // Extract subject IDs from the tutor's published listings
         const ids = (listingsRes.data || []).map((l: TutorListing) => l.subjectId);
         setTutorSubjectIds(ids);
+        setAvailability(availRes.data || []);
       } catch {
         toast.show("Bilgiler yüklenemedi", "error");
       }
@@ -123,10 +136,17 @@ export default function LessonRequestScreen() {
               selectedDate={selectedDate}
               selectedStart={selectedStart}
               selectedEnd={selectedEnd}
-              onDateSelect={setSelectedDate}
+              onDateSelect={(d) => { setSelectedStart(null); setSelectedEnd(null); setSelectedDate(d); }}
               onStartSelect={setSelectedStart}
               onEndSelect={setSelectedEnd}
               disabledDates={[]}
+              availableDaysOfWeek={availableDaysOfWeek}
+              availableTimeRanges={(() => {
+                if (!selectedDate || !availability.length) return undefined;
+                const jsDay = new Date(selectedDate + "T12:00:00").getDay();
+                const backendDay = (jsDay + 6) % 7;
+                return availability.filter(s => s.dayOfWeek === backendDay).map(s => ({ startTime: s.startTime, endTime: s.endTime }));
+              })()}
             />
           </View>
 

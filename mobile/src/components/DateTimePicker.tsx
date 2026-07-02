@@ -3,6 +3,11 @@ import { View, Text, TouchableOpacity, FlatList, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, radius } from "../constants/theme";
 
+interface TimeRange {
+  startTime: string;
+  endTime: string;
+}
+
 interface DateTimePickerProps {
   selectedDate: string | null;
   selectedStart: string | null;
@@ -11,6 +16,8 @@ interface DateTimePickerProps {
   onStartSelect: (time: string) => void;
   onEndSelect: (time: string) => void;
   disabledDates?: string[];
+  availableDaysOfWeek?: number[];
+  availableTimeRanges?: TimeRange[];
 }
 
 const TIME_SLOTS = [
@@ -19,10 +26,14 @@ const TIME_SLOTS = [
   "18:00", "19:00", "20:00", "21:00", "22:00",
 ];
 
+function toBackendDay(jsDay: number): number {
+  return (jsDay + 6) % 7;
+}
+
 export function DateTimePicker({
   selectedDate, selectedStart, selectedEnd,
   onDateSelect, onStartSelect, onEndSelect,
-  disabledDates,
+  disabledDates, availableDaysOfWeek, availableTimeRanges,
 }: DateTimePickerProps) {
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
@@ -33,7 +44,15 @@ export function DateTimePicker({
     return d;
   });
 
-  const isDisabled = (dateStr: string) => disabledDates?.includes(dateStr) ?? false;
+  const isDisabled = (dateStr: string) => {
+    if (disabledDates?.includes(dateStr)) return true;
+    if (availableDaysOfWeek) {
+      const d = new Date(dateStr + "T12:00:00");
+      const backendDay = toBackendDay(d.getDay());
+      if (!availableDaysOfWeek.includes(backendDay)) return true;
+    }
+    return false;
+  };
   const formatDate = (d: Date) => d.toISOString().split("T")[0];
   const dayNames = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
   const monthNames = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
@@ -111,6 +130,7 @@ export function DateTimePicker({
         onSelect={(t) => { onStartSelect(t); setShowStartPicker(false); }}
         onClose={() => setShowStartPicker(false)}
         minTime={TIME_SLOTS[0]}
+        timeRanges={availableTimeRanges}
       />
       <TimeSlotModal
         visible={showEndPicker}
@@ -118,18 +138,23 @@ export function DateTimePicker({
         onSelect={(t) => { onEndSelect(t); setShowEndPicker(false); }}
         onClose={() => setShowEndPicker(false)}
         minTime={selectedStart || TIME_SLOTS[0]}
+        timeRanges={availableTimeRanges}
       />
     </View>
   );
 }
 
 function TimeSlotModal({
-  visible, selected, onSelect, onClose, minTime,
+  visible, selected, onSelect, onClose, minTime, timeRanges,
 }: {
-  visible: boolean; selected: string | null; onSelect: (t: string) => void; onClose: () => void; minTime: string;
+  visible: boolean; selected: string | null; onSelect: (t: string) => void; onClose: () => void; minTime: string; timeRanges?: TimeRange[];
 }) {
+  const isInRanges = (t: string): boolean => {
+    if (!timeRanges || timeRanges.length === 0) return true;
+    return timeRanges.some(r => t >= r.startTime && t < r.endTime);
+  };
   const minIndex = TIME_SLOTS.indexOf(minTime);
-  const slots = minIndex >= 0 ? TIME_SLOTS.slice(minIndex + 1) : TIME_SLOTS;
+  const slots = (minIndex >= 0 ? TIME_SLOTS.slice(minIndex + 1) : TIME_SLOTS).filter(isInRanges);
 
   return (
     <Modal visible={visible} transparent animationType="slide">

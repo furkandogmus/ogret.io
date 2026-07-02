@@ -256,7 +256,7 @@ public class LessonService {
                 .findByTutorIdAndIsActiveTrue(tutorId);
         if (slots.isEmpty()) return;
 
-        int dayOfWeek = date.getDayOfWeek().getValue() % 7;
+        int dayOfWeek = date.getDayOfWeek().getValue() - 1;
         boolean available = slots.stream()
                 .anyMatch(s -> s.getDayOfWeek().equals(dayOfWeek)
                         && !s.getStartTime().isAfter(start)
