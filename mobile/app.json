@@ -38,13 +38,7 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store",
-      [
-        "expo-linking",
-        {
-          "url": "ogret.io"
-        }
-      ]
+      "expo-secure-store"
     ],
     "extra": {
       "router": {
