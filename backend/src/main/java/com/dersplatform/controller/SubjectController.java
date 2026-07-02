@@ -5,6 +5,8 @@ import com.dersplatform.model.dto.response.TutorSummaryResponse;
 import com.dersplatform.repository.SubjectRepository;
 import com.dersplatform.service.TutorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +22,7 @@ public class SubjectController {
     private final TutorService tutorService;
 
     @GetMapping
+    @Cacheable(value = "subjects", unless = "#result.body.isEmpty()")
     public ResponseEntity<List<SubjectResponse>> getSubjects() {
         return ResponseEntity.ok(
                 subjectRepository.findByIsActiveTrueOrderByName()

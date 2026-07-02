@@ -4,6 +4,7 @@ import com.dersplatform.model.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ public class NotificationService {
      * @param senderName   optional sender display name
      * @param senderAvatar optional sender avatar URL
      */
+    @Async
     public void sendNotification(UUID recipientId, String type, String title, String body,
                                   String link, String senderName, String senderAvatar) {
         Map<String, Object> payload = Map.of(

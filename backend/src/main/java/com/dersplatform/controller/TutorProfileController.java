@@ -5,6 +5,7 @@ import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.*;
 import com.dersplatform.service.TutorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -47,6 +48,7 @@ public class TutorProfileController {
 
     @PutMapping("/subjects")
     @PreAuthorize("hasRole('TUTOR')")
+    @CacheEvict(value = {"tutorDetail", "subjects"}, allEntries = true)
     public ResponseEntity<Void> updateMySubjects(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody List<UUID> subjectIds) {

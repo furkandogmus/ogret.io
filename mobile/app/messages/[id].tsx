@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { View, Text, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Linking } from "react-native";
+import { View, Text, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Linking, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
@@ -21,6 +21,8 @@ export default function ChatScreen() {
   const [otherUser, setOtherUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
+  const textRef = useRef(text);
+  textRef.current = text;
   const flatListRef = useRef<FlatList>(null);
   const typingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -37,27 +39,35 @@ export default function ChatScreen() {
     })();
   }, [id]);
 
+  const incomingRef = useRef(incomingMessages);
+  incomingRef.current = incomingMessages;
+
   useEffect(() => {
-    const newMsg = incomingMessages.find((m) => m.senderId === id);
-    if (newMsg) {
+    return () => {
+      if (typingDebounceRef.current) clearTimeout(typingDebounceRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const last = incomingMessages[incomingMessages.length - 1];
+    if (last && last.senderId === id) {
       setMessages((prev) => {
-        if (prev.some((m) => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg as unknown as Message];
+        if (prev.some((m) => m.id === last.id)) return prev;
+        return [...prev, last as unknown as Message];
       });
     }
-  }, [incomingMessages, id]);
+  }, [incomingMessages.length, id]);
 
   const sendMessage = useCallback(async () => {
-    if (!text.trim()) return;
+    const msg = textRef.current.trim();
+    if (!msg) return;
     try {
-      if (connected) {
-        wsSend(id, text.trim());
-      }
-      const { data } = await messageApi.send({ receiverId: id, content: text.trim() });
+      if (connected) wsSend(id, msg);
+      const { data } = await messageApi.send({ receiverId: id, content: msg });
       setMessages((prev) => [...prev, data]);
       setText("");
     } catch { /* */ }
-  }, [text, id, connected, wsSend]);
+  }, [id, connected, wsSend]);
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -89,6 +99,10 @@ export default function ChatScreen() {
         ref={flatListRef}
         data={messages}
         keyExtractor={(item) => item.id}
+        windowSize={10}
+        maxToRenderPerBatch={10}
+        initialNumToRender={20}
+        removeClippedSubviews={Platform.OS === "android"}
         contentContainerStyle={{ padding: spacing.md }}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         renderItem={({ item }) => {

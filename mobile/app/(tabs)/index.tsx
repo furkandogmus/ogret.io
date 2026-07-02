@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { View, Text, FlatList, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { TutorCard } from "../../src/components/TutorCard";
@@ -58,13 +58,13 @@ export default function SearchScreen() {
     } catch { /* */ }
   };
 
-  const filtered = tutors.filter((t) => {
+  const filtered = useMemo(() => tutors.filter((t) => {
     const matchesSearch = t.fullName.toLowerCase().includes(search.toLowerCase()) ||
       t.subjects.some((s) => s.toLowerCase().includes(search.toLowerCase()));
     const matchesCategory = selectedCategory === "Tümü" ||
       t.subjects.some((s) => s.toLowerCase().includes(selectedCategory.toLowerCase()));
     return matchesSearch && matchesCategory;
-  });
+  }), [tutors, search, selectedCategory]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -154,6 +154,10 @@ export default function SearchScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
+        windowSize={10}
+        maxToRenderPerBatch={10}
+        initialNumToRender={10}
+        removeClippedSubviews={Platform.OS === "android"}
         contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
         renderItem={({ item }) => (
           <TutorCard tutor={item} onPress={() => router.push(`/tutor/${item.id}`)} favorited={favoriteIds.has(item.id)} onFavoriteToggle={() => handleFavoriteToggle(item.id)} />
