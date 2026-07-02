@@ -39,7 +39,9 @@ export function useSeo(props: SeoProps) {
     setMeta("description", props.description || BASE_DESCRIPTION);
     setMeta("og:title", props.ogTitle || fullTitle);
     setMeta("og:description", props.ogDescription || props.description || BASE_DESCRIPTION);
-    setMeta("og:image", props.ogImage || "https://ogret.io/favicon.svg");
+    setMeta("og:image", props.ogImage || "https://ogret.io/og-image.svg");
+    setMeta("og:image:width", "1200");
+    setMeta("og:image:height", "630");
     setMeta("og:type", "website");
     setMeta("og:locale", "tr_TR");
     setMeta("twitter:card", "summary_large_image");

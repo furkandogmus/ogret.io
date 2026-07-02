@@ -21,6 +21,11 @@ import { ProfileEditPage } from "./pages/ProfileEditPage";
 import { WriteReferencePage } from "./pages/WriteReferencePage";
 import { CreateListingWizardPage } from "./pages/CreateListingWizardPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { FaqPage } from "./pages/FaqPage";
+import { AboutPage } from "./pages/AboutPage";
+import { ContactPage } from "./pages/ContactPage";
+import { PrivacyPage } from "./pages/PrivacyPage";
+import { TermsPage } from "./pages/TermsPage";
 import { BlogIndexPage } from "./pages/blog/BlogIndexPage";
 import { BlogPostPage } from "./pages/blog/BlogPostPage";
 import { AuthGuard } from "./components/shared/AuthGuard";
@@ -52,6 +57,11 @@ export default function App() {
               <Route path="/email-dogrula" element={<EmailVerificationPage />} />
               <Route path="/blog" element={<BlogIndexPage />} />
               <Route path="/blog/:slug" element={<BlogPostPage />} />
+              <Route path="/sikca-sorulan-sorular" element={<FaqPage />} />
+              <Route path="/hakkimizda" element={<AboutPage />} />
+              <Route path="/iletisim" element={<ContactPage />} />
+              <Route path="/gizlilik" element={<PrivacyPage />} />
+              <Route path="/kullanim-kosullari" element={<TermsPage />} />
               <Route path="/dogrulama" element={<VerificationPage />} />
               <Route path="/profil/duzenle" element={<AuthGuard><ProfileEditPage /></AuthGuard>} />
               <Route path="*" element={<NotFoundPage />} />

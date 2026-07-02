@@ -1,9 +1,23 @@
+import { useEffect } from "react";
 import { Link } from "react-router";
-import { BookOpen, Calendar, Clock, ArrowRight } from "lucide-react";
+import { Calendar, Clock, ArrowRight } from "lucide-react";
 import { useSeo } from "../../hooks/useSeo";
 import { blogPosts } from "./blogData";
 
 export function BlogIndexPage() {
+  useEffect(() => {
+    let link = document.querySelector("link[rel='alternate'][type='application/rss+xml']");
+    if (!link) {
+      link = document.createElement("link");
+      link.setAttribute("rel", "alternate");
+      link.setAttribute("type", "application/rss+xml");
+      link.setAttribute("title", "öğret.io Blog RSS");
+      link.setAttribute("href", "https://ogret.io/feed.xml");
+      document.head.appendChild(link);
+    }
+    return () => { link?.remove(); };
+  }, []);
+
   useSeo({
     title: "Blog - Özel Ders Rehberi",
     description: "Özel ders, sınav hazırlığı, yabancı dil öğrenimi ve eğitim üzerine faydalı içerikler. öğret.io blog rehberi.",

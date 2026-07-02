@@ -18,11 +18,6 @@ const SORT_OPTIONS = [
 const SIZE = 12;
 
 export function SearchPage() {
-  useSeo({
-    title: "Özel Ders İlanları",
-    description: "Binlerce uzman öğretmen arasından size en uygun özel ders ilanını bulun. Online veya yüz yüze ders seçenekleri.",
-    canonical: "https://ogret.io/arama",
-  });
   const [searchParams, setSearchParams] = useSearchParams();
   const [subjects, setSubjects] = useState<SubjectResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +37,12 @@ export function SearchPage() {
   const onlyOnline = searchParams.get("online") === "true";
   const sort = searchParams.get("sort") || "score";
   const page = Number(searchParams.get("page")) || 0;
+
+  useSeo({
+    title: q ? `"${q}" için Özel Ders İlanları` : "Özel Ders İlanları",
+    description: "Binlerce uzman öğretmen arasından size en uygun özel ders ilanını bulun. Online veya yüz yüze ders seçenekleri.",
+    canonical: "https://ogret.io/arama",
+  });
 
   const [searchInput, setSearchInput] = useState(q);
 
