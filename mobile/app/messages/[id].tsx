@@ -38,7 +38,7 @@ export default function ChatScreen() {
         setOtherUser(userRes.data);
         setMessages(msgRes.data);
         setHasActiveLesson(lessonRes.data.hasActiveLesson);
-      } catch { /* */ }
+      } catch (e) { console.warn("ChatScreen init error:", e); }
     })();
   }, [id]);
 
