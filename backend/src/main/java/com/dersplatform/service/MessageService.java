@@ -112,4 +112,11 @@ public class MessageService {
                 .map(MessageResponse::fromEntity)
                 .toList();
     }
+
+    public List<MessageResponse> getAllMessages(UUID userId) {
+        return messageRepository.findAllByUserId(userId)
+                .stream()
+                .map(MessageResponse::fromEntity)
+                .toList();
+    }
 }

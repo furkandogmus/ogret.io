@@ -13,4 +13,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
     @Query("SELECT m FROM Message m JOIN FETCH m.sender JOIN FETCH m.receiver WHERE m.receiver.id = :userId AND m.isRead = false ORDER BY m.createdAt DESC")
     List<Message> findUnreadMessages(UUID userId);
+
+    @Query("SELECT m FROM Message m JOIN FETCH m.sender JOIN FETCH m.receiver WHERE m.sender.id = :userId OR m.receiver.id = :userId ORDER BY m.createdAt DESC")
+    List<Message> findAllByUserId(UUID userId);
 }

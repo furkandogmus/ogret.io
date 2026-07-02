@@ -32,9 +32,14 @@ export default function MessagesScreen() {
   const buildConversations = useCallback(async () => {
     if (!me) { setLoading(false); return; }
     try {
-      const { data: allMessages } = await messageApi.getUnread();
+      const [allRes, unreadRes] = await Promise.all([
+        messageApi.getAll(),
+        messageApi.getUnread(),
+      ]);
+      const allMessages = Array.isArray(allRes.data) ? allRes.data : [];
+      const unreadSet = new Set((Array.isArray(unreadRes.data) ? unreadRes.data : []).map(m => m.id));
       const grouped = new Map<string, { messages: Message[]; lastMessage: Message }>();
-      for (const msg of Array.isArray(allMessages) ? allMessages : []) {
+      for (const msg of allMessages) {
         const otherId = msg.senderId === me?.id ? msg.receiverId : msg.senderId;
         const existing = grouped.get(otherId);
         if (existing) {
@@ -54,7 +59,7 @@ export default function MessagesScreen() {
           userAvatar: lastMessage.senderId === me?.id ? lastMessage.receiverAvatar : lastMessage.senderAvatar,
           userOnline: false,
           lastMessage,
-          unread: msgs.filter((m) => m.receiverId === me?.id && !m.read).length,
+          unread: msgs.filter((m) => unreadSet.has(m.id)).length,
         });
       }
       convos.sort((a, b) => new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime());

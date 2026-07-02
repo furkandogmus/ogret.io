@@ -37,6 +37,13 @@ public class MessageController {
                 .body(messageService.sendMessage(UUID.fromString(userDetails.getUsername()), request));
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<MessageResponse>> getAllMessages(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                messageService.getAllMessages(UUID.fromString(userDetails.getUsername())));
+    }
+
     @GetMapping("/unread")
     public ResponseEntity<List<MessageResponse>> getUnread(
             @AuthenticationPrincipal UserDetails userDetails) {

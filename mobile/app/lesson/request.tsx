@@ -70,6 +70,10 @@ export default function LessonRequestScreen() {
       toast.show("Bitiş saati başlangıçtan sonra olmalı", "error");
       return;
     }
+    if (!notes.trim()) {
+      toast.show("Ders açıklaması zorunludur", "error");
+      return;
+    }
     setSubmitting(true);
     try {
       await lessonApi.create({
@@ -78,7 +82,7 @@ export default function LessonRequestScreen() {
         lessonDate: selectedDate,
         startTime: selectedStart,
         endTime: selectedEnd,
-        notes: notes || undefined,
+        notes: notes.trim(),
       });
       toast.show("Ders talebiniz iletildi!", "success");
       router.back();
@@ -164,12 +168,12 @@ export default function LessonRequestScreen() {
 
           <View style={{ marginTop: spacing.lg }}>
             <Input
-              label="Notlar (isteğe bağlı)"
+              label="Ders Açıklaması"
               value={notes}
               onChangeText={setNotes}
               multiline
               numberOfLines={3}
-              placeholder="Öğretmene iletmek istediğiniz notlar..."
+              placeholder="Hangi konuda ders almak istediğinizi, eksik olduğunuz konuları ve varsa özel taleplerinizi yazın..."
             />
           </View>
         </View>
@@ -179,7 +183,7 @@ export default function LessonRequestScreen() {
           onPress={handleSubmit}
           loading={submitting}
           size="lg"
-          disabled={!selectedSubject || !selectedDate || !selectedStart || !selectedEnd}
+          disabled={!selectedSubject || !selectedDate || !selectedStart || !selectedEnd || !notes.trim()}
           style={{ marginTop: spacing.lg }}
         />
       </ScrollView>
