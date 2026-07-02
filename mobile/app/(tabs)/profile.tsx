@@ -198,9 +198,8 @@ export default function ProfileScreen() {
                 onPress={() => router.push(`/lesson/${lesson.id}`)}
                 onCancel={["PENDING", "CONFIRMED"].includes(lesson.status) ? () => handleCancel(lesson.id) : undefined}
                 onComplete={
-                  isTutor && lesson.status === "PENDING" ? () => handleConfirm(lesson.id)
-                  : isTutor && lesson.status === "CONFIRMED" ? () => handleStart(lesson.id)
-                  : isTutor && lesson.status === "IN_PROGRESS" ? () => handleComplete(lesson.id)
+                  lesson.status === "PENDING" && isTutor ? () => handleConfirm(lesson.id)
+                  : lesson.status === "CONFIRMED" || lesson.status === "IN_PROGRESS" ? () => handleComplete(lesson.id)
                   : undefined
                 }
               />

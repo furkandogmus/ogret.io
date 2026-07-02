@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useMemo } from "react";
 import { View, Text } from "react-native";
 import { Image } from "expo-image";
 import { colors } from "../constants/theme";
@@ -10,29 +10,42 @@ interface Props {
   online?: boolean;
 }
 
+function isReachableUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname;
+    return !["localhost", "127.0.0.1", "minio", "0.0.0.0"].includes(host);
+  } catch {
+    return false;
+  }
+}
+
 function AvatarComponent({ uri, name, size = 48, online }: Props) {
-  const [failed, setFailed] = useState(false);
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = useMemo(
+    () =>
+      name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2),
+    [name],
+  );
+
+  const showFallback = !uri || !isReachableUrl(uri);
 
   return (
     <View style={{ position: "relative" }} accessibilityLabel={name} accessibilityRole="image">
-      {uri && !failed ? (
+      {showFallback ? (
+        <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ color: "#fff", fontSize: size * 0.4, fontWeight: "600" }}>{initials}</Text>
+        </View>
+      ) : (
         <Image
           source={{ uri }}
           style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.surfaceLight }}
           contentFit="cover"
           transition={300}
-          onError={() => setFailed(true)}
         />
-      ) : (
-        <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ color: "#fff", fontSize: size * 0.4, fontWeight: "600" }}>{initials}</Text>
-        </View>
       )}
       {online !== undefined && (
         <View

@@ -16,7 +16,19 @@ export default function ProfileEditScreen() {
   const toast = useToast();
 
   const [fullName, setFullName] = useState(user?.fullName || "");
-  const [phone, setPhone] = useState(user?.phone || "");
+  const [phone, setPhone] = useState(user?.phone?.replace("+90", "") || "");
+
+  const formatPhone = (text: string) => {
+    const digits = text.replace(/\D/g, "").slice(0, 10);
+    if (digits.length < 4) return digits;
+    if (digits.length < 7) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 8)} ${digits.slice(8)}`;
+  };
+
+  const handlePhoneChange = (text: string) => {
+    const digits = text.replace(/\D/g, "");
+    if (digits.length <= 10) setPhone(formatPhone(digits));
+  };
   const [bio, setBio] = useState(user?.bio || "");
   const [education, setEducation] = useState(user?.education || "");
   const [hourlyRate, setHourlyRate] = useState(user?.hourlyRate?.toString() || "");
@@ -68,9 +80,10 @@ export default function ProfileEditScreen() {
     setLoading(true);
     try {
       // 1. Update basic profile info
+      const cleanDigits = phone.replace(/\D/g, "");
       await userApi.updateProfile({
         fullName,
-        phone,
+        phone: cleanDigits ? `+90${cleanDigits}` : "",
         bio,
         education,
         experienceYears: experienceYears ? Number(experienceYears) : undefined,
@@ -119,7 +132,7 @@ export default function ProfileEditScreen() {
         
         <View style={{ gap: spacing.sm, marginBottom: spacing.lg }}>
           <Input label="Ad Soyad" value={fullName} onChangeText={setFullName} placeholder="Adınız ve soyadınız" />
-          <Input label="Telefon" value={phone} onChangeText={setPhone} placeholder="Örn: +905555555555" keyboardType="phone-pad" />
+          <Input label="Telefon" value={phone} onChangeText={handlePhoneChange} placeholder="5xx xxx xx xx" keyboardType="phone-pad" />
           <Input label="Eğitim" value={education} onChangeText={setEducation} placeholder="Örn: Boğaziçi Üniversitesi Matematik mezunu" />
           <Input label="Biyografi" value={bio} onChangeText={setBio} multiline placeholder="Kendinizden bahsedin, öğrencilerin sizi tanımasını sağlayın..." />
         </View>

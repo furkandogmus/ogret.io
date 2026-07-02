@@ -26,7 +26,7 @@ const statusIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
 function LessonCardComponent({ lesson, userRole, onPress, onCancel, onComplete, onMeetingLink }: Props) {
   const otherUser = userRole === "STUDENT" ? lesson.tutor : lesson.student;
   const canCancel = lesson.status === "PENDING";
-  const canComplete = lesson.status === "CONFIRMED" || lesson.status === "IN_PROGRESS" || (lesson.status === "PENDING" && userRole === "TUTOR");
+  const canComplete = lesson.status === "IN_PROGRESS" || lesson.status === "PENDING" || lesson.status === "CONFIRMED";
   const showActions = (onCancel && canCancel) || (onComplete && canComplete);
 
   return (
@@ -83,7 +83,7 @@ function LessonCardComponent({ lesson, userRole, onPress, onCancel, onComplete, 
           {canComplete && onComplete && (
             <TouchableOpacity onPress={onComplete} style={{ flex: 1, backgroundColor: colors.success + "20", borderRadius: radius.sm, padding: spacing.sm, alignItems: "center" }}>
               <Text style={{ color: colors.success, fontWeight: "600", fontSize: 13 }}>
-                {lesson.status === "PENDING" ? "Onayla" : lesson.status === "CONFIRMED" && userRole === "TUTOR" ? "Başlat" : "Tamamla"}
+                {lesson.status === "PENDING" ? "Onayla" : "Tamamla"}
               </Text>
             </TouchableOpacity>
           )}

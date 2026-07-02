@@ -29,7 +29,7 @@ function TabPager({ currentIndex }: { currentIndex: number }) {
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gs) =>
-        Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5 && Math.abs(gs.dx) > 5,
+        Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5 && Math.abs(gs.dx) > 2,
       onPanResponderMove: (_, gs) => {
         scrollX.setValue(indexRef.current * SCREEN_WIDTH - gs.dx);
       },
