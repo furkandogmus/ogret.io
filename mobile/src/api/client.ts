@@ -14,7 +14,7 @@ export function getApiBaseUrl() {
     const ip = hostUri.split(":")[0];
     return `http://${ip}:8080/api/v1`;
   }
-  return "http://localhost:8080/api/v1";
+  return "http://192.168.1.141:8080/api/v1";
 }
 
 const api = axios.create({
