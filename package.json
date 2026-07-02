@@ -90,9 +90,8 @@
     }
   },
   "packageManager": "pnpm@11.9.0",
-  "pnpm": {
-    "overrides": {
-      "vite": "6.3.5"
-    }
+  "onlyBuiltDependencies": ["@tailwindcss/oxide", "esbuild"],
+  "overrides": {
+    "vite": "6.3.5"
   }
 }
