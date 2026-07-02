@@ -9,6 +9,7 @@ import com.dersplatform.model.enums.LessonStatus;
 import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.LessonRepository;
 import com.dersplatform.repository.SubjectRepository;
+import com.dersplatform.repository.TutorAvailabilityRepository;
 import com.dersplatform.repository.TutorListingRepository;
 import com.dersplatform.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +39,8 @@ class LessonServiceTest {
     @Mock private SubjectRepository subjectRepository;
     @Mock private TutorListingRepository tutorListingRepository;
     @Mock private NotificationService notificationService;
+    @Mock private TutorAvailabilityRepository tutorAvailabilityRepository;
+    @Mock private ScoringService scoringService;
 
     private LessonService lessonService;
     private User student;
@@ -49,7 +52,7 @@ class LessonServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        lessonService = new LessonService(lessonRepository, userRepository, subjectRepository, tutorListingRepository, notificationService);
+        lessonService = new LessonService(lessonRepository, userRepository, subjectRepository, tutorListingRepository, tutorAvailabilityRepository, notificationService, scoringService);
 
         student = User.builder()
                 .id(UUID.randomUUID())

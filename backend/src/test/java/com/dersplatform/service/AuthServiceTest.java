@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -29,6 +30,7 @@ class AuthServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private JwtTokenProvider jwtTokenProvider;
     @Mock private AuthenticationManager authenticationManager;
+    @Mock private JavaMailSender mailSender;
 
     private AuthService authService;
     private RegisterRequest registerRequest;
@@ -37,7 +39,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userRepository, new BCryptPasswordEncoder(), jwtTokenProvider, authenticationManager);
+        authService = new AuthService(userRepository, new BCryptPasswordEncoder(), jwtTokenProvider, authenticationManager, mailSender);
 
         registerRequest = new RegisterRequest();
         registerRequest.setEmail("test@example.com");
