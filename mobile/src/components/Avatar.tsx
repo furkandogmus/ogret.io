@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { View, Text } from "react-native";
 import { Image } from "expo-image";
 import { colors } from "../constants/theme";
@@ -11,6 +11,7 @@ interface Props {
 }
 
 function AvatarComponent({ uri, name, size = 48, online }: Props) {
+  const [failed, setFailed] = useState(false);
   const initials = name
     .split(" ")
     .map((n) => n[0])
@@ -20,12 +21,13 @@ function AvatarComponent({ uri, name, size = 48, online }: Props) {
 
   return (
     <View style={{ position: "relative" }} accessibilityLabel={name} accessibilityRole="image">
-      {uri ? (
+      {uri && !failed ? (
         <Image
           source={{ uri }}
           style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.surfaceLight }}
           contentFit="cover"
           transition={300}
+          onError={() => setFailed(true)}
         />
       ) : (
         <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" }}>

@@ -7,8 +7,6 @@ import { colors } from "../../src/constants/theme";
 export default function TabLayout() {
   const { user } = useAuth();
   const unread = useUnreadCount();
-  const isTutor = user?.role === "TUTOR";
-  const isStudent = user?.role === "STUDENT";
   const isAdmin = user?.role === "ADMIN";
 
   return (
@@ -32,7 +30,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Ana Sayfa",
-          tabBarIcon: ({ color, size }) => <Ionicons name="search" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -40,7 +38,7 @@ export default function TabLayout() {
         options={{
           title: "Paneli",
           tabBarIcon: ({ color, size }) => <Ionicons name="school" size={size} color={color} />,
-          href: isStudent ? undefined : null,
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -48,7 +46,7 @@ export default function TabLayout() {
         options={{
           title: "Paneli",
           tabBarIcon: ({ color, size }) => <Ionicons name="easel" size={size} color={color} />,
-          href: isTutor ? undefined : null,
+          href: null,
         }}
       />
       <Tabs.Screen
