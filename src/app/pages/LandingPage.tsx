@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import { toast } from "sonner";
+import { useSeo } from "../hooks/useSeo";
 import {
-  Search, ArrowRight, Star, BookOpen, Calculator, Globe, Code2, Music, GraduationCap, Zap,
+  Search, ArrowRight, Star, BookOpen, Calculator, Globe, Code2, Music, Zap,
   Dna, Beaker, Map, Hourglass, Camera, Palette, Mic
 } from "lucide-react";
 import { tutorApi, subjectApi } from "../api/services";
 import type { TutorSummaryResponse, SubjectResponse } from "../api/services";
 import { TutorCard } from "../components/shared/TutorCard";
+import { HeroIllustration } from "../components/shared/HeroIllustration";
 
 const SUBJECT_ICONS: Record<string, any> = {
   matematik: Calculator,
@@ -46,6 +48,11 @@ const SUBJECT_ICONS: Record<string, any> = {
 };
 
 export function LandingPage() {
+  useSeo({
+    title: "Online Özel Ders Platformu",
+    description: "Türkiye'nin en iyi online özel ders platformu. Alanında uzman öğretmenlerle online olarak buluşun. Her konuda, her seviyede, her zaman.",
+    canonical: "https://ogret.io/",
+  });
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [featuredTutors, setFeaturedTutors] = useState<TutorSummaryResponse[]>([]);
@@ -71,7 +78,8 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-stone-50/30">
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-[#FFF2F2] to-white rounded-b-[40px] md:rounded-b-[56px] border-b border-stone-100/80 pb-16 pt-20 shadow-sm">
+      <section className="relative bg-gradient-to-b from-[#FFF2F2] to-white rounded-b-[40px] md:rounded-b-[56px] border-b border-stone-100/80 pb-16 pt-20 shadow-sm overflow-hidden">
+        <HeroIllustration />
         <div className="max-w-4xl mx-auto px-4 text-center">
 
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-stone-900 tracking-tight leading-[1.1] mb-8">
@@ -245,16 +253,44 @@ export function LandingPage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
             {[
-              { heading: "Platform", links: ["Nasıl Çalışır", "Fiyatlandırma", "Öğretmenler", "Öğrenciler"] },
+              { heading: "Platform", links: ["Nasıl Çalışır", "Fiyatlandırma", "Öğretmenler", "Öğrenciler", "Blog"] },
               { heading: "Kategoriler", links: ["Matematik", "İngilizce", "Yazılım", "Müzik"] },
-              { heading: "Destek", links: ["Yardım Merkezi", "İletişim", "Güvenlik", "Gizlilik"] },
+              { heading: "Destek", links: ["SSS", "İletişim", "Gizlilik", "Kullanım Koşulları"] },
               { heading: "Takip Et", links: ["Instagram", "Twitter / X", "LinkedIn", "YouTube"] },
             ].map(({ heading, links }) => (
               <div key={heading}>
                 <h4 className="text-white font-medium mb-4 text-xs uppercase tracking-wider">{heading}</h4>
-                {links.map((l) => (
-                  <div key={l} className="py-1.5 hover:text-white cursor-pointer transition-colors">{l}</div>
-                ))}
+                {links.map((l) => {
+                  const routeMap: Record<string, string> = {
+                    "Nasıl Çalışır": "#",
+                    "Fiyatlandırma": "#",
+                    "Öğretmenler": "/arama",
+                    "Öğrenciler": "#",
+                    "Blog": "/blog",
+                    "Matematik": "/arama?q=matematik",
+                    "İngilizce": "/arama?q=ingilizce",
+                    "Yazılım": "/arama?q=yazilim",
+                    "Müzik": "/arama?q=muzik",
+                    "SSS": "/sikca-sorulan-sorular",
+                    "İletişim": "/iletisim",
+                    "Gizlilik": "/gizlilik",
+                    "Kullanım Koşulları": "/kullanim-kosullari",
+                    "Instagram": "https://instagram.com/ogret.io",
+                    "Twitter / X": "https://x.com/ogretio",
+                    "LinkedIn": "https://linkedin.com/company/ogretio",
+                    "YouTube": "https://youtube.com/@ogretio",
+                  };
+                  const href = routeMap[l] || "#";
+                  const isExternal = href.startsWith("http");
+                  if (isExternal) {
+                    return (
+                      <a key={l} href={href} target="_blank" rel="noopener noreferrer" className="block py-1.5 hover:text-white transition-colors">{l}</a>
+                    );
+                  }
+                  return (
+                    <Link key={l} to={href} className="block py-1.5 hover:text-white transition-colors">{l}</Link>
+                  );
+                })}
               </div>
             ))}
           </div>

@@ -65,8 +65,12 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
     setError("");
     try {
       const dateStr = selectedDate || dates[0].toISOString().split("T")[0];
+      const startMinutes = selectedTime * 60;
+      const endMinutes = startMinutes + duration;
+      const endHour = Math.floor(endMinutes / 60);
+      const endMin = endMinutes % 60;
       const startTime = `${String(selectedTime).padStart(2, "0")}:00`;
-      const endTime = `${String(selectedTime + Math.ceil(duration / 60)).padStart(2, "0")}:${duration % 60 === 0 ? "00" : String(duration % 60).padStart(2, "0")}`;
+      const endTime = `${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
 
       await lessonApi.create({
         tutorId: tutor.id,

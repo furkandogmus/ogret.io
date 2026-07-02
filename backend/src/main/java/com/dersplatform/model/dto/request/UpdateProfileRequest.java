@@ -10,4 +10,5 @@ public class UpdateProfileRequest {
     private String education;
     private Integer experienceYears;
     private BigDecimal hourlyRate;
+    private String phone;
 }

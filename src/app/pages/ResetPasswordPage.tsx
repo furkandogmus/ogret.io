@@ -2,8 +2,13 @@ import { useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router";
 import { BookOpen, Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import { authApi } from "../api/services";
+import { useSeo } from "../hooks/useSeo";
 
 export function ResetPasswordPage() {
+  useSeo({
+    title: "Şifre Sıfırla",
+    description: "Yeni şifrenizi belirleyerek hesabınıza tekrar erişebilirsiniz.",
+  });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get("token") || "";
@@ -42,13 +47,15 @@ export function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12">
-        <div className="text-center space-y-4">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-          <p className="text-muted-foreground">Geçersiz veya eksik sıfırlama bağlantısı</p>
-          <Link to="/giris" className="text-primary font-medium hover:underline text-sm">
-            Giriş sayfasına dön
-          </Link>
+      <div role="main">
+        <div className="min-h-screen flex items-center justify-center px-4 py-12">
+          <div className="text-center space-y-4">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+            <p className="text-muted-foreground">Geçersiz veya eksik sıfırlama bağlantısı</p>
+            <Link to="/giris" className="text-primary font-medium hover:underline text-sm">
+              Giriş sayfasına dön
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -56,19 +63,22 @@ export function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12">
-        <div className="text-center space-y-4">
-          <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
-          <h2 className="heading-md text-foreground">Şifre Sıfırlandı</h2>
-          <p className="text-sm text-muted-foreground">Yönlendiriliyorsunuz...</p>
+      <div role="main">
+        <div className="min-h-screen flex items-center justify-center px-4 py-12">
+          <div className="text-center space-y-4">
+            <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
+            <h2 className="heading-md text-foreground">Şifre Sıfırlandı</h2>
+            <p className="text-sm text-muted-foreground">Yönlendiriliyorsunuz...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
+    <div role="main">
+      <div className="min-h-screen flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center shadow-md shadow-emerald-600/20">
@@ -135,6 +145,7 @@ export function ResetPasswordPage() {
             </Link>
           </p>
         </form>
+        </div>
       </div>
     </div>
   );

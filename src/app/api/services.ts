@@ -130,10 +130,14 @@ export const userApi = {
     education?: string;
     experienceYears?: number;
     hourlyRate?: number;
+    phone?: string;
   }) => api.put<UserResponse>("/users/me", data),
 
   updateAvatar: (avatarUrl: string) =>
     api.put<UserResponse>("/users/me/avatar", { avatarUrl }),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.put("/users/me/password", { currentPassword, newPassword }),
 };
 
 export interface Page<T> {

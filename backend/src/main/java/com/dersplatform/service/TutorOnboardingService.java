@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 @Service
@@ -39,7 +38,7 @@ public class TutorOnboardingService {
                 "completed", step1
         ));
 
-        boolean step2 = user.getHourlyRate() != null && user.getHourlyRate().compareTo(BigDecimal.ZERO) > 0;
+        boolean step2 = user.getHourlyRate() != null && user.getHourlyRate().compareTo(java.math.BigDecimal.ZERO) > 0;
         steps.add(Map.of(
                 "id", 2, "title", "Hizmet Detayları",
                 "fields", List.of("hourlyRate", "experienceYears"),
@@ -88,10 +87,10 @@ public class TutorOnboardingService {
     }
 
     @Transactional
-    public User updateStep2(UUID userId, BigDecimal hourlyRate, Integer experienceYears) {
+    public User updateStep2(UUID userId, Integer hourlyRate, Integer experienceYears) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
-        user.setHourlyRate(hourlyRate);
+        user.setHourlyRate(hourlyRate != null ? java.math.BigDecimal.valueOf(hourlyRate) : null);
         user.setExperienceYears(experienceYears);
         return userRepository.save(user);
     }
@@ -112,7 +111,7 @@ public class TutorOnboardingService {
                 .title(title)
                 .lessonDescription(lessonDescription)
                 .aboutTutor(aboutTutor)
-                .hourlyRate(tutor.getHourlyRate() != null ? tutor.getHourlyRate() : BigDecimal.ZERO)
+                .hourlyRate(tutor.getHourlyRate() != null ? tutor.getHourlyRate() : java.math.BigDecimal.ZERO)
                 .allowsOnline(allowsOnline)
                 .status("ACTIVE")
                 .build();

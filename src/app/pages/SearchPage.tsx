@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import {
-  Search, SlidersHorizontal, X,
+  Search, SlidersHorizontal, X, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { subjectApi, listingApi } from "../api/services";
-import type { SubjectResponse, ListingResponse } from "../api/services";
+import type { SubjectResponse, ListingResponse, Page } from "../api/services";
 import { TutorCard } from "../components/shared/TutorCard";
+import { useSeo } from "../hooks/useSeo";
 
 const SORT_OPTIONS = [
   { value: "score", label: "En İyi Eşleşme" },
@@ -14,58 +15,88 @@ const SORT_OPTIONS = [
   { value: "price_asc", label: "Düşük Fiyat" },
 ];
 
+const SIZE = 12;
+
 export function SearchPage() {
-  const [searchParams] = useSearchParams();
-  const [results, setResults] = useState<ListingResponse[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [subjects, setSubjects] = useState<SubjectResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
-  const [sort, setSort] = useState("score");
-  const [selectedSubject, setSelectedSubject] = useState(searchParams.get("subject") || "");
-  const [maxPrice, setMaxPrice] = useState(1000);
-  const [minRating, setMinRating] = useState(0);
+  const [results, setResults] = useState<ListingResponse[]>([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [onlyOnline, setOnlyOnline] = useState(false);
   const [activePopover, setActivePopover] = useState<"price" | "rating" | null>(null);
 
-  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  const [pageable, setPageable] = useState<Pick<Page<unknown>, "page" | "totalPages" | "totalElements">>({
+    page: 0, totalPages: 0, totalElements: 0,
+  });
+
+  // Read filter state from URL search params
+  const q = searchParams.get("q") || "";
+  const subjectId = searchParams.get("subjectId") || "";
+  const maxPrice = Number(searchParams.get("maxPrice")) || 1000;
+  const minRating = Number(searchParams.get("minRating")) || 0;
+  const onlyOnline = searchParams.get("online") === "true";
+  const sort = searchParams.get("sort") || "score";
+  const page = Number(searchParams.get("page")) || 0;
+
+  useSeo({
+    title: q ? `"${q}" için Özel Ders İlanları` : "Özel Ders İlanları",
+    description: "Binlerce uzman öğretmen arasından size en uygun özel ders ilanını bulun. Online veya yüz yüze ders seçenekleri.",
+    canonical: "https://ogret.io/arama",
+  });
+
+  const [searchInput, setSearchInput] = useState(q);
+
+  useEffect(() => {
+    setSearchInput(q);
+  }, [q]);
+
+  const updateParams = useCallback((updates: Record<string, string>) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value || value === "0" || value === "1000" || value === "false" || value === "score") {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+    });
+    if (!("page" in updates)) {
+      next.delete("page");
+    }
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     subjectApi.list().then(({ data }) => setSubjects(data)).catch(() => toast.error("Konular yüklenemedi"));
   }, []);
 
-  // Sync state when searchParams URL query changes
-  useEffect(() => {
-    const q = searchParams.get("q") || "";
-    setSearchTerm(q);
-    const sub = searchParams.get("subject") || "";
-    setSelectedSubject(sub);
-  }, [searchParams]);
-
-  // Debounce search input changes
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 200);
+      if (searchInput !== q) {
+        updateParams({ q: searchInput });
+      }
+    }, 300);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchInput, q, updateParams]);
 
   useEffect(() => {
     fetchResults();
-  }, [sort, selectedSubject, maxPrice, minRating, onlyOnline, debouncedSearch]);
+  }, [q, subjectId, maxPrice, minRating, onlyOnline, sort, page]);
 
   const fetchResults = async () => {
     setLoading(true);
     try {
       const { data } = await listingApi.searchListings({
-        q: debouncedSearch || undefined,
-        subjectId: selectedSubject || undefined,
+        q: q || undefined,
+        subjectId: subjectId || undefined,
         maxPrice: maxPrice < 1000 ? maxPrice : undefined,
         minRating: minRating > 0 ? minRating : undefined,
         online: onlyOnline || undefined,
-        sort,
+        sort: sort || undefined,
+        page,
+        size: SIZE,
       });
-      setResults(data?.content || data || []);
+      setResults(data?.content || []);
+      setPageable({ page: data?.page ?? 0, totalPages: data?.totalPages ?? 0, totalElements: data?.totalElements ?? 0 });
     } catch {
       toast.error("Arama sonuçları yüklenemedi");
     } finally {
@@ -73,27 +104,35 @@ export function SearchPage() {
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchResults();
+  const goToPage = (p: number) => {
+    updateParams({ page: String(p) });
+  };
+
+  const clearFilters = () => {
+    setSearchParams(q ? { q } : {}, { replace: true });
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <h1 className="text-lg font-bold text-stone-900">{q ? `"${q}" için Özel Ders İlanları` : "Özel Ders İlanları"}</h1>
       <div className="flex items-center gap-3">
-        <form onSubmit={handleSearch} className="flex-1 relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <form role="search" onSubmit={(e) => { e.preventDefault(); updateParams({ q: searchInput }); }} className="flex-1 relative">
+          <label htmlFor="search-input" className="sr-only">İlan veya ders ara</label>
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
           <input
+            id="search-input"
             type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             placeholder="İlan veya ders ara..."
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
           />
         </form>
+        <label htmlFor="sort-select" className="sr-only">Sıralama</label>
         <select
+          id="sort-select"
           value={sort}
-          onChange={(e) => setSort(e.target.value)}
+          onChange={(e) => updateParams({ sort: e.target.value })}
           className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         >
           {SORT_OPTIONS.map((opt) => (
@@ -102,27 +141,26 @@ export function SearchPage() {
         </select>
         <button
           onClick={() => setShowFilters(!showFilters)}
+          aria-label="Filtreleri aç/kapa"
           className={`p-2.5 rounded-xl border transition-colors ${
             showFilters ? "bg-primary text-white border-primary" : "border-border text-muted-foreground hover:text-foreground"
           }`}
         >
           <SlidersHorizontal className="w-4 h-4" />
         </button>
-      </div>      {showFilters && (
+      </div>
+      {showFilters && (
         <div className="relative bg-white border border-stone-100 shadow-md rounded-2xl p-5 space-y-4 z-20">
-          {/* Backdrop to close popovers when clicking outside */}
           {activePopover && (
             <div className="fixed inset-0 bg-transparent z-10" onClick={() => setActivePopover(null)} />
           )}
-
-          {/* Ders Kategorisi (Inline Row of Buttons - Matches Test & Superprof Subject Row) */}
           <div className="relative z-20">
             <label className="text-xs font-bold text-stone-500 uppercase tracking-wider block mb-2">Ders Kategorisi</label>
             <div className="flex flex-wrap gap-1.5">
               <button
-                onClick={() => setSelectedSubject("")}
+                onClick={() => updateParams({ subjectId: "" })}
                 className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-colors ${
-                  !selectedSubject ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/15" : "bg-stone-50 text-stone-600 border border-stone-200/40 hover:bg-stone-100"
+                  !subjectId ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/15" : "bg-stone-50 text-stone-600 border border-stone-200/40 hover:bg-stone-100"
                 }`}
               >
                 Tümü
@@ -130,9 +168,9 @@ export function SearchPage() {
               {subjects.map((s) => (
                 <button
                   key={s.id}
-                  onClick={() => setSelectedSubject(s.id)}
+                  onClick={() => updateParams({ subjectId: s.id })}
                   className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-colors ${
-                    selectedSubject === s.id ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/15" : "bg-stone-50 text-stone-600 border border-stone-200/40 hover:bg-stone-100"
+                    subjectId === s.id ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/15" : "bg-stone-50 text-stone-600 border border-stone-200/40 hover:bg-stone-100"
                   }`}
                 >
                   {s.name}
@@ -140,10 +178,7 @@ export function SearchPage() {
               ))}
             </div>
           </div>
-
           <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-stone-100/60 relative z-20">
-            
-            {/* Max Saatlik Ücret Popover Pill */}
             <div className="relative">
               <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block mb-1">Max Saatlik Ücret</label>
               <button
@@ -164,7 +199,7 @@ export function SearchPage() {
                       max="1000"
                       step="50"
                       value={maxPrice}
-                      onChange={(e) => setMaxPrice(Number(e.target.value))}
+                      onChange={(e) => updateParams({ maxPrice: e.target.value })}
                       className="w-full accent-emerald-600"
                     />
                     <div className="flex justify-between text-[10px] font-bold text-stone-400 mt-1">
@@ -176,8 +211,6 @@ export function SearchPage() {
                 </div>
               )}
             </div>
-
-            {/* Min Puan Popover Pill */}
             <div className="relative">
               <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block mb-1">Min Puan</label>
               <button
@@ -195,7 +228,7 @@ export function SearchPage() {
                     {[0, 1, 2, 3, 4, 5].map((r) => (
                       <button
                         key={r}
-                        onClick={() => { setMinRating(r); setActivePopover(null); }}
+                        onClick={() => { updateParams({ minRating: String(r) }); setActivePopover(null); }}
                         className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                           minRating === r
                             ? "bg-emerald-600 text-white shadow-sm"
@@ -209,15 +242,13 @@ export function SearchPage() {
                 </div>
               )}
             </div>
-
-            {/* Sadece Online Olanlar inline toggle */}
             <div className="flex items-center gap-3 pt-4 sm:pt-0">
               <div className="flex items-center gap-3">
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     checked={onlyOnline}
-                    onChange={(e) => setOnlyOnline(e.target.checked)}
+                    onChange={(e) => updateParams({ online: e.target.checked ? "true" : "" })}
                     className="sr-only peer"
                   />
                   <div className="w-9 h-5 bg-stone-200 rounded-full peer peer-checked:bg-emerald-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
@@ -225,17 +256,16 @@ export function SearchPage() {
                 <span className="text-xs font-bold text-stone-600">Sadece Online Olanlar</span>
               </div>
             </div>
-
           </div>
         </div>
       )}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {loading ? "Yükleniyor..." : `${results.length} ilan bulundu`}
+          {loading ? "Yükleniyor..." : `${pageable.totalElements} ilan bulundu`}
         </p>
-        {selectedSubject && (
+        {(subjectId || maxPrice < 1000 || minRating > 0 || onlyOnline) && (
           <button
-            onClick={() => setSelectedSubject("")}
+            onClick={clearFilters}
             className="flex items-center gap-1 text-xs text-primary hover:underline"
           >
             <X className="w-3 h-3" />
@@ -243,7 +273,6 @@ export function SearchPage() {
           </button>
         )}
       </div>
-
       {loading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -276,37 +305,64 @@ export function SearchPage() {
             <p className="text-xs text-stone-400 font-medium">Arama kelimenizi değiştirmeyi veya filtreleri sıfırlamayı deneyebilirsiniz.</p>
           </div>
           <button
-            onClick={() => {
-              setSearchTerm("");
-              setSelectedSubject("");
-              setMaxPrice(1000);
-              setMinRating(0);
-              setOnlyOnline(false);
-            }}
+            onClick={clearFilters}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-emerald-600/10 active:scale-[0.97]"
           >
             Tüm Filtreleri Temizle
           </button>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {results.map((l) => (
-            <TutorCard
-              key={`listing-${l.id}`}
-              id={l.tutorId}
-              fullName={l.tutorName}
-              avatarUrl={l.tutorAvatar}
-              listingTitle={l.title}
-              rating={0}
-              reviewCount={0}
-              hourlyRate={l.hourlyRate}
-              experienceYears={0}
-              online={l.allowsOnline}
-              verified={false}
-              subjects={[l.subjectName]}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {results.map((l) => (
+              <TutorCard
+                key={`listing-${l.id}`}
+                id={l.tutorId}
+                fullName={l.tutorName}
+                avatarUrl={l.tutorAvatar}
+                listingTitle={l.title}
+                rating={0}
+                reviewCount={0}
+                hourlyRate={l.hourlyRate}
+                experienceYears={0}
+                online={l.allowsOnline}
+                verified={false}
+                subjects={[l.subjectName]}
+              />
+            ))}
+          </div>
+          {pageable.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 0}
+                className="p-2 rounded-xl border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              {Array.from({ length: pageable.totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => goToPage(i)}
+                  className={`min-w-[36px] h-9 rounded-xl text-xs font-bold transition-colors ${
+                    i === page
+                      ? "bg-emerald-600 text-white shadow-sm"
+                      : "border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= pageable.totalPages - 1}
+                className="p-2 rounded-xl border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

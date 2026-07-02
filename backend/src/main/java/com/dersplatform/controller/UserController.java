@@ -1,10 +1,13 @@
 package com.dersplatform.controller;
 
+import com.dersplatform.model.dto.request.ChangePasswordRequest;
 import com.dersplatform.model.dto.request.UpdateProfileRequest;
 import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,7 +29,16 @@ public class UserController {
         return ResponseEntity.ok(userService.getProfile(UUID.fromString(userDetails.getUsername())));
     }
 
+    @PutMapping("/me/password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(UUID.fromString(userDetails.getUsername()), request.getCurrentPassword(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "Şifre başarıyla değiştirildi"));
+    }
+
     @PutMapping("/me")
+    @CacheEvict(value = {"tutorDetail", "userById"}, allEntries = true)
     public ResponseEntity<UserResponse> updateProfile(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdateProfileRequest request) {
@@ -34,6 +46,7 @@ public class UserController {
     }
 
     @PutMapping("/me/avatar")
+    @CacheEvict(value = {"tutorDetail", "userById"}, allEntries = true)
     public ResponseEntity<UserResponse> updateAvatar(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody Map<String, String> body) {
@@ -48,6 +61,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @Cacheable(value = "userById", key = "#id", unless = "#result.body == null")
     public ResponseEntity<UserResponse> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }

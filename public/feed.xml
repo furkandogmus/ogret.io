@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>öğret.io Blog</title>
+    <link>https://ogret.io/blog</link>
+    <description>Özel ders, eğitim ve öğrenme üzerine faydalı içerikler</description>
+    <language>tr</language>
+    <lastBuildDate>Sat, 15 Mar 2026 00:00:00 +0300</lastBuildDate>
+    <atom:link href="https://ogret.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>Online Özel Dersin Avantajları: Neden Dijital Eğitim Geleceğimiz?</title>
+      <link>https://ogret.io/blog/online-ozel-dersin-avantajlari</link>
+      <guid>https://ogret.io/blog/online-ozel-dersin-avantajlari</guid>
+      <pubDate>Sun, 15 Mar 2026 00:00:00 +0300</pubDate>
+      <description>Online özel dersin öğrencilere ve velilere sağladığı avantajlar: esneklik, erişilebilirlik, ve kişiselleştirilmiş öğrenme deneyimi.</description>
+    </item>
+    <item>
+      <title>Sınav Başarısı İçin Etkili Ders Çalışma Stratejileri</title>
+      <link>https://ogret.io/blog/sinav-basarisi-icin-ders-calisma-stratejileri</link>
+      <guid>https://ogret.io/blog/sinav-basarisi-icin-ders-calisma-stratejileri</guid>
+      <pubDate>Tue, 10 Mar 2026 00:00:00 +0300</pubDate>
+      <description>LGS, YKS ve diğer sınavlara hazırlanan öğrenciler için kanıtlanmış ders çalışma teknikleri ve zaman yönetimi ipuçları.</description>
+    </item>
+    <item>
+      <title>Yabancı Dil Öğrenmenin En Etkili Yolları</title>
+      <link>https://ogret.io/blog/yabanci-dil-ogrenmenin-en-etkili-yollari</link>
+      <guid>https://ogret.io/blog/yabanci-dil-ogrenmenin-en-etkili-yollari</guid>
+      <pubDate>Thu, 05 Mar 2026 00:00:00 +0300</pubDate>
+      <description>İngilizce, Almanca ve diğer yabancı dilleri öğrenmek için bilimsel olarak kanıtlanmış yöntemler.</description>
+    </item>
+    <item>
+      <title>Çocuğunuz İçin Doğru Özel Ders Öğretmenini Seçme Rehberi</title>
+      <link>https://ogret.io/blog/cocugunuz-icin-dogru-ozel-ders-ogretmenini-secme-rehberi</link>
+      <guid>https://ogret.io/blog/cocugunuz-icin-dogru-ozel-ders-ogretmenini-secme-rehberi</guid>
+      <pubDate>Sat, 28 Feb 2026 00:00:00 +0300</pubDate>
+      <description>Çocuğunuz için en uygun özel ders öğretmenini seçerken dikkat etmeniz gereken kriterler.</description>
+    </item>
+  </channel>
+</rss>

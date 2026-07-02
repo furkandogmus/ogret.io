@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams, Link } from "react-router";
 import {
   Save, ArrowLeft, Camera, Check, X, Zap, ShieldCheck,
-  GraduationCap, MapPin, Lock, Search, Trash2, CheckCircle
+  GraduationCap, MapPin, Lock, Search, Trash2, CheckCircle, ChevronRight
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../providers/AuthProvider";
+import { toast } from "sonner";
 import { userApi, subjectApi, tutorApi, fileApi } from "../api/services";
+import { JsonLd } from "../components/shared/JsonLd";
 import type { SubjectResponse } from "../api/services";
 import { Avatar } from "../components/shared/Avatar";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "../components/ui/form";
@@ -139,6 +141,7 @@ export function ProfileEditPage() {
         education: user?.education || "",
         experienceYears: user?.experienceYears || undefined,
         hourlyRate: user?.hourlyRate || undefined,
+        phone: phone || undefined,
       });
       setUser(data);
       setSaved(true);
@@ -198,31 +201,48 @@ export function ProfileEditPage() {
     setAvailDays((prev) => ({ ...prev, [day]: !prev[day] }));
   };
 
-  const handleChangePassword = (e: React.FormEvent) => {
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordSuccess("");
+    setError("");
     if (!oldPassword || !newPassword || !confirmPassword) {
-      alert("Lütfen tüm alanları doldurun.");
+      toast.error("Lütfen tüm alanları doldurun.");
       return;
     }
     if (newPassword !== confirmPassword) {
-      alert("Yeni şifreler eşleşmiyor.");
+      toast.error("Yeni şifreler eşleşmiyor.");
       return;
     }
-    // Simulate password update
-    setPasswordSuccess("Şifreniz başarıyla güncellendi ✓");
-    setOldPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setTimeout(() => {
-      setShowPasswordForm(false);
-      setPasswordSuccess("");
-    }, 2000);
+    try {
+      await userApi.changePassword(oldPassword, newPassword);
+      setPasswordSuccess("Şifreniz başarıyla güncellendi ✓");
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => {
+        setShowPasswordForm(false);
+        setPasswordSuccess("");
+      }, 2000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Şifre değiştirilirken hata oluştu");
+    }
   };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Back Button & Navigation header */}
+      <nav className="flex items-center gap-1.5 text-xs text-stone-400 font-medium mb-4" aria-label="Sayfa yolu">
+        <Link to="/" className="hover:text-stone-600 transition-colors">Ana Sayfa</Link>
+        <ChevronRight className="w-3 h-3" aria-hidden="true" />
+        <span className="text-stone-700 font-semibold" aria-current="page">Profil Düzenle</span>
+      </nav>
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ogret.io/" },
+          { "@type": "ListItem", position: 2, name: "Profil Düzenle", item: "https://ogret.io/profil/duzenle" },
+        ],
+      }} />
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => navigate(-1)}
@@ -298,7 +318,7 @@ export function ProfileEditPage() {
           <div className="space-y-6">
             {/* Genel Bilgiler 😁 */}
             <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Genel bilgiler 😁</h3>
+              <h3 className="font-extrabold text-stone-900 text-base">Genel Bilgiler</h3>
               
               <div className="space-y-3 text-left">
                 <div>
@@ -345,7 +365,7 @@ export function ProfileEditPage() {
                     disabled
                     className="w-full bg-stone-50/30 rounded-xl px-4 py-2.5 pr-10 text-xs font-bold text-stone-500 outline-none border border-stone-200/40 cursor-not-allowed"
                   />
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-[#4CD084] text-white p-0.5 rounded-full">
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-emerald-500 text-white p-0.5 rounded-full">
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </div>
                 </div>
@@ -360,7 +380,7 @@ export function ProfileEditPage() {
                     placeholder="Telefon"
                     className="w-full bg-white rounded-xl pl-14 pr-10 py-2.5 text-xs font-bold text-stone-700 outline-none border border-stone-200/80 focus:border-rose-450 transition-colors"
                   />
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-[#4CD084] text-white p-0.5 rounded-full">
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-emerald-500 text-white p-0.5 rounded-full">
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </div>
                 </div>
@@ -380,25 +400,25 @@ export function ProfileEditPage() {
 
             {/* Diploma 📜 */}
             <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Diploma 📜</h3>
+              <h3 className="font-extrabold text-stone-900 text-base">Diploma</h3>
               
               <div className="flex flex-col items-center justify-center p-3">
                 <div className="relative w-24 h-24 bg-stone-50 rounded-full flex items-center justify-center border border-stone-100/60 shadow-inner">
                   <GraduationCap className="w-10 h-10 text-stone-400" />
-                  <div className="absolute bottom-0 right-0 bg-[#4CD084] text-white p-1 rounded-full border-4 border-white">
+                  <div className="absolute bottom-0 right-0 bg-emerald-500 text-white p-1 rounded-full border-4 border-white">
                     <Check className="w-3 h-3 stroke-[3]" />
                   </div>
                 </div>
               </div>
 
-              <button className="w-full bg-[#4CD084] text-white py-3 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-default">
+              <button className="w-full bg-emerald-500 text-white py-3 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-default">
                 Diploma onaylandı
               </button>
             </div>
 
             {/* Bildirimler 🗣️ */}
             <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-5 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Bildirimler 🗣️</h3>
+              <h3 className="font-extrabold text-stone-900 text-base">Bildirimler</h3>
               
               <div className="space-y-4 text-left">
                 <div>
@@ -406,10 +426,10 @@ export function ProfileEditPage() {
                   <button
                     onClick={() => setSmsLessons(!smsLessons)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
-                      smsLessons ? "bg-[#4CD084] text-white shadow-sm" : "bg-stone-50 text-stone-400 border border-stone-200/60"
+                      smsLessons ? "bg-emerald-500 text-white shadow-sm" : "bg-stone-50 text-stone-400 border border-stone-200/60"
                     }`}
                   >
-                    <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${smsLessons ? "border-white bg-white text-[#4CD084]" : "border-stone-300 bg-white"}`}>
+                    <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${smsLessons ? "border-white bg-white text-emerald-500" : "border-stone-300 bg-white"}`}>
                       {smsLessons && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                     </div>
                     <span className="text-xs font-bold">Ders talepleri</span>
@@ -429,10 +449,10 @@ export function ProfileEditPage() {
                         key={idx}
                         onClick={() => item.setState(!item.state)}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
-                          item.state ? "bg-[#4CD084] text-white shadow-sm" : "bg-stone-50 text-stone-400 border border-stone-200/60"
+                          item.state ? "bg-emerald-500 text-white shadow-sm" : "bg-stone-50 text-stone-400 border border-stone-200/60"
                         }`}
                       >
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${item.state ? "border-white bg-white text-[#4CD084]" : "border-stone-300 bg-white"}`}>
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${item.state ? "border-white bg-white text-emerald-500" : "border-stone-300 bg-white"}`}>
                           {item.state && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                         </div>
                         <span className="text-xs font-bold">{item.label}</span>
@@ -448,7 +468,7 @@ export function ProfileEditPage() {
           <div className="space-y-6">
             {/* Posta adresi 📍 */}
             <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Posta adresi 📍</h3>
+              <h3 className="font-extrabold text-stone-900 text-base">Posta Adresi</h3>
               
               <div className="space-y-3">
                 <input
@@ -484,25 +504,25 @@ export function ProfileEditPage() {
 
             {/* Kimlik 🪪 */}
             <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Kimlik 🪪</h3>
+              <h3 className="font-extrabold text-stone-900 text-base">Kimlik</h3>
               
               <div className="flex flex-col items-center justify-center p-3">
                 <div className="relative w-24 h-24 bg-stone-50 rounded-full flex items-center justify-center border border-stone-100/60 shadow-inner">
                   <ShieldCheck className="w-10 h-10 text-stone-400" />
-                  <div className="absolute bottom-0 right-0 bg-[#4CD084] text-white p-1 rounded-full border-4 border-white">
+                  <div className="absolute bottom-0 right-0 bg-emerald-500 text-white p-1 rounded-full border-4 border-white">
                     <Check className="w-3 h-3 stroke-[3]" />
                   </div>
                 </div>
               </div>
 
-              <button className="w-full bg-[#4CD084] text-white py-3 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-default">
+              <button className="w-full bg-emerald-500 text-white py-3 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-default">
                 Kimlik onaylandı
               </button>
             </div>
 
             {/* Hesabımı sil 😲 */}
             <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Hesabımı sil 😲</h3>
+              <h3 className="font-extrabold text-stone-900 text-base">Hesabımı Sil</h3>
               
               <div className="space-y-4 text-left">
                 <p className="text-xs text-stone-500 font-semibold leading-relaxed">
@@ -521,14 +541,11 @@ export function ProfileEditPage() {
                   <span className="text-xs font-bold">Hesabımı sil</span>
                 </button>
 
+                {/* TODO: Hesap silme backend'e eklenecek - şimdilik sadece uyarı gösteriliyor */}
                 <button
                   disabled={!deleteChecked}
                   onClick={() => {
-                    if (window.confirm("Hesabınızı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
-                      alert("Hesabınız silindi.");
-                      setUser(null);
-                      navigate("/");
-                    }
+                    toast.error("Hesap silme işlemi şu an kullanılamıyor. Lütfen destek ekibimizle iletişime geçin.");
                   }}
                   className={`w-full py-3.5 rounded-2xl font-bold text-xs transition-all ${
                     deleteChecked
@@ -546,7 +563,7 @@ export function ProfileEditPage() {
           <div className="space-y-6">
             {/* Profil Gücü ⚡ */}
             <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-5 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Profil gücü ⚡</h3>
+              <h3 className="font-extrabold text-stone-900 text-base">Profil Gücü</h3>
               
               <div className="relative w-28 h-28 mx-auto flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90">
@@ -585,7 +602,7 @@ export function ProfileEditPage() {
 
             {/* Profil resmi 📷 */}
             <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Profil resmi 📷</h3>
+              <h3 className="font-extrabold text-stone-900 text-base">Profil Resmi</h3>
               
               <div className="flex justify-center p-2">
                 <div className="relative">
@@ -604,7 +621,7 @@ export function ProfileEditPage() {
 
             {/* Şifremi değiştir 🔒 */}
             <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Şifremi değiştir 🔒</h3>
+              <h3 className="font-extrabold text-stone-900 text-base">Şifremi Değiştir</h3>
               
               {!showPasswordForm ? (
                 <div className="pt-2">

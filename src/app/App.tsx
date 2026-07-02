@@ -4,40 +4,36 @@ import { ModalProvider } from "./providers/ModalProvider";
 import { AuthProvider } from "./providers/AuthProvider";
 import { NotificationProvider } from "./providers/NotificationProvider";
 import { RootLayout } from "./components/layout/RootLayout";
+import { AuthGuard } from "./components/shared/AuthGuard";
 import { CookieConsent } from "./components/shared/CookieConsent";
 
-const LandingPage = lazy(() => import("./pages/LandingPage"));
-const SearchPage = lazy(() => import("./pages/SearchPage"));
-const TutorProfilePage = lazy(() => import("./pages/TutorProfilePage"));
-const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
-const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
-const MessagesPage = lazy(() => import("./pages/MessagesPage"));
-const LoginPage = lazy(() => import("./pages/LoginPage"));
-const RegisterPage = lazy(() => import("./pages/RegisterPage"));
-const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
-const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const SubscriptionPage = lazy(() => import("./pages/SubscriptionPage"));
-const VerificationPage = lazy(() => import("./pages/VerificationPage"));
-const ProfileEditPage = lazy(() => import("./pages/ProfileEditPage"));
-const WriteReferencePage = lazy(() => import("./pages/WriteReferencePage"));
-const CreateListingWizardPage = lazy(() => import("./pages/CreateListingWizardPage"));
-const BlogListPage = lazy(() => import("./pages/BlogListPage"));
-const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
-const LegalPage = lazy(() => import("./pages/LegalPage"));
-const DisputesPage = lazy(() => import("./pages/DisputesPage"));
-const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
-
-function PageLoader() {
-  return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">Yükleniyor...</p>
-      </div>
-    </div>
-  );
-}
+const LandingPage = lazy(() => import("./pages/LandingPage").then(m => ({ default: m.LandingPage })));
+const SearchPage = lazy(() => import("./pages/SearchPage").then(m => ({ default: m.SearchPage })));
+const TutorProfilePage = lazy(() => import("./pages/TutorProfilePage").then(m => ({ default: m.TutorProfilePage })));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard").then(m => ({ default: m.StudentDashboard })));
+const TutorDashboard = lazy(() => import("./pages/TutorDashboard").then(m => ({ default: m.TutorDashboard })));
+const MessagesPage = lazy(() => import("./pages/MessagesPage").then(m => ({ default: m.MessagesPage })));
+const LoginPage = lazy(() => import("./pages/LoginPage").then(m => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import("./pages/RegisterPage").then(m => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage").then(m => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage").then(m => ({ default: m.ResetPasswordPage })));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
+const SubscriptionPage = lazy(() => import("./pages/SubscriptionPage").then(m => ({ default: m.SubscriptionPage })));
+const VerificationPage = lazy(() => import("./pages/VerificationPage").then(m => ({ default: m.VerificationPage })));
+const EmailVerificationPage = lazy(() => import("./pages/EmailVerificationPage").then(m => ({ default: m.EmailVerificationPage })));
+const ProfileEditPage = lazy(() => import("./pages/ProfileEditPage").then(m => ({ default: m.ProfileEditPage })));
+const WriteReferencePage = lazy(() => import("./pages/WriteReferencePage").then(m => ({ default: m.WriteReferencePage })));
+const CreateListingWizardPage = lazy(() => import("./pages/CreateListingWizardPage").then(m => ({ default: m.CreateListingWizardPage })));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
+const FaqPage = lazy(() => import("./pages/FaqPage").then(m => ({ default: m.FaqPage })));
+const AboutPage = lazy(() => import("./pages/AboutPage").then(m => ({ default: m.AboutPage })));
+const ContactPage = lazy(() => import("./pages/ContactPage").then(m => ({ default: m.ContactPage })));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage").then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import("./pages/TermsPage").then(m => ({ default: m.TermsPage })));
+const BlogIndexPage = lazy(() => import("./pages/blog/BlogIndexPage").then(m => ({ default: m.BlogIndexPage })));
+const BlogPostPage = lazy(() => import("./pages/blog/BlogPostPage").then(m => ({ default: m.BlogPostPage })));
+const DisputesPage = lazy(() => import("./pages/DisputesPage").then(m => ({ default: m.DisputesPage })));
+const LegalPage = lazy(() => import("./pages/LegalPage").then(m => ({ default: m.LegalPage })));
 
 export default function App() {
   return (
@@ -45,7 +41,12 @@ export default function App() {
       <AuthProvider>
         <NotificationProvider>
           <ModalProvider>
-          <Suspense fallback={<PageLoader />}>
+          <Suspense fallback={
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+              <div style={{ width: 40, height: 40, border: "3px solid #e5e7eb", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+          }>
           <CookieConsent />
           <Routes>
             <Route path="/giris" element={<LoginPage />} />
@@ -58,18 +59,25 @@ export default function App() {
               <Route path="/ogretmen/:id" element={<TutorProfilePage />} />
               <Route path="/ogretmen/:id/referans-yaz" element={<WriteReferencePage />} />
               <Route path="/tutors/:id/recommend" element={<WriteReferencePage />} />
-              <Route path="/ogretmen/ilan-olustur" element={<CreateListingWizardPage />} />
-              <Route path="/tutors/create-listing" element={<CreateListingWizardPage />} />
-              <Route path="/ogrenci-panel" element={<StudentDashboard />} />
-              <Route path="/ogretmen-panel" element={<TutorDashboard />} />
-              <Route path="/mesajlar" element={<MessagesPage />} />
-              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/ogretmen/ilan-olustur" element={<AuthGuard role="TUTOR"><CreateListingWizardPage /></AuthGuard>} />
+              <Route path="/tutors/create-listing" element={<AuthGuard role="TUTOR"><CreateListingWizardPage /></AuthGuard>} />
+              <Route path="/ogrenci-panel" element={<AuthGuard><StudentDashboard /></AuthGuard>} />
+              <Route path="/ogretmen-panel" element={<AuthGuard><TutorDashboard /></AuthGuard>} />
+              <Route path="/mesajlar" element={<AuthGuard><MessagesPage /></AuthGuard>} />
+              <Route path="/admin" element={<AuthGuard role="ADMIN"><AdminDashboard /></AuthGuard>} />
               <Route path="/abonelik" element={<SubscriptionPage />} />
-              <Route path="/dogrulama" element={<VerificationPage />} />
-              <Route path="/profil/duzenle" element={<ProfileEditPage />} />
-              <Route path="/blog" element={<BlogListPage />} />
+              <Route path="/email-dogrula" element={<EmailVerificationPage />} />
+              <Route path="/blog" element={<BlogIndexPage />} />
               <Route path="/blog/:slug" element={<BlogPostPage />} />
-              <Route path="/legal/:slug" element={<LegalPage />} />
+              <Route path="/sikca-sorulan-sorular" element={<FaqPage />} />
+              <Route path="/hakkimizda" element={<AboutPage />} />
+              <Route path="/iletisim" element={<ContactPage />} />
+              <Route path="/gizlilik" element={<PrivacyPage />} />
+              <Route path="/kullanim-kosullari" element={<TermsPage />} />
+              <Route path="/anlasmazlik" element={<DisputesPage />} />
+              <Route path="/yasal" element={<LegalPage />} />
+              <Route path="/dogrulama" element={<VerificationPage />} />
+              <Route path="/profil/duzenle" element={<AuthGuard><ProfileEditPage /></AuthGuard>} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>

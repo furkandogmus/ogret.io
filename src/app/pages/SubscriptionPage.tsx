@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import { Check, Zap, Crown, Star } from "lucide-react";
 import { useAuth } from "../providers/AuthProvider";
 import { subscriptionApi } from "../api/services";
 import type { SubscriptionResponse } from "../api/services";
+import { useSeo } from "../hooks/useSeo";
 
 interface Plan {
   id: string;
@@ -15,6 +17,10 @@ interface Plan {
 const PLAN_ICONS = [Zap, Crown, Star];
 
 export function SubscriptionPage() {
+  useSeo({
+    title: "Abonelik Planları",
+    description: "Öğretmenler için abonelik planları. Profilinizi öne çıkarın, daha fazla öğrenciye ulaşın.",
+  });
   const { isTutor } = useAuth();
   const navigate = useNavigate();
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -47,8 +53,9 @@ export function SubscriptionPage() {
     try {
       const { data } = await subscriptionApi.subscribe(planType, "havale");
       setCurrent(data);
+      toast.success(`${planType} planına başarıyla abone olundu!`);
     } catch {
-      console.error("Abone olunamadi");
+      toast.error("Abone olunamadı. Lütfen tekrar deneyin.");
     }
   };
 
@@ -56,8 +63,9 @@ export function SubscriptionPage() {
     try {
       await subscriptionApi.cancel();
       setCurrent(null);
+      toast.success("Aboneliğiniz iptal edildi.");
     } catch {
-      console.error("Abonelik iptal edilemedi");
+      toast.error("Abonelik iptal edilemedi. Lütfen tekrar deneyin.");
     }
   };
 

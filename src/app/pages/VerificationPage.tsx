@@ -3,8 +3,13 @@ import { useNavigate } from "react-router";
 import { Shield, Upload, CheckCircle, AlertCircle } from "lucide-react";
 import { useAuth } from "../providers/AuthProvider";
 import { verificationApi, fileApi } from "../api/services";
+import { useSeo } from "../hooks/useSeo";
 
 export function VerificationPage() {
+  useSeo({
+    title: "Kimlik Doğrulama",
+    description: "Kimlik belgenizi yükleyerek güvenilirliğinizi artırın. Onaylanan öğretmenler profilinde rozet alır.",
+  });
   const { user, isTutor } = useAuth();
   const navigate = useNavigate();
   const [documentType, setDocumentType] = useState("IDENTITY");
@@ -12,6 +17,7 @@ export function VerificationPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
   if (!isTutor) {
     return (
@@ -25,14 +31,14 @@ export function VerificationPage() {
   const handleSubmit = async () => {
     if (!selectedFile) return;
     setSubmitting(true);
+    setError("");
     try {
-      const uploadRes = await fileApi.upload(selectedFile, false); // Upload as private document
+      const uploadRes = await fileApi.upload(selectedFile, false);
       const documentUrl = uploadRes.data.url;
       await verificationApi.submit({ documentType, documentUrl });
       setSubmitted(true);
-    } catch (error) {
-      console.error("Verification submit failed", error);
-      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Doğrulama gönderilirken hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setSubmitting(false);
     }
@@ -131,6 +137,13 @@ export function VerificationPage() {
             </div>
           )}
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
 
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />

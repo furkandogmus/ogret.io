@@ -6,6 +6,7 @@ import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.model.entity.User;
 import com.dersplatform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final PasswordEncoder passwordEncoder;
 
     public UserResponse getProfile(UUID userId) {
         User user = userRepository.findById(userId)
@@ -36,6 +38,7 @@ public class UserService {
         if (request.getEducation() != null) user.setEducation(request.getEducation());
         if (request.getExperienceYears() != null) user.setExperienceYears(request.getExperienceYears());
         if (request.getHourlyRate() != null) user.setHourlyRate(request.getHourlyRate());
+        if (request.getPhone() != null) user.setPhone(request.getPhone());
 
         user.setProfileComplete(true);
         user = userRepository.save(user);
@@ -56,6 +59,19 @@ public class UserService {
         user.setAvatarUrl(avatarUrl);
         user = userRepository.save(user);
         return UserResponse.fromEntity(user);
+    }
+
+    @Transactional
+    public void changePassword(UUID userId, String currentPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
+
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw ApiException.badRequest("Mevcut şifre yanlış");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 
     public UserResponse getUserById(UUID id) {

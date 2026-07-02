@@ -4,6 +4,7 @@ import { BookOpen, Mail, Lock, Phone, User, Eye, EyeOff, AlertCircle, Graduation
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../providers/AuthProvider";
+import { useSeo } from "../hooks/useSeo";
 import { registerSchema, type RegisterForm } from "../lib/validation";
 import { Form, FormField, FormItem, FormControl, FormMessage } from "../components/ui/form";
 import { FloatingInput } from "../components/ui/floating-input";
@@ -16,6 +17,10 @@ function formatPhone(value: string): string {
 }
 
 export function RegisterPage() {
+  useSeo({
+    title: "Kayıt Ol",
+    description: "öğret.io'ya ücretsiz kayıt olun. Özel ders almak veya öğretmen olarak ders vermek için hemen hesap oluşturun.",
+  });
   const { register } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -55,6 +60,7 @@ export function RegisterPage() {
   const role = form.watch("role");
 
   return (
+    <main>
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
@@ -222,5 +228,6 @@ export function RegisterPage() {
         </p>
       </div>
     </div>
+    </main>
   );
 }
