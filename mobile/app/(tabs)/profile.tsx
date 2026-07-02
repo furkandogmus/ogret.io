@@ -5,7 +5,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Avatar } from "../../src/components/Avatar";
 import { AvatarPicker } from "../../src/components/AvatarPicker";
-import { SwipeableTabContent } from "../../src/components/SwipeableTabContent";
 import { LessonCard } from "../../src/components/LessonCard";
 import { EmptyState } from "../../src/components/EmptyState";
 import { useAuth } from "../../src/providers/AuthProvider";
@@ -123,7 +122,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SwipeableTabContent><ScrollView
+    <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
       <View style={{ paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.md }}>
@@ -246,6 +245,6 @@ export default function ProfileScreen() {
           <Text style={{ color: "#fff", fontSize: 14, marginTop: 20 }}>Kapatmak için tıkla</Text>
         </TouchableOpacity>
       </Modal>
-    </ScrollView></SwipeableTabContent>
+    </ScrollView>
   );
 }
