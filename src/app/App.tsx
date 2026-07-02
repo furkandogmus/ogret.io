@@ -16,10 +16,12 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { SubscriptionPage } from "./pages/SubscriptionPage";
 import { VerificationPage } from "./pages/VerificationPage";
+import { EmailVerificationPage } from "./pages/EmailVerificationPage";
 import { ProfileEditPage } from "./pages/ProfileEditPage";
 import { WriteReferencePage } from "./pages/WriteReferencePage";
 import { CreateListingWizardPage } from "./pages/CreateListingWizardPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { AuthGuard } from "./components/shared/AuthGuard";
 
 export default function App() {
   return (
@@ -38,15 +40,16 @@ export default function App() {
               <Route path="/ogretmen/:id" element={<TutorProfilePage />} />
               <Route path="/ogretmen/:id/referans-yaz" element={<WriteReferencePage />} />
               <Route path="/tutors/:id/recommend" element={<WriteReferencePage />} />
-              <Route path="/ogretmen/ilan-olustur" element={<CreateListingWizardPage />} />
-              <Route path="/tutors/create-listing" element={<CreateListingWizardPage />} />
-              <Route path="/ogrenci-panel" element={<StudentDashboard />} />
-              <Route path="/ogretmen-panel" element={<TutorDashboard />} />
-              <Route path="/mesajlar" element={<MessagesPage />} />
-              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/ogretmen/ilan-olustur" element={<AuthGuard role="TUTOR"><CreateListingWizardPage /></AuthGuard>} />
+              <Route path="/tutors/create-listing" element={<AuthGuard role="TUTOR"><CreateListingWizardPage /></AuthGuard>} />
+              <Route path="/ogrenci-panel" element={<AuthGuard><StudentDashboard /></AuthGuard>} />
+              <Route path="/ogretmen-panel" element={<AuthGuard><TutorDashboard /></AuthGuard>} />
+              <Route path="/mesajlar" element={<AuthGuard><MessagesPage /></AuthGuard>} />
+              <Route path="/admin" element={<AuthGuard role="ADMIN"><AdminDashboard /></AuthGuard>} />
               <Route path="/abonelik" element={<SubscriptionPage />} />
+              <Route path="/email-dogrula" element={<EmailVerificationPage />} />
               <Route path="/dogrulama" element={<VerificationPage />} />
-              <Route path="/profil/duzenle" element={<ProfileEditPage />} />
+              <Route path="/profil/duzenle" element={<AuthGuard><ProfileEditPage /></AuthGuard>} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>

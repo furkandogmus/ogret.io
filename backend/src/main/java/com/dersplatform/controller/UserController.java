@@ -1,5 +1,6 @@
 package com.dersplatform.controller;
 
+import com.dersplatform.model.dto.request.ChangePasswordRequest;
 import com.dersplatform.model.dto.request.UpdateProfileRequest;
 import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.service.UserService;
@@ -24,6 +25,14 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(userService.getProfile(UUID.fromString(userDetails.getUsername())));
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(UUID.fromString(userDetails.getUsername()), request.getCurrentPassword(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "Şifre başarıyla değiştirildi"));
     }
 
     @PutMapping("/me")

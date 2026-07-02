@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import { Check, Zap, Crown, Star } from "lucide-react";
 import { useAuth } from "../providers/AuthProvider";
 import { subscriptionApi } from "../api/services";
@@ -47,8 +48,9 @@ export function SubscriptionPage() {
     try {
       const { data } = await subscriptionApi.subscribe(planType, "havale");
       setCurrent(data);
+      toast.success(`${planType} planına başarıyla abone olundu!`);
     } catch {
-      console.error("Abone olunamadi");
+      toast.error("Abone olunamadı. Lütfen tekrar deneyin.");
     }
   };
 
@@ -56,8 +58,9 @@ export function SubscriptionPage() {
     try {
       await subscriptionApi.cancel();
       setCurrent(null);
+      toast.success("Aboneliğiniz iptal edildi.");
     } catch {
-      console.error("Abonelik iptal edilemedi");
+      toast.error("Abonelik iptal edilemedi. Lütfen tekrar deneyin.");
     }
   };
 

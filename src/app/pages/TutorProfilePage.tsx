@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, Link } from "react-router";
 import {
   ChevronLeft, CheckCircle, Shield, Star, GraduationCap, Award, Check,
-  Clock, MapPin, MessageSquare, BookOpen, Calendar
+  Clock, MapPin, MessageSquare, BookOpen, Calendar, ChevronRight
 } from "lucide-react";
 import { tutorApi, reviewApi, referenceApi, listingApi } from "../api/services";
 import type { UserResponse, ReviewResponse, ReferenceResponse, ListingResponse } from "../api/services";
@@ -102,11 +102,22 @@ export function TutorProfilePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      <nav className="flex items-center gap-1.5 text-xs text-stone-400 font-medium mb-4">
+        <Link to="/" className="hover:text-stone-600 transition-colors">Ana Sayfa</Link>
+        <ChevronRight className="w-3 h-3" />
+        <Link to="/arama" className="hover:text-stone-600 transition-colors">Öğretmenler</Link>
+        {tutor && (
+          <>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-stone-700 font-semibold">{tutor.fullName}</span>
+          </>
+        )}
+      </nav>
       <button
-        onClick={() => navigate("/arama")}
+        onClick={() => navigate(-1)}
         className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 mb-6 transition-colors font-semibold"
       >
-        <ChevronLeft className="w-4 h-4" /> Arama Sonuçlarına Dön
+        <ChevronLeft className="w-4 h-4" /> Geri
       </button>
 
       {/* Main Two-Column Grid */}

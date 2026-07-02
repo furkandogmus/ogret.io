@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import { toast } from "sonner";
 import {
   Search, ArrowRight, Star, BookOpen, Calculator, Globe, Code2, Music, GraduationCap, Zap,
@@ -252,9 +252,13 @@ export function LandingPage() {
             ].map(({ heading, links }) => (
               <div key={heading}>
                 <h4 className="text-white font-medium mb-4 text-xs uppercase tracking-wider">{heading}</h4>
-                {links.map((l) => (
-                  <div key={l} className="py-1.5 hover:text-white cursor-pointer transition-colors">{l}</div>
-                ))}
+                {links.map((l) => {
+                  // TODO: Sayfa yönlendirmeleri ilgili sayfalar oluşturulduğunda güncellenecek
+                  const href = `/${l.toLowerCase().replace(/[\s/]+/g, '-').replace(/[^a-z0-9-]/g, '')}`;
+                  return (
+                    <Link key={l} to={href} className="block py-1.5 hover:text-white transition-colors">{l}</Link>
+                  );
+                })}
               </div>
             ))}
           </div>
