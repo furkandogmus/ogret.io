@@ -30,6 +30,7 @@ export default function MessagesScreen() {
   const toast = useToast();
 
   const buildConversations = useCallback(async () => {
+    if (!me) { setLoading(false); return; }
     try {
       const { data: allMessages } = await messageApi.getUnread();
       const grouped = new Map<string, { messages: Message[]; lastMessage: Message }>();
