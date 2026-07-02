@@ -33,7 +33,7 @@ export default function MessagesScreen() {
     if (!me) { setLoading(false); return; }
     try {
       const [allRes, unreadRes] = await Promise.all([
-        messageApi.getAll(),
+        messageApi.getAll().catch(() => ({ data: [] })),
         messageApi.getUnread(),
       ]);
       const allMessages = Array.isArray(allRes.data) ? allRes.data : [];
