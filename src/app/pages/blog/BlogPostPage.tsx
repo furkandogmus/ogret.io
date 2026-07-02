@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router";
 import { Calendar, Clock, ArrowLeft, BookOpen } from "lucide-react";
 import { useSeo } from "../../hooks/useSeo";
 import { JsonLd } from "../../components/shared/JsonLd";
+import { BlogIllustration } from "../../components/shared/BlogIllustration";
 import { getBlogPost, blogPosts } from "./blogData";
 
 export function BlogPostPage() {
@@ -50,6 +51,10 @@ export function BlogPostPage() {
             {post.readingTime}
           </span>
         </div>
+
+        {post.image && (
+          <BlogIllustration slug={post.image} className="w-full h-52 rounded-2xl mb-6" />
+        )}
 
         <h1 className="text-2xl md:text-3xl font-black text-stone-900 tracking-tight mb-6 leading-tight">
           {post.title}

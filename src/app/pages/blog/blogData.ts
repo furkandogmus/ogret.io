@@ -5,6 +5,7 @@ export interface BlogPost {
   content: string[];
   date: string;
   readingTime: string;
+  image?: string;
 }
 
 export const blogPosts: BlogPost[] = [
@@ -13,6 +14,7 @@ export const blogPosts: BlogPost[] = [
     title: "Online Özel Dersin Avantajları: Neden Dijital Eğitim Geleceğimiz?",
     description: "Online özel dersin öğrencilere ve velilere sağladığı avantajlar: esneklik, erişilebilirlik, ve kişiselleştirilmiş öğrenme deneyimi.",
     date: "2026-03-15",
+    image: "online-ozel-dersin-avantajlari",
     readingTime: "4 dk okuma",
     content: [
       "Son yıllarda dijital eğitim platformlarının yükselişiyle birlikte online özel ders, geleneksel yüz yüze eğitime güçlü bir alternatif haline geldi. Peki online özel dersin bu kadar popüler olmasının ardındaki sebepler neler?",
@@ -28,6 +30,7 @@ export const blogPosts: BlogPost[] = [
     title: "Sınav Başarısı İçin Etkili Ders Çalışma Stratejileri",
     description: "LGS, YKS ve diğer sınavlara hazırlanan öğrenciler için kanıtlanmış ders çalışma teknikleri ve zaman yönetimi ipuçları.",
     date: "2026-03-10",
+    image: "sinav-basarisi-icin-ders-calisma-stratejileri",
     readingTime: "5 dk okuma",
     content: [
       "Sınav dönemi, öğrencilerin en çok zorlandığı ama aynı zamanda en kritik süreçlerden biridir. Doğru stratejilerle çalışmak, başarıyı doğrudan etkiler. İşte kanıtlanmış çalışma teknikleri:",
@@ -43,6 +46,7 @@ export const blogPosts: BlogPost[] = [
     title: "Yabancı Dil Öğrenmenin En Etkili Yolları",
     description: "İngilizce, Almanca ve diğer yabancı dilleri öğrenmek için bilimsel olarak kanıtlanmış yöntemler ve pratik ipuçları.",
     date: "2026-03-05",
+    image: "yabanci-dil-ogrenmenin-en-etkili-yollari",
     readingTime: "4 dk okuma",
     content: [
       "Yabancı dil öğrenmek günümüz dünyasında bir lüks değil, ihtiyaç haline geldi. Peki en etkili dil öğrenme yöntemleri neler? Gelin bilimsel araştırmaların ışığında bu soruyu cevaplayalım.",
@@ -58,6 +62,7 @@ export const blogPosts: BlogPost[] = [
     title: "Çocuğunuz İçin Doğru Özel Ders Öğretmenini Seçme Rehberi",
     description: "Çocuğunuz için en uygun özel ders öğretmenini seçerken dikkat etmeniz gereken kriterler ve ipuçları.",
     date: "2026-02-28",
+    image: "cocugunuz-icin-dogru-ozel-ders-ogretmenini-secme-rehberi",
     readingTime: "5 dk okuma",
     content: [
       "Çocuğunuz için doğru özel ders öğretmenini bulmak, eğitim hayatında büyük fark yaratabilir. Peki iyi bir özel ders öğretmenini nasıl seçmelisiniz? İşte dikkat etmeniz gereken noktalar:",

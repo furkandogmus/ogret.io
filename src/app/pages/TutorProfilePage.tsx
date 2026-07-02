@@ -50,12 +50,8 @@ export function TutorProfilePage() {
         setListings(data);
         if (data.length > 0) setSelectedListing(data[0]);
       }),
+      tutorApi.getAvailability(id).then(({ data }) => setAvailability(data)),
     ]).finally(() => setLoading(false));
-
-    fetch(`/api/v1/tutors/${id}/availability`)
-      .then((r) => r.json())
-      .then(setAvailability)
-      .catch(() => console.error("Uygunluk bilgisi yüklenemedi"));
   }, [id]);
 
   const isAvailable = (dayIdx: number, hour: number) =>
