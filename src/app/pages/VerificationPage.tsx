@@ -3,8 +3,13 @@ import { useNavigate } from "react-router";
 import { Shield, Upload, CheckCircle, AlertCircle } from "lucide-react";
 import { useAuth } from "../providers/AuthProvider";
 import { verificationApi, fileApi } from "../api/services";
+import { useSeo } from "../hooks/useSeo";
 
 export function VerificationPage() {
+  useSeo({
+    title: "Kimlik Doğrulama",
+    description: "Kimlik belgenizi yükleyerek güvenilirliğinizi artırın. Onaylanan öğretmenler profilinde rozet alır.",
+  });
   const { user, isTutor } = useAuth();
   const navigate = useNavigate();
   const [documentType, setDocumentType] = useState("IDENTITY");

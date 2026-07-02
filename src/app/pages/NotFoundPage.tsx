@@ -1,7 +1,12 @@
 import { useNavigate } from "react-router";
 import { Home, Search } from "lucide-react";
+import { useSeo } from "../hooks/useSeo";
 
 export function NotFoundPage() {
+  useSeo({
+    title: "Sayfa Bulunamadı",
+    description: "Aradığınız sayfa mevcut değil. Ana sayfa veya arama sayfasına dönebilirsiniz.",
+  });
   const navigate = useNavigate();
 
   return (

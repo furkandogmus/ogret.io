@@ -7,6 +7,9 @@ interface SeoProps {
   ogDescription?: string;
   ogImage?: string;
   canonical?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
+  article?: boolean;
 }
 
 const BASE_TITLE = "öğret.io";
@@ -42,8 +45,18 @@ export function useSeo(props: SeoProps) {
     setMeta("og:image", props.ogImage || "https://ogret.io/og-image.svg");
     setMeta("og:image:width", "1200");
     setMeta("og:image:height", "630");
-    setMeta("og:type", "website");
+    setMeta("og:type", props.article ? "article" : "website");
     setMeta("og:locale", "tr_TR");
+
+    if (props.publishedTime) {
+      setMeta("article:published_time", props.publishedTime);
+    } else {
+      const el = document.querySelector("meta[property='article:published_time']");
+      if (el) el.remove();
+    }
+    if (props.modifiedTime) {
+      setMeta("article:modified_time", props.modifiedTime);
+    }
     setMeta("twitter:card", "summary_large_image");
     setMeta("twitter:title", props.ogTitle || fullTitle);
     setMeta("twitter:description", props.ogDescription || props.description || BASE_DESCRIPTION);
@@ -62,5 +75,5 @@ export function useSeo(props: SeoProps) {
       document.title = BASE_TITLE;
       setMeta("description", BASE_DESCRIPTION);
     };
-  }, [props.title, props.description, props.ogTitle, props.ogDescription, props.ogImage, props.canonical]);
+  }, [props.title, props.description, props.ogTitle, props.ogDescription, props.ogImage, props.canonical, props.publishedTime, props.modifiedTime, props.article]);
 }

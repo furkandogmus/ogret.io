@@ -13,6 +13,8 @@ export function Avatar({ src, alt, className = "w-10 h-10", online }: AvatarProp
         <img
           src={src}
           alt={alt}
+          loading="lazy"
+          decoding="async"
           className={`rounded-xl object-cover bg-stone-100 ${className}`}
         />
         {online !== undefined && (

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
 import { useSeo } from "../../hooks/useSeo";
+import { JsonLd } from "../../components/shared/JsonLd";
 import { blogPosts } from "./blogData";
 
 export function BlogIndexPage() {
@@ -60,6 +61,16 @@ export function BlogIndexPage() {
           </article>
         ))}
       </div>
+
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        itemListElement: blogPosts.map((post, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          url: `https://ogret.io/blog/${post.slug}`,
+        })),
+      }} />
     </div>
   );
 }

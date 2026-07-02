@@ -12,6 +12,8 @@ export function BlogPostPage() {
     title: post ? post.title : "Blog Yazısı",
     description: post?.description || "Blog yazısı bulunamadı.",
     canonical: post ? `https://ogret.io/blog/${post.slug}` : undefined,
+    article: true,
+    publishedTime: post ? new Date(post.date).toISOString() : undefined,
   });
 
   if (!post) {
