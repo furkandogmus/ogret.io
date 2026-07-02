@@ -102,9 +102,14 @@ export function MessagesPage() {
       const existing = new Set(prev.map((m) => m.id));
       const newOnes = filtered.filter((m) => !existing.has(m.id));
       if (newOnes.length === 0) return prev;
-      return [...prev, ...newOnes];
+      for (const m of newOnes) {
+        if (m.senderId === activeId && m.receiverId === user?.id) {
+          messageApi.markAsRead(m.id).catch(() => {});
+        }
+      }
+      return [...prev, ...newOnes.map(m => m.senderId === activeId && m.receiverId === user?.id ? { ...m, read: true } : m)];
     });
-  }, [incoming, activeId]);
+  }, [incoming, activeId, user?.id]);
 
   useEffect(() => {
     if (incoming.length === 0) return;
@@ -176,11 +181,17 @@ export function MessagesPage() {
       const { data } = await messageApi.getConversation(withUserId);
       setMessages(data);
       setShowMobileList(false);
+      const unreadIds: string[] = [];
       data.forEach((msg) => {
         if (!msg.read && msg.receiverId === user?.id) {
+          unreadIds.push(msg.id);
           messageApi.markAsRead(msg.id).catch(() => {});
         }
       });
+      if (unreadIds.length > 0) {
+        setMessages((prev) => prev.map((m) => unreadIds.includes(m.id) ? { ...m, read: true } : m));
+        setConversations((prev) => prev.map((c) => c.userId === withUserId ? { ...c, unread: 0 } : c));
+      }
     } catch { console.error("Mesajlar yuklenemedi"); setMessages([]); }
   };
 
@@ -362,8 +373,13 @@ export function MessagesPage() {
                           <div className="text-xs font-medium text-primary mb-0.5">{msg.senderName}</div>
                         )}
                         {msg.content}
-                        <div className={`text-xs mt-1 ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                          {new Date(msg.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                        <div className={`text-xs mt-1 flex items-center gap-1 ${isMe ? "text-primary-foreground/60 justify-end" : "text-muted-foreground"}`}>
+                          <span>{new Date(msg.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</span>
+                          {isMe && (
+                            <svg className={`w-3.5 h-3.5 ${msg.read ? "text-blue-300" : "text-primary-foreground/40"}`} viewBox="0 0 24 24" fill="currentColor">
+                              <path d={msg.read ? "M17 1.5l-9 9-4-4-1.5 1.5L8 13.5 18.5 3zM17 7.5l-9 9-4-4-1.5 1.5L8 19.5 18.5 9z" : "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"} />
+                            </svg>
+                          )}
                         </div>
                       </div>
                     </div>
