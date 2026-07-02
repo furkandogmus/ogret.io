@@ -7,14 +7,15 @@ const REFRESH_KEY = "refreshToken";
 
 export function getApiBaseUrl() {
   if (process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
+    const url = process.env.EXPO_PUBLIC_API_URL;
+    return url.endsWith("/api/v1") ? url : `${url}/api/v1`;
   }
   const hostUri = Constants.expoConfig?.hostUri;
   if (hostUri) {
     const ip = hostUri.split(":")[0];
     return `http://${ip}:8080/api/v1`;
   }
-  return "http://192.168.1.141:8080/api/v1";
+  return "http://localhost:8080/api/v1";
 }
 
 const api = axios.create({

@@ -9,8 +9,8 @@ import { StarRating } from "../../src/components/StarRating";
 import { Button } from "../../src/components/Button";
 import { Skeleton } from "../../src/components/Skeleton";
 import { useToast } from "../../src/components/Toast";
-import { tutorApi, subjectApi, reviewApi } from "../../src/api/services";
-import type { User, Subject, Review } from "../../src/types";
+import { tutorApi, subjectApi, reviewApi, referenceApi } from "../../src/api/services";
+import type { User, Subject, Review, Reference } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
 
 function ProfileSkeleton() {
@@ -38,22 +38,33 @@ export default function TutorProfileScreen() {
   const [tutor, setTutor] = useState<User | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [references, setReferences] = useState<Reference[]>([]);
   const [loading, setLoading] = useState(true);
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<"about" | "reviews">("about");
+  const [activeTab, setActiveTab] = useState<"about" | "reviews" | "references">("about");
 
   useEffect(() => {
     (async () => {
       try {
-        const [tutorRes, subjectsRes, reviewsRes] = await Promise.all([
+        const [tutorRes, subjectsRes, reviewsRes, refsRes] = await Promise.all([
           tutorApi.getById(id),
           subjectApi.list(),
           reviewApi.getTutorReviews(id),
+          referenceApi.getApproved(id).catch(() => ({ data: [] })),
         ]);
-        setTutor(tutorRes.data);
-        setSubjects(subjectsRes.data);
+        const tutorData = tutorRes.data;
+        setTutor(tutorData);
+        if (tutorData.subjects && tutorData.subjects.length > 0) {
+          const tutorSubjectIds = tutorData.subjects.map(s => s.id || s.name);
+          setSubjects(subjectsRes.data.filter(s => tutorSubjectIds.includes(s.id) || tutorSubjectIds.includes(s.name)));
+        } else {
+          setSubjects(subjectsRes.data);
+        }
         setReviews(reviewsRes.data);
-      } catch { /* */ }
+        setReferences(refsRes.data);
+      } catch {
+        toast.show("Öğretmen bilgileri yüklenemedi", "error");
+      }
       setLoading(false);
     })();
   }, [id]);
@@ -120,10 +131,10 @@ export default function TutorProfileScreen() {
       </View>
 
       <View style={{ flexDirection: "row", paddingHorizontal: spacing.md, marginBottom: spacing.md }}>
-        {["about", "reviews"].map((tab) => (
+        {(["about", "reviews", "references"] as const).map((tab) => (
           <TouchableOpacity
             key={tab}
-            onPress={() => setActiveTab(tab as typeof activeTab)}
+            onPress={() => setActiveTab(tab)}
             style={{
               flex: 1,
               paddingVertical: 10,
@@ -132,7 +143,7 @@ export default function TutorProfileScreen() {
             }}
           >
             <Text style={{ color: activeTab === tab ? colors.primary : colors.textMuted, fontWeight: "600", textAlign: "center", fontSize: 14 }}>
-              {tab === "about" ? "Hakkında" : "Yorumlar"}
+              {tab === "about" ? "Hakkında" : tab === "reviews" ? `Yorumlar (${reviews.length})` : `Referanslar (${references.length})`}
             </Text>
           </TouchableOpacity>
         ))}
@@ -155,7 +166,7 @@ export default function TutorProfileScreen() {
             ))}
           </View>
         </View>
-      ) : (
+      ) : activeTab === "reviews" ? (
         <View style={{ paddingHorizontal: spacing.md, paddingBottom: spacing.xxl }}>
           {reviews.length === 0 ? (
             <Text style={{ color: colors.textMuted, textAlign: "center", marginTop: spacing.xl }}>Henüz yorum yok</Text>
@@ -167,6 +178,30 @@ export default function TutorProfileScreen() {
                   <StarRating rating={review.rating} />
                 </View>
                 {review.comment && <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: spacing.xs }}>{review.comment}</Text>}
+              </View>
+            ))
+          )}
+        </View>
+      ) : (
+        <View style={{ paddingHorizontal: spacing.md, paddingBottom: spacing.xxl }}>
+          <View style={{ backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, borderWidth: 1, borderColor: colors.border }}>
+            <Text style={{ color: colors.text, fontWeight: "600", fontSize: 14, marginBottom: 4 }}>Tavsiye & Referans Yaz</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>Bu öğretmen için bir tavsiye yazmak ister misiniz?</Text>
+            <TouchableOpacity
+              onPress={() => router.push(`/tutor/write-reference?id=${id}`)}
+              style={{ backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 10, alignItems: "center", marginTop: spacing.sm }}
+            >
+              <Text style={{ color: colors.buttonText, fontSize: 13, fontWeight: "700" }}>Referans Yaz</Text>
+            </TouchableOpacity>
+          </View>
+          {references.length === 0 ? (
+            <Text style={{ color: colors.textMuted, textAlign: "center", marginTop: spacing.md }}>Henüz referans yok</Text>
+          ) : (
+            references.map((ref, i) => (
+              <View key={ref.id || i} style={{ backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border }}>
+                <Text style={{ color: colors.text, fontWeight: "600", fontSize: 14 }}>{ref.recommenderName}</Text>
+                {ref.recommenderTitle && <Text style={{ color: colors.textMuted, fontSize: 11 }}>{ref.recommenderTitle}</Text>}
+                {ref.comment && <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: spacing.xs, lineHeight: 18 }}>{ref.comment}</Text>}
               </View>
             ))
           )}

@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { TutorCard } from "../../src/components/TutorCard";
 import { EmptyState } from "../../src/components/EmptyState";
+import { useToast } from "../../src/components/Toast";
 import { favoriteApi } from "../../src/api/services";
 import type { User } from "../../src/types";
 import { colors, spacing } from "../../src/constants/theme";
@@ -14,13 +15,14 @@ export default function FavoritesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const toast = useToast();
 
   const fetchFavorites = useCallback(async () => {
     try {
       const { data } = await favoriteApi.list();
       setFavorites(data);
       setFavoriteIds(new Set(data.map((u) => u.id)));
-    } catch { /* */ }
+    } catch { toast.show("Favoriler yüklenemedi", "error"); }
     setLoading(false);
     setRefreshing(false);
   }, []);
@@ -38,7 +40,7 @@ export default function FavoritesScreen() {
         await favoriteApi.add(tutorId);
         setFavoriteIds((prev) => new Set(prev).add(tutorId));
       }
-    } catch { /* */ }
+    } catch { toast.show("İşlem başarısız", "error"); }
   };
 
   return (

@@ -41,7 +41,7 @@ export default function TutorAvailabilityScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await tutorApi.getAvailability("me");
+        const { data } = await tutorApi.getMyAvailability();
         
         // Default values for all 7 days
         const initial: Record<number, DayState> = {};

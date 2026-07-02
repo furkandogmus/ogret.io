@@ -24,7 +24,7 @@ export default function LessonDetailScreen() {
       try {
         const { data } = await lessonApi.getById(id);
         setLesson(data);
-      } catch { /* */ }
+      } catch { toast.show("Ders bilgileri yüklenemedi", "error"); }
     })();
   }, [id]);
 
@@ -37,6 +37,8 @@ export default function LessonDetailScreen() {
   const canReschedule = ["PENDING", "CONFIRMED"].includes(lesson.status) && isStudent;
   const canTutorCancel = lesson.status === "CONFIRMED" && isTutor;
   const showConfirmButtons = lesson.status === "PENDING" && isTutor;
+  const canStart = lesson.status === "CONFIRMED" && isTutor;
+  const canComplete = lesson.status === "IN_PROGRESS" && isTutor;
 
   const handleCopyLink = async () => {
     if (lesson.meetingLink) {
@@ -148,6 +150,26 @@ export default function LessonDetailScreen() {
               ]);
             }} variant="outline" size="md" style={{ flex: 1 }} haptic="medium" />
           </View>
+        )}
+
+        {canStart && (
+          <Button title="Dersi Başlat" onPress={async () => {
+            try {
+              const { data } = await lessonApi.start(id);
+              setLesson(data);
+              toast.show("Ders başlatıldı", "success");
+            } catch { toast.show("Ders başlatılamadı", "error"); }
+          }} variant="primary" size="lg" icon={<Ionicons name="play" size={18} color="#fff" />} haptic="medium" />
+        )}
+
+        {canComplete && (
+          <Button title="Dersi Tamamla" onPress={async () => {
+            try {
+              const { data } = await lessonApi.complete(id);
+              setLesson(data);
+              toast.show("Ders tamamlandı", "success");
+            } catch { toast.show("Ders tamamlanamadı", "error"); }
+          }} variant="primary" size="lg" icon={<Ionicons name="checkmark-done" size={18} color="#fff" />} haptic="medium" />
         )}
 
         {canTutorCancel && (

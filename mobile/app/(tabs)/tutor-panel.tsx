@@ -23,7 +23,7 @@ export default function TutorPanel() {
     try {
       const { data } = await lessonApi.list("tutor");
       setLessons(data);
-    } catch { /* */ }
+    } catch { toast.show("Dersler yüklenemedi", "error"); }
     setLoading(false);
     setRefreshing(false);
   }, []);
@@ -61,6 +61,14 @@ export default function TutorPanel() {
       toast.show("Ders tamamlandı", "success");
       fetchLessons();
     } catch { toast.show("Ders tamamlanamadı", "error"); }
+  };
+
+  const handleStartOrComplete = async (id: string, status: string) => {
+    if (status === "CONFIRMED") {
+      await handleStart(id);
+    } else if (status === "IN_PROGRESS") {
+      await handleComplete(id);
+    }
   };
 
   const handleCancel = (id: string) => {
@@ -117,7 +125,7 @@ export default function TutorPanel() {
         removeClippedSubviews={Platform.OS === "android"}
         contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
         renderItem={({ item }) => (
-          <LessonCard lesson={item} userRole="TUTOR" onPress={() => router.push(`/lesson/${item.id}`)} onCancel={item.status === "PENDING" ? () => handleCancel(item.id) : undefined} onComplete={item.status === "CONFIRMED" ? () => handleConfirm(item.id) : item.status === "IN_PROGRESS" ? async () => { try { await lessonApi.complete(item.id); toast.show("Ders tamamlandı", "success"); fetchLessons(); } catch { toast.show("Tamamlanamadı", "error"); } } : undefined} />
+          <LessonCard lesson={item} userRole="TUTOR" onPress={() => router.push(`/lesson/${item.id}`)} onCancel={item.status === "PENDING" ? () => handleCancel(item.id) : undefined} onComplete={["CONFIRMED", "IN_PROGRESS"].includes(item.status) ? () => handleStartOrComplete(item.id, item.status) : item.status === "PENDING" ? () => handleConfirm(item.id) : undefined} />
         )}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchLessons(); }} tintColor={colors.primary} />}
         ListEmptyComponent={

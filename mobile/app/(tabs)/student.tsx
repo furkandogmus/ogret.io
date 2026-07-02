@@ -23,7 +23,7 @@ export default function StudentDashboard() {
     try {
       const { data } = await lessonApi.list("student");
       setLessons(data);
-    } catch { /* */ }
+    } catch { toast.show("Dersler yüklenemedi", "error"); }
     setLoading(false);
     setRefreshing(false);
   }, []);

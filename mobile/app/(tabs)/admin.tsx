@@ -23,7 +23,7 @@ export default function AdminPanel() {
       ]);
       setUsers(usersRes.data);
       setStats(dashRes.data);
-    } catch { /* */ }
+    } catch { toast.show("Veriler yüklenemedi", "error"); }
     setLoading(false);
     setRefreshing(false);
   }, []);

@@ -9,8 +9,13 @@ export function useUnreadCount() {
 
   const fetch = useCallback(async () => {
     try {
-      const { data } = await messageApi.getUnread();
-      setCount(data.filter((m) => !m.read).length);
+      const { data: unreadMessages } = await messageApi.getUnread();
+      const unread = Array.isArray(unreadMessages)
+        ? unreadMessages.filter((m) => !m.read).length
+        : typeof unreadMessages === "number"
+          ? unreadMessages
+          : 0;
+      setCount(unread);
     } catch {
       setCount(0);
     }

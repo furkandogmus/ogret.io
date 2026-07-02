@@ -23,11 +23,12 @@ export const userApi = {
 
 export const tutorApi = {
   list: (params?: { subjectId?: string; minPrice?: number; maxPrice?: number; minRating?: number; sort?: string; page?: number; size?: number }) =>
-    api.get<{ content: TutorSummary[] }>("/tutors", { params }),
+    api.get<{ content: TutorSummary[]; totalPages: number; totalElements: number }>("/tutors", { params }),
   getById: (id: string) => api.get<User>(`/tutors/${id}`),
   getMySubjects: () => api.get<{ subjectId: string; subjectName: string; id: string }[]>("/tutors/me/subjects"),
   updateSubjects: (subjectIds: string[]) => api.put("/tutors/me/subjects", subjectIds),
   getAvailability: (id: string) => api.get<{ id: string; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }[]>(`/tutors/${id}/availability`),
+  getMyAvailability: () => api.get<{ id: string; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }[]>("/tutors/me/availability"),
   updateAvailability: (slots: { dayOfWeek: number; startTime: string; endTime: string }[]) =>
     api.put("/tutors/me/availability", slots),
 };
@@ -43,7 +44,7 @@ export const lessonApi = {
   create: (data: { tutorId: string; subjectId: string; lessonDate: string; startTime: string; endTime: string; notes?: string }) =>
     api.post<Lesson>("/lessons", data),
   confirm: (id: string) => api.put<Lesson>(`/lessons/${id}/confirm`),
-  cancel: (id: string, reason?: string) => api.put<Lesson>(`/lessons/${id}/cancel`, null, { params: { reason } }),
+  cancel: (id: string, reason?: string) => api.put<Lesson>(`/lessons/${id}/cancel`, { reason }),
   start: (id: string) => api.put<Lesson>(`/lessons/${id}/start`),
   complete: (id: string) => api.put<Lesson>(`/lessons/${id}/complete`),
   updateMeetingLink: (id: string, link: string) => api.put<Lesson>(`/lessons/${id}/meeting-link`, { meetingLink: link }),
@@ -104,13 +105,57 @@ export const fileApi = {
 };
 
 export const adminApi = {
-  getUsers: () => api.get<{ content: User[] }>("/admin/users"),
+  getUsers: (params?: { page?: number; size?: number }) =>
+    api.get<{ content: User[]; totalPages: number; totalElements: number }>("/admin/users", { params }),
   getDashboard: () => api.get<DashboardStats>("/admin/dashboard"),
   verifyUser: (userId: string) => api.put(`/admin/users/${userId}/verify`),
   getVerifications: () => api.get<{ id: string; userId: string; documentType: string; status: string }[]>("/admin/verifications"),
   reviewVerification: (id: string, approved: boolean, adminNote?: string) => api.put(`/admin/verifications/${id}`, { approved, adminNote }),
-  getLessons: () => api.get<{ content: Lesson[] }>("/admin/lessons"),
+  getLessons: (params?: { page?: number; size?: number }) =>
+    api.get<{ content: Lesson[]; totalPages: number; totalElements: number }>("/admin/lessons", { params }),
 };
+
+export const blogApi = {
+  getPosts: (params?: { categoryId?: string; page?: number; size?: number }) =>
+    api.get<{ content: BlogPostResponse[]; totalPages: number; totalElements: number }>("/blog/posts", { params }),
+  getPost: (slug: string) => api.get<BlogPostResponse>(`/blog/posts/${slug}`),
+  getFeatured: (params?: { page?: number; size?: number }) =>
+    api.get<{ content: BlogPostResponse[]; totalPages: number }>("/blog/featured", { params }),
+  getCategories: () => api.get<BlogCategoryResponse[]>("/blog/categories"),
+  getTags: () => api.get<BlogTagResponse[]>("/blog/tags"),
+  recordView: (id: string) => api.post(`/blog/posts/${id}/view`),
+};
+
+export interface BlogPostResponse {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt?: string;
+  coverImage?: string;
+  author?: { id: string; fullName: string; avatarUrl?: string };
+  category?: { id: string; name: string; slug: string };
+  tags: { id: string; name: string; slug: string }[];
+  status: string;
+  publishedAt?: string;
+  readingTime?: number;
+  isFeatured: boolean;
+  viewCount: number;
+}
+
+export interface BlogCategoryResponse {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  sortOrder: number;
+}
+
+export interface BlogTagResponse {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 export const listingApi = {
   create: (data: CreateListingRequest) => api.post<TutorListing>("/tutors/me/listings", data),
@@ -118,6 +163,7 @@ export const listingApi = {
   update: (id: string, data: CreateListingRequest) => api.put<TutorListing>(`/tutors/me/listings/${id}`, data),
   delete: (id: string) => api.delete(`/tutors/me/listings/${id}`),
   getTutorListings: (tutorId: string) => api.get<TutorListing[]>(`/tutors/${tutorId}/listings`),
-  searchListings: (params?: { q?: string; subjectId?: string; minPrice?: number; maxPrice?: number; online?: boolean }) =>
-    api.get<TutorListing[]>("/tutors/listings", { params }),
+  searchListings: (params?: { q?: string; subjectId?: string; minPrice?: number; maxPrice?: number; minRating?: number; online?: boolean; sort?: string; page?: number; size?: number }) =>
+    api.get<{ content: TutorListing[]; totalPages: number; totalElements: number }>("/tutors/listings", { params }),
+  getListingDetails: (id: string) => api.get<TutorListing>(`/tutors/listings/${id}`),
 };
