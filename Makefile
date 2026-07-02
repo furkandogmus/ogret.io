@@ -1,4 +1,5 @@
 .PHONY: install dev build test clean db-start db-stop backend-run frontend-run \
+        stop stop-backend stop-frontend \
         docker-build docker-up docker-down migrate seed lint format help
 
 # ─── Vars ──────────────────────────────────────────────────────────
@@ -43,6 +44,20 @@ backend-run: ## Run backend with Gradle
 
 frontend-run: ## Run frontend dev server
 	pnpm dev
+
+stop: ## Stop both backend and frontend dev servers
+	@echo "Port 8080 üzerindeki Backend servisi durduruluyor..."
+	@lsof -t -i :8080 | xargs kill -9 2>/dev/null || echo "Backend servisi zaten çalışmıyor."
+	@echo "Port 5173 üzerindeki Frontend servisi durduruluyor..."
+	@lsof -t -i :5173 | xargs kill -9 2>/dev/null || echo "Frontend servisi zaten çalışmıyor."
+
+stop-backend: ## Stop only the backend dev server
+	@echo "Port 8080 üzerindeki Backend servisi durduruluyor..."
+	@lsof -t -i :8080 | xargs kill -9 2>/dev/null || echo "Backend servisi zaten çalışmıyor."
+
+stop-frontend: ## Stop only the frontend dev server
+	@echo "Port 5173 üzerindeki Frontend servisi durduruluyor..."
+	@lsof -t -i :5173 | xargs kill -9 2>/dev/null || echo "Frontend servisi zaten çalışmıyor."
 
 # ─── Build ──────────────────────────────────────────────────────────
 build: ## Build frontend + backend (without tests)
