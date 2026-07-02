@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from "react-native";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { LessonCard } from "../../src/components/LessonCard";
@@ -29,14 +29,14 @@ export default function TutorPanel() {
 
   useEffect(() => { fetchLessons(); }, [fetchLessons]);
 
-  const filtered = lessons.filter((l) => {
+  const filtered = useMemo(() => lessons.filter((l) => {
     if (filter === "pending") return l.status === "PENDING";
     if (filter === "confirmed") return ["CONFIRMED", "IN_PROGRESS"].includes(l.status);
     return ["COMPLETED", "CANCELLED"].includes(l.status);
-  });
+  }), [lessons, filter]);
 
-  const pending = lessons.filter((l) => l.status === "PENDING");
-  const confirmed = lessons.filter((l) => l.status === "CONFIRMED");
+  const pending = useMemo(() => lessons.filter((l) => l.status === "PENDING"), [lessons]);
+  const confirmed = useMemo(() => lessons.filter((l) => l.status === "CONFIRMED"), [lessons]);
 
   const handleConfirm = async (id: string) => {
     try {
@@ -94,6 +94,10 @@ export default function TutorPanel() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
+        windowSize={10}
+        maxToRenderPerBatch={10}
+        initialNumToRender={10}
+        removeClippedSubviews={Platform.OS === "android"}
         contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
         renderItem={({ item }) => (
           <LessonCard lesson={item} userRole="TUTOR" onPress={() => router.push(`/lesson/${item.id}`)} onCancel={item.status === "PENDING" ? () => handleCancel(item.id) : undefined} onComplete={item.status === "CONFIRMED" ? () => handleConfirm(item.id) : undefined} />

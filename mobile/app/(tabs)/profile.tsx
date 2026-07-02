@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Alert, Modal, Image } from "react-native";
+import { useState, useMemo } from "react";
+import { View, Text, TouchableOpacity, ScrollView, Alert, Modal } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Avatar } from "../../src/components/Avatar";
@@ -34,7 +35,7 @@ export default function ProfileScreen() {
   };
 
   type MenuItem = { icon: keyof typeof Ionicons.glyphMap; label: string; route?: string; action?: () => void; danger?: boolean };
-  const menuItems: MenuItem[] = [
+  const menuItems: MenuItem[] = useMemo(() => [
     ...(user?.role === "TUTOR" ? [
       { icon: "card-outline" as const, label: "Abonelik", route: "/subscription" },
       { icon: "id-card-outline" as const, label: "Kimlik Doğrulama", route: "/verification" },
@@ -46,7 +47,7 @@ export default function ProfileScreen() {
     { icon: "wallet-outline" as const, label: "Ödeme Yöntemleri", route: "/payment/methods" },
     { icon: "settings-outline" as const, label: "Ayarlar", route: "/settings" },
     { icon: "log-out-outline" as const, label: "Çıkış Yap", action: handleLogout, danger: true },
-  ];
+  ], [user?.role]);
 
   const roleLabels = { STUDENT: "Öğrenci", TUTOR: "Öğretmen", ADMIN: "Admin" };
 
@@ -121,7 +122,7 @@ export default function ProfileScreen() {
       <Modal visible={showAvatarFull} transparent animationType="fade">
         <TouchableOpacity style={{ flex: 1, backgroundColor: "#000", alignItems: "center", justifyContent: "center" }} activeOpacity={1} onPress={() => setShowAvatarFull(false)}>
           {user?.avatarUrl && (
-            <Image source={{ uri: user.avatarUrl }} style={{ width: 300, height: 300, borderRadius: 150 }} resizeMode="cover" />
+            <Image source={{ uri: user.avatarUrl }} style={{ width: 300, height: 300, borderRadius: 150 }} contentFit="cover" />
           )}
           <Text style={{ color: "#fff", fontSize: 14, marginTop: 20 }}>Kapatmak için tıkla</Text>
         </TouchableOpacity>

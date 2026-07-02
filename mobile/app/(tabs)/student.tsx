@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from "react-native";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { LessonCard } from "../../src/components/LessonCard";
@@ -29,14 +29,14 @@ export default function StudentDashboard() {
 
   useEffect(() => { fetchLessons(); }, [fetchLessons]);
 
-  const filtered = lessons.filter((l) => {
+  const filtered = useMemo(() => lessons.filter((l) => {
     if (filter === "upcoming") return ["PENDING", "CONFIRMED"].includes(l.status);
     if (filter === "past") return ["COMPLETED", "CANCELLED"].includes(l.status);
     return true;
-  });
+  }), [lessons, filter]);
 
-  const upcoming = lessons.filter((l) => ["PENDING", "CONFIRMED"].includes(l.status));
-  const pending = lessons.filter((l) => l.status === "PENDING");
+  const upcoming = useMemo(() => lessons.filter((l) => ["PENDING", "CONFIRMED"].includes(l.status)), [lessons]);
+  const pending = useMemo(() => lessons.filter((l) => l.status === "PENDING"), [lessons]);
 
   const handleCancel = (lessonId: string) => {
     Alert.alert("İptal Et", "Dersi iptal etmek istediğine emin misin?", [
@@ -89,6 +89,10 @@ export default function StudentDashboard() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
+        windowSize={10}
+        maxToRenderPerBatch={10}
+        initialNumToRender={10}
+        removeClippedSubviews={Platform.OS === "android"}
         contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
         renderItem={({ item }) => <LessonCard lesson={item} userRole="STUDENT" onPress={() => router.push(`/lesson/${item.id}`)} onCancel={() => handleCancel(item.id)} />}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchLessons(); }} tintColor={colors.primary} />}
