@@ -16,14 +16,14 @@ help: ## Show this help
 
 # ─── Install ────────────────────────────────────────────────────────
 install: ## Install all dependencies (frontend + backend)
-	pnpm install
+	npm install
 	@echo "--- Backend dependencies ---"
 	$(GRADLE) build --no-daemon -x test
 
 # ─── Development ────────────────────────────────────────────────────
 dev: ## Start both backend and frontend in dev mode
 	$(GRADLE) bootRun &
-	pnpm dev
+	npm run dev
 
 db-start: ## Start PostgreSQL and Redis via Docker
 	$(DC) up -d postgres redis
@@ -43,7 +43,7 @@ backend-run: ## Run backend with Gradle
 	$(GRADLE) bootRun --no-daemon
 
 frontend-run: ## Run frontend dev server
-	pnpm dev
+	npm run dev
 
 stop: ## Stop both backend and frontend dev servers
 	@echo "Port 8080 üzerindeki Backend servisi durduruluyor..."
@@ -62,12 +62,12 @@ stop-frontend: ## Stop only the frontend dev server
 # ─── Build ──────────────────────────────────────────────────────────
 build: ## Build frontend + backend (without tests)
 	@echo "--- Building frontend ---"
-	pnpm build
+	npm run build
 	@echo "--- Building backend ---"
 	$(GRADLE) build --no-daemon -x test
 
 build-frontend: ## Build frontend only
-	pnpm build
+	npm run build
 
 build-backend: ## Build backend only
 	$(GRADLE) build --no-daemon -x test
@@ -77,16 +77,16 @@ test: ## Run all tests
 	@echo "--- Backend tests ---"
 	$(GRADLE) test --no-daemon
 	@echo "--- Frontend E2E tests ---"
-	pnpm test:e2e
+	npm run test:e2e
 
 test-backend: ## Run backend tests only
 	$(GRADLE) test --no-daemon
 
 test-frontend: ## Run frontend E2E tests only
-	pnpm test:e2e
+	npm run test:e2e
 
 test-frontend-ui: ## Run frontend E2E tests with Playwright UI
-	pnpm test:e2e:ui
+	npm run test:e2e:ui
 
 # ─── Docker ─────────────────────────────────────────────────────────
 docker-build: ## Build Docker images for frontend
@@ -140,13 +140,13 @@ clean-docker: ## Remove Docker volumes (⚠️ deletes data)
 
 # ─── Lint / Format ──────────────────────────────────────────────────
 lint: ## Lint frontend code (ESLint, warnings only — does NOT block build)
-	pnpm lint
+	npm run lint
 
 lint-fix: ## Auto-fix lint issues
-	pnpm lint:fix
+	npm run lint:fix
 
 typecheck: ## Run TypeScript type checking (does NOT block build)
-	pnpm typecheck
+	npm run typecheck
 
 check: lint typecheck ## Run all static analysis (lint + typecheck)
 
