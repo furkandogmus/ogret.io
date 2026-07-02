@@ -4,11 +4,16 @@ import { BookOpen, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../providers/AuthProvider";
+import { useSeo } from "../hooks/useSeo";
 import { loginSchema, type LoginForm } from "../lib/validation";
 import { Form, FormField, FormItem, FormControl, FormMessage } from "../components/ui/form";
 import { FloatingInput } from "../components/ui/floating-input";
 
 export function LoginPage() {
+  useSeo({
+    title: "Giriş Yap",
+    description: "öğret.io hesabınıza giriş yapın. Online özel ders almak veya vermek için hemen oturum açın.",
+  });
   const { login } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -30,6 +35,7 @@ export function LoginPage() {
   };
 
   return (
+    <main>
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
@@ -125,5 +131,6 @@ export function LoginPage() {
         </p>
       </div>
     </div>
+    </main>
   );
 }

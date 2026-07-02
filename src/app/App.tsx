@@ -21,6 +21,8 @@ import { ProfileEditPage } from "./pages/ProfileEditPage";
 import { WriteReferencePage } from "./pages/WriteReferencePage";
 import { CreateListingWizardPage } from "./pages/CreateListingWizardPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { BlogIndexPage } from "./pages/blog/BlogIndexPage";
+import { BlogPostPage } from "./pages/blog/BlogPostPage";
 import { AuthGuard } from "./components/shared/AuthGuard";
 
 export default function App() {
@@ -48,6 +50,8 @@ export default function App() {
               <Route path="/admin" element={<AuthGuard role="ADMIN"><AdminDashboard /></AuthGuard>} />
               <Route path="/abonelik" element={<SubscriptionPage />} />
               <Route path="/email-dogrula" element={<EmailVerificationPage />} />
+              <Route path="/blog" element={<BlogIndexPage />} />
+              <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="/dogrulama" element={<VerificationPage />} />
               <Route path="/profil/duzenle" element={<AuthGuard><ProfileEditPage /></AuthGuard>} />
               <Route path="*" element={<NotFoundPage />} />

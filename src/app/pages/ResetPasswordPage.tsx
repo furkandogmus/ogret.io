@@ -2,8 +2,13 @@ import { useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router";
 import { BookOpen, Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import { authApi } from "../api/services";
+import { useSeo } from "../hooks/useSeo";
 
 export function ResetPasswordPage() {
+  useSeo({
+    title: "Şifre Sıfırla",
+    description: "Yeni şifrenizi belirleyerek hesabınıza tekrar erişebilirsiniz.",
+  });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get("token") || "";
@@ -42,6 +47,7 @@ export function ResetPasswordPage() {
 
   if (!token) {
     return (
+      <main>
       <div className="min-h-screen flex items-center justify-center px-4 py-12">
         <div className="text-center space-y-4">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
@@ -51,11 +57,13 @@ export function ResetPasswordPage() {
           </Link>
         </div>
       </div>
+      </main>
     );
   }
 
   if (success) {
     return (
+      <main>
       <div className="min-h-screen flex items-center justify-center px-4 py-12">
         <div className="text-center space-y-4">
           <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
@@ -63,6 +71,7 @@ export function ResetPasswordPage() {
           <p className="text-sm text-muted-foreground">Yönlendiriliyorsunuz...</p>
         </div>
       </div>
+      </main>
     );
   }
 
@@ -137,5 +146,6 @@ export function ResetPasswordPage() {
         </form>
       </div>
     </div>
+    </main>
   );
 }

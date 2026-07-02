@@ -7,6 +7,7 @@ import {
 import { subjectApi, listingApi } from "../api/services";
 import type { SubjectResponse, ListingResponse, Page } from "../api/services";
 import { TutorCard } from "../components/shared/TutorCard";
+import { useSeo } from "../hooks/useSeo";
 
 const SORT_OPTIONS = [
   { value: "score", label: "En İyi Eşleşme" },
@@ -17,6 +18,11 @@ const SORT_OPTIONS = [
 const SIZE = 12;
 
 export function SearchPage() {
+  useSeo({
+    title: "Özel Ders İlanları",
+    description: "Binlerce uzman öğretmen arasından size en uygun özel ders ilanını bulun. Online veya yüz yüze ders seçenekleri.",
+    canonical: "https://ogret.io/arama",
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const [subjects, setSubjects] = useState<SubjectResponse[]>([]);
   const [loading, setLoading] = useState(true);

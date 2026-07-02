@@ -5,6 +5,7 @@ import { Check, Zap, Crown, Star } from "lucide-react";
 import { useAuth } from "../providers/AuthProvider";
 import { subscriptionApi } from "../api/services";
 import type { SubscriptionResponse } from "../api/services";
+import { useSeo } from "../hooks/useSeo";
 
 interface Plan {
   id: string;
@@ -16,6 +17,10 @@ interface Plan {
 const PLAN_ICONS = [Zap, Crown, Star];
 
 export function SubscriptionPage() {
+  useSeo({
+    title: "Abonelik Planları",
+    description: "Öğretmenler için abonelik planları. Profilinizi öne çıkarın, daha fazla öğrenciye ulaşın.",
+  });
   const { isTutor } = useAuth();
   const navigate = useNavigate();
   const [plans, setPlans] = useState<Plan[]>([]);

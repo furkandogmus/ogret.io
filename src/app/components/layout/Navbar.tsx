@@ -10,6 +10,7 @@ import { NotificationBell } from "../shared/NotificationBell";
 const PUBLIC_ITEMS = [
   { label: "Ana Sayfa", path: "/", icon: Home },
   { label: "Öğretmen Ara", path: "/arama", icon: Search },
+  { label: "Blog", path: "/blog", icon: BookOpen },
 ];
 
 export function Navbar() {
