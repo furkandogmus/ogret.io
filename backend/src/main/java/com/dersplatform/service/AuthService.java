@@ -5,7 +5,6 @@ import com.dersplatform.model.dto.request.LoginRequest;
 import com.dersplatform.model.dto.request.RefreshTokenRequest;
 import com.dersplatform.model.dto.request.RegisterRequest;
 import com.dersplatform.model.dto.request.VerifyEmailRequest;
-import com.dersplatform.model.dto.request.VerifyPhoneRequest;
 import com.dersplatform.model.dto.response.AuthResponse;
 import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.model.entity.User;
@@ -14,6 +13,7 @@ import com.dersplatform.repository.UserRepository;
 import com.dersplatform.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -33,11 +34,14 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final JavaMailSender mailSender;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Value("${app.base-url:http://localhost:5173}")
     private String baseUrl;
 
     private static final long ACCESS_TOKEN_TTL = 900000;
+    private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final long LOCKOUT_DURATION_MINUTES = 15;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -65,7 +69,6 @@ public class AuthService {
 
         user = userRepository.save(user);
 
-        // TODO: E-posta doğrulama mail'i gönder - mail altyapısı hazır olunca aktifleştirilecek
         try {
             String verifyToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
             String verifyLink = baseUrl + "/email-dogrula?token=" + verifyToken;
@@ -88,15 +91,34 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> ApiException.unauthorized("E-posta veya şifre hatalı"));
+        String lockoutKey = "bruteforce:" + request.getEmail();
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        user.getId().toString(),
-                        request.getPassword()
-                )
-        );
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(lockoutKey))) {
+            Long ttl = redisTemplate.getExpire(lockoutKey, TimeUnit.SECONDS);
+            throw ApiException.tooManyRequests(
+                "Hesap geçici olarak kilitlendi. " + (ttl != null ? ttl : 0) + " saniye sonra tekrar deneyin."
+            );
+        }
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> {
+                    recordFailedAttempt(lockoutKey);
+                    return ApiException.unauthorized("E-posta veya şifre hatalı");
+                });
+
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            user.getId().toString(),
+                            request.getPassword()
+                    )
+            );
+        } catch (Exception e) {
+            recordFailedAttempt(lockoutKey);
+            throw ApiException.unauthorized("E-posta veya şifre hatalı");
+        }
+
+        redisTemplate.delete(lockoutKey);
 
         user.setLastActiveAt(LocalDateTime.now());
         user.setOnline(true);
@@ -106,15 +128,30 @@ public class AuthService {
     }
 
     public AuthResponse refresh(RefreshTokenRequest request) {
-        if (!jwtTokenProvider.validateRefreshToken(request.getRefreshToken())) {
+        String token = request.getRefreshToken();
+
+        if (isTokenBlacklisted(token)) {
+            throw ApiException.unauthorized("Token geçersiz (iptal edilmiş)");
+        }
+
+        if (!jwtTokenProvider.validateRefreshToken(token)) {
             throw ApiException.unauthorized("Geçersiz refresh token");
         }
 
-        var userId = jwtTokenProvider.getUserIdFromRefreshToken(request.getRefreshToken());
+        var userId = jwtTokenProvider.getUserIdFromRefreshToken(token);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
 
+        addToBlacklist(token, 7 * 24 * 60 * 60);
+
         return buildAuthResponse(user);
+    }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            addToBlacklist(refreshToken, 7 * 24 * 60 * 60);
+        }
     }
 
     @Transactional
@@ -128,15 +165,6 @@ public class AuthService {
         user.setVerified(true);
         userRepository.save(user);
     }
-
-    // TODO: Telefon doğrulama - Twilio entegrasyonu gerekiyor, şimdilik pasif
-    // @Transactional
-    // public void verifyPhone(VerifyPhoneRequest request) {
-    //     if (request.getCode() == null || request.getCode().isBlank()) {
-    //         throw ApiException.badRequest("Doğrulama kodu gerekli");
-    //     }
-    //     throw ApiException.badRequest("SMS doğrulama henüz yapılandırılmadı");
-    // }
 
     @Transactional
     public void forgotPassword(String email) {
@@ -181,6 +209,26 @@ public class AuthService {
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
         user.setPasswordHash(passwordEncoder.encode(password));
         userRepository.save(user);
+    }
+
+    private void recordFailedAttempt(String lockoutKey) {
+        Long attempts = redisTemplate.opsForValue().increment(lockoutKey);
+        if (attempts != null && attempts == 1) {
+            redisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
+        }
+    }
+
+    private void addToBlacklist(String token, long ttlSeconds) {
+        String jti = jwtTokenProvider.getTokenId(token);
+        if (jti != null) {
+            redisTemplate.opsForValue().set("blacklist:" + jti, "true", ttlSeconds, TimeUnit.SECONDS);
+        }
+    }
+
+    public boolean isTokenBlacklisted(String token) {
+        String jti = jwtTokenProvider.getTokenId(token);
+        if (jti == null) return true;
+        return Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + jti));
     }
 
     private AuthResponse buildAuthResponse(User user) {

@@ -6,8 +6,6 @@ import com.dersplatform.model.dto.request.RefreshTokenRequest;
 import com.dersplatform.model.dto.request.RegisterRequest;
 import com.dersplatform.model.dto.request.ResetPasswordRequest;
 import com.dersplatform.model.dto.request.VerifyEmailRequest;
-// TODO: Telefon doğrulama - Twilio entegrasyonu gerekiyor, şimdilik pasif
-// import com.dersplatform.model.dto.request.VerifyPhoneRequest;
 import com.dersplatform.model.dto.response.AuthResponse;
 import com.dersplatform.service.AuthService;
 import jakarta.validation.Valid;
@@ -63,5 +61,12 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request.getToken(), request.getPassword());
         return ResponseEntity.ok(Map.of("message", "Şifreniz başarıyla sıfırlandı"));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout(@RequestBody(required = false) Map<String, String> body) {
+        String refreshToken = body != null ? body.get("refreshToken") : null;
+        authService.logout(refreshToken);
+        return ResponseEntity.ok(Map.of("message", "Başarıyla çıkış yapıldı"));
     }
 }

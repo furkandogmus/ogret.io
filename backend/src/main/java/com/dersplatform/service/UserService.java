@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -63,9 +64,29 @@ public class UserService {
         return UserResponse.fromEntity(user);
     }
 
+    public List<Map<String, Object>> searchUsersSimple(String query) {
+        if (query == null || query.isBlank()) return List.of();
+        return userRepository.searchByFullText(query).stream()
+                .limit(5)
+                .map(u -> Map.<String, Object>of(
+                    "id", u.getId().toString(),
+                    "fullName", u.getFullName(),
+                    "avatarUrl", u.getAvatarUrl() != null ? u.getAvatarUrl() : "",
+                    "role", u.getRole().name()
+                ))
+                .toList();
+    }
+
     public List<UserResponse> searchUsers(String query, UUID excludeUserId) {
         if (query == null || query.isBlank()) return List.of();
-        return userRepository.findByFullNameContainingIgnoreCase(query)
+        List<User> ftsResults = userRepository.searchByFullText(query)
+                .stream()
+                .filter(u -> !u.getId().equals(excludeUserId))
+                .toList();
+        if (!ftsResults.isEmpty()) {
+            return ftsResults.stream().map(UserResponse::fromEntity).toList();
+        }
+        return userRepository.searchByTrigramSimilarity(query)
                 .stream()
                 .filter(u -> !u.getId().equals(excludeUserId))
                 .map(UserResponse::fromEntity)
