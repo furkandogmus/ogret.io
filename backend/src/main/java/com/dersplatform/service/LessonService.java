@@ -16,7 +16,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dersplatform.model.entity.Message;
 import com.dersplatform.model.entity.TutorAvailability;
+import com.dersplatform.model.enums.MessageType;
+import com.dersplatform.repository.MessageRepository;
 import com.dersplatform.repository.TutorAvailabilityRepository;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -32,6 +35,7 @@ public class LessonService {
     private final SubjectRepository subjectRepository;
     private final TutorListingRepository tutorListingRepository;
     private final TutorAvailabilityRepository tutorAvailabilityRepository;
+    private final MessageRepository messageRepository;
     private final NotificationService notificationService;
     private final ScoringService scoringService;
 
@@ -92,6 +96,19 @@ public class LessonService {
 
         student.setLastActiveAt(java.time.LocalDateTime.now());
         userRepository.save(student);
+
+        // Send the student's notes as the first message to the tutor
+        String initialContent = request.getNotes() != null && !request.getNotes().isBlank()
+                ? request.getNotes()
+                : subject.getName() + " dersi için talepte bulundu.";
+        messageRepository.save(Message.builder()
+                .sender(student)
+                .receiver(tutor)
+                .lesson(lesson)
+                .content(initialContent)
+                .messageType(MessageType.TEXT)
+                .isRead(false)
+                .build());
 
         // Notify the tutor about the new lesson request
         notificationService.notifyLessonRequest(student, tutor, subject.getName());
