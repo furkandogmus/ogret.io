@@ -125,7 +125,7 @@ export function AdminDashboard() {
       </div>
 
       {fetchError && (
-        <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">{fetchError}</div>
+        <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">{fetchError}</div>
       )}
 
       <div className="flex gap-2">
@@ -202,13 +202,13 @@ export function AdminDashboard() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleVerification(v.id, true)}
-                          className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                          className="p-1.5 rounded-lg text-green-600 hover:bg-green-50"
                         >
                           <CheckCircle className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleVerification(v.id, false)}
-                          className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          className="p-1.5 rounded-lg text-red-600 hover:bg-red-50"
                         >
                           <XCircle className="w-5 h-5" />
                         </button>
@@ -262,13 +262,13 @@ export function AdminDashboard() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleReference(r.id, true)}
-                          className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                          className="p-1.5 rounded-lg text-green-600 hover:bg-green-50"
                         >
                           <CheckCircle className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleReference(r.id, false)}
-                          className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          className="p-1.5 rounded-lg text-red-600 hover:bg-red-50"
                         >
                           <XCircle className="w-5 h-5" />
                         </button>

@@ -22,23 +22,6 @@ test.describe('Landing Page E2E Tests', () => {
     await expect(page.locator('text=Mutlu Öğrenci').first()).toBeVisible();
   });
 
-  test('should toggle dark/light theme mode', async ({ page }) => {
-    // Find the theme toggle button (normally a button with sun/moon icon)
-    const body = page.locator('html');
-    
-    // Locate the theme toggle button inside Navbar. 
-    // Let's search for a button containing lucide icons or check theme switch button
-    const themeButton = page.locator('button[aria-label="theme-toggle"], button:has(svg.lucide-sun), button:has(svg.lucide-moon)').first();
-    
-    if (await themeButton.isVisible()) {
-      const initialClass = await body.getAttribute('class') || '';
-      await themeButton.click();
-      const updatedClass = await body.getAttribute('class') || '';
-      // It should change classes (like adding dark or changing data-theme)
-      expect(initialClass).not.toBe(updatedClass);
-    }
-  });
-
   test('should navigate to search page when clicking a popular subject or search button', async ({ page }) => {
     // Click on "Matematik" popüler button
     const mathPopularButton = page.locator('button:has-text("Matematik")').first();
