@@ -21,12 +21,7 @@ public class SubjectController {
 
     @GetMapping
     public ResponseEntity<List<SubjectResponse>> getSubjects() {
-        return ResponseEntity.ok(
-                subjectService.getAllActiveSubjects()
-                        .stream()
-                        .map(SubjectResponse::fromEntity)
-                        .toList()
-        );
+        return ResponseEntity.ok(subjectService.getAllActiveSubjects());
     }
 
     @GetMapping("/{id}/tutors")

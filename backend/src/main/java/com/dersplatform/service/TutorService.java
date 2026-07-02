@@ -39,7 +39,7 @@ public class TutorService {
                                                   BigDecimal minRating, Pageable pageable) {
         List<UUID> activeListingTutorIds = tutorListingRepository.findDistinctTutorIdsWithActiveListings();
         if (activeListingTutorIds.isEmpty()) {
-            return Page.empty();
+            return new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
         }
 
         Page<User> tutors;
