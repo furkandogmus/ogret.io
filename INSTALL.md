@@ -198,11 +198,11 @@ make db-reset
 
 ## 7. Mobil Uygulama (Expo)
 
-Mobil uygulama, React Native ve **Expo SDK 52** kullanılarak geliştirilmiştir.
+Mobil uygulama, React Native ve **Expo SDK 54** kullanılarak geliştirilmiştir.
 
 ### Gereksinimler
-- **Node.js**: Expo SDK 52 ve bağımlılık uyumluluğu için **Node 20 LTS** kullanılması zorunludur. Node 23+ (örneğin Node 26) sürümlerinde yer alan deneysel tür ayıklama (`type-stripping`) özelliği `expo-modules-core` kütüphanesinin `.ts` dosyalarında hata fırlatmasına yol açar.
-- **Expo Go**: Mobil testler için cihazınızda veya simülatörünüzde **Expo SDK 52** uyumlu Expo Go uygulamasının yüklü olduğundan emin olun.
+- **Node.js**: Expo SDK 54 ve bağımlılık uyumluluğu için **Node 20 LTS** kullanılması zorunludur. Node 23+ (örneğin Node 26) sürümlerinde yer alan deneysel tür ayıklama (`type-stripping`) özelliği `expo-modules-core` kütüphanesinin `.ts` dosyalarında hata fırlatmasına yol açar.
+- **Expo Go**: Mobil testler için cihazınızda veya simülatörünüzde **Expo SDK 54** uyumlu Expo Go uygulamasının yüklü olduğundan emin olun.
 
 ### Kurulum ve Çalıştırma
 
