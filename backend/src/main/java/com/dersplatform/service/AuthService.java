@@ -13,7 +13,7 @@ import com.dersplatform.repository.UserRepository;
 import com.dersplatform.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,7 +34,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final JavaMailSender mailSender;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Value("${app.base-url:http://localhost:5173}")
     private String baseUrl;
@@ -93,8 +93,8 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         String lockoutKey = "bruteforce:" + request.getEmail();
 
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(lockoutKey))) {
-            Long ttl = redisTemplate.getExpire(lockoutKey, TimeUnit.SECONDS);
+        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(lockoutKey))) {
+            Long ttl = stringRedisTemplate.getExpire(lockoutKey, TimeUnit.SECONDS);
             throw ApiException.tooManyRequests(
                 "Hesap geçici olarak kilitlendi. " + (ttl != null ? ttl : 0) + " saniye sonra tekrar deneyin."
             );
@@ -118,7 +118,7 @@ public class AuthService {
             throw ApiException.unauthorized("E-posta veya şifre hatalı");
         }
 
-        redisTemplate.delete(lockoutKey);
+        stringRedisTemplate.delete(lockoutKey);
 
         user.setLastActiveAt(LocalDateTime.now());
         user.setOnline(true);
@@ -212,23 +212,23 @@ public class AuthService {
     }
 
     private void recordFailedAttempt(String lockoutKey) {
-        Long attempts = redisTemplate.opsForValue().increment(lockoutKey);
+        Long attempts = stringRedisTemplate.opsForValue().increment(lockoutKey);
         if (attempts != null && attempts == 1) {
-            redisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
+            stringRedisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
         }
     }
 
     private void addToBlacklist(String token, long ttlSeconds) {
         String jti = jwtTokenProvider.getTokenId(token);
         if (jti != null) {
-            redisTemplate.opsForValue().set("blacklist:" + jti, "true", ttlSeconds, TimeUnit.SECONDS);
+            stringRedisTemplate.opsForValue().set("blacklist:" + jti, "true", ttlSeconds, TimeUnit.SECONDS);
         }
     }
 
     public boolean isTokenBlacklisted(String token) {
         String jti = jwtTokenProvider.getTokenId(token);
         if (jti == null) return true;
-        return Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + jti));
+        return Boolean.TRUE.equals(stringRedisTemplate.hasKey("blacklist:" + jti));
     }
 
     private AuthResponse buildAuthResponse(User user) {

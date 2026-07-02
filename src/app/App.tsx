@@ -1,25 +1,38 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { ModalProvider } from "./providers/ModalProvider";
 import { AuthProvider } from "./providers/AuthProvider";
 import { NotificationProvider } from "./providers/NotificationProvider";
 import { RootLayout } from "./components/layout/RootLayout";
-import { LandingPage } from "./pages/LandingPage";
-import { SearchPage } from "./pages/SearchPage";
-import { TutorProfilePage } from "./pages/TutorProfilePage";
-import { StudentDashboard } from "./pages/StudentDashboard";
-import { TutorDashboard } from "./pages/TutorDashboard";
-import { MessagesPage } from "./pages/MessagesPage";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "./pages/ResetPasswordPage";
-import { AdminDashboard } from "./pages/AdminDashboard";
-import { SubscriptionPage } from "./pages/SubscriptionPage";
-import { VerificationPage } from "./pages/VerificationPage";
-import { ProfileEditPage } from "./pages/ProfileEditPage";
-import { WriteReferencePage } from "./pages/WriteReferencePage";
-import { CreateListingWizardPage } from "./pages/CreateListingWizardPage";
-import { NotFoundPage } from "./pages/NotFoundPage";
+
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const SearchPage = lazy(() => import("./pages/SearchPage"));
+const TutorProfilePage = lazy(() => import("./pages/TutorProfilePage"));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
+const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
+const MessagesPage = lazy(() => import("./pages/MessagesPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/RegisterPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const SubscriptionPage = lazy(() => import("./pages/SubscriptionPage"));
+const VerificationPage = lazy(() => import("./pages/VerificationPage"));
+const ProfileEditPage = lazy(() => import("./pages/ProfileEditPage"));
+const WriteReferencePage = lazy(() => import("./pages/WriteReferencePage"));
+const CreateListingWizardPage = lazy(() => import("./pages/CreateListingWizardPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-muted-foreground">Yükleniyor...</p>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -27,6 +40,7 @@ export default function App() {
       <AuthProvider>
         <NotificationProvider>
           <ModalProvider>
+          <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/giris" element={<LoginPage />} />
             <Route path="/kayit" element={<RegisterPage />} />
@@ -50,6 +64,7 @@ export default function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
+          </Suspense>
           </ModalProvider>
         </NotificationProvider>
       </AuthProvider>

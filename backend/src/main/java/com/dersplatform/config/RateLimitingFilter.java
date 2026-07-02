@@ -5,7 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class RateLimitingFilter implements Filter {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
 
     private static final int MAX_REQUESTS = 100;
     private static final int AUTH_MAX_REQUESTS = 10;
@@ -34,9 +34,9 @@ public class RateLimitingFilter implements Filter {
         int maxRequests = isAuthEndpoint ? AUTH_MAX_REQUESTS : MAX_REQUESTS;
         String key = "rate_limit:" + ip + ":" + (isAuthEndpoint ? "auth" : "general");
 
-        Long current = redisTemplate.opsForValue().increment(key);
+        Long current = stringRedisTemplate.opsForValue().increment(key);
         if (current != null && current == 1) {
-            redisTemplate.expire(key, WINDOW_SECONDS, TimeUnit.SECONDS);
+            stringRedisTemplate.expire(key, WINDOW_SECONDS, TimeUnit.SECONDS);
         }
 
         if (current != null && current > maxRequests) {
