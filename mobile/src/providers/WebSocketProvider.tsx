@@ -20,7 +20,16 @@ const INITIAL_RECONNECT_DELAY = 1000;
 function getWsUrl() {
   const apiUrl = getApiBaseUrl();
   const baseUrl = apiUrl.replace("/api/v1", "").replace("http://", "ws://").replace("https://", "wss://");
-  return `${baseUrl}/ws/chat`;
+  const url = `${baseUrl}/ws/chat`;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") {
+      parsed.port = "8080";
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
 }
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
