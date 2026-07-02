@@ -61,8 +61,7 @@ function RootLayoutInner() {
         <Stack.Screen name="tutor/listings" options={{ headerShown: false, animation: "slide_from_right" }} />
         <Stack.Screen name="tutor/references" options={{ headerShown: false, animation: "slide_from_bottom" }} />
         <Stack.Screen name="settings" options={{ headerShown: false, animation: "slide_from_right" }} />
-        <Stack.Screen name="auth/reset-password" options={{ headerShown: false, animation: "slide_from_bottom" }} />
-        <Stack.Screen name="auth/email-verify" options={{ headerShown: false, animation: "slide_from_bottom" }} />
+
         <Stack.Screen name="blog/index" options={{ headerShown: false, animation: "slide_from_right" }} />
         <Stack.Screen name="blog/[slug]" options={{ headerShown: false, animation: "slide_from_right" }} />
         <Stack.Screen name="tutor/write-reference" options={{ headerShown: false, animation: "slide_from_bottom" }} />
