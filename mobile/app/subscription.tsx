@@ -95,7 +95,7 @@ export default function SubscriptionScreen() {
             }}
           >
             {plan.popular && (
-              <View style={{ backgroundColor: colors.primary, borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 4, alignSelf: "flex-start", marginBottom: spacing.sm }}>
+              <View key="popular-badge" style={{ backgroundColor: colors.primary, borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 4, alignSelf: "flex-start", marginBottom: spacing.sm }}>
                 <Text style={{ color: "#fff", fontSize: 11, fontWeight: "600" }}>POPÜLER</Text>
               </View>
             )}
@@ -104,7 +104,7 @@ export default function SubscriptionScreen() {
                 <Ionicons name={plan.icon} size={24} color={plan.popular ? colors.primary : colors.textSecondary} />
                 <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>{plan.name}</Text>
               {currentPlan === plan.type && (
-                <View style={{ backgroundColor: colors.success + "30", borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 2, marginLeft: spacing.sm }}>
+                <View key="active-badge" style={{ backgroundColor: colors.success + "30", borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 2, marginLeft: spacing.sm }}>
                   <Text style={{ color: colors.success, fontSize: 10, fontWeight: "700" }}>AKTİF</Text>
                 </View>
               )}
