@@ -31,7 +31,8 @@ CREATE TABLE blog_posts (
 CREATE TABLE blog_tags (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
-    slug VARCHAR(100) NOT NULL UNIQUE
+    slug VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE blog_post_tags (
