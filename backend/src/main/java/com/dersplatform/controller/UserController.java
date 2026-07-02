@@ -6,6 +6,8 @@ import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,6 +38,7 @@ public class UserController {
     }
 
     @PutMapping("/me")
+    @CacheEvict(value = {"tutorDetail", "userById"}, allEntries = true)
     public ResponseEntity<UserResponse> updateProfile(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdateProfileRequest request) {
@@ -43,6 +46,7 @@ public class UserController {
     }
 
     @PutMapping("/me/avatar")
+    @CacheEvict(value = {"tutorDetail", "userById"}, allEntries = true)
     public ResponseEntity<UserResponse> updateAvatar(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody Map<String, String> body) {
@@ -57,6 +61,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @Cacheable(value = "userById", key = "#id", unless = "#result.body == null")
     public ResponseEntity<UserResponse> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }

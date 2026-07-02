@@ -18,10 +18,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -137,48 +138,57 @@ public class TutorListingService {
     public Page<ListingResponse> searchListings(UUID subjectId, BigDecimal minPrice, BigDecimal maxPrice,
                                                 BigDecimal minRating, Boolean online, String sort, String q,
                                                 Pageable pageable) {
-        List<TutorListing> all = tutorListingRepository.searchActiveListings(subjectId, minPrice, maxPrice, online);
-
         var locale = new java.util.Locale("tr", "TR");
 
-        var filtered = all.stream()
-                .filter(l -> {
-                    if (minRating == null) return true;
-                    BigDecimal rating = l.getTutor().getRatingAvg();
-                    return rating != null && rating.compareTo(minRating) >= 0;
-                })
-                .filter(l -> {
-                    if (q == null || q.isBlank()) return true;
-                    String query = q.toLowerCase(locale);
-                    return l.getTitle().toLowerCase(locale).contains(query)
-                            || l.getSubject().getName().toLowerCase(locale).contains(query)
-                            || l.getTutor().getFullName().toLowerCase(locale).contains(query)
-                            || (l.getLessonDescription() != null && l.getLessonDescription().toLowerCase(locale).contains(query));
-                })
-                .sorted((l1, l2) -> {
-                    if ("price_asc".equals(sort)) {
-                        return l1.getHourlyRate().compareTo(l2.getHourlyRate());
-                    } else if ("price_desc".equals(sort)) {
-                        return l2.getHourlyRate().compareTo(l1.getHourlyRate());
-                    } else if ("rating".equals(sort)) {
-                        BigDecimal r1 = l1.getTutor().getRatingAvg() != null ? l1.getTutor().getRatingAvg() : BigDecimal.ZERO;
-                        BigDecimal r2 = l2.getTutor().getRatingAvg() != null ? l2.getTutor().getRatingAvg() : BigDecimal.ZERO;
-                        return r2.compareTo(r1);
-                    } else {
-                        BigDecimal p1 = l1.getTutor().getPopularityScore() != null ? l1.getTutor().getPopularityScore() : BigDecimal.ZERO;
-                        BigDecimal p2 = l2.getTutor().getPopularityScore() != null ? l2.getTutor().getPopularityScore() : BigDecimal.ZERO;
-                        return p2.compareTo(p1);
-                    }
-                })
-                .toList();
+        if (minRating != null || (q != null && !q.isBlank())) {
+            List<TutorListing> all = tutorListingRepository.searchActiveListings(subjectId, minPrice, maxPrice, online);
 
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), filtered.size());
-        List<ListingResponse> pageContent = start >= filtered.size()
-                ? List.of()
-                : filtered.subList(start, end).stream().map(ListingResponse::fromEntity).toList();
+            var filtered = all.stream()
+                    .filter(l -> {
+                        if (minRating == null) return true;
+                        BigDecimal rating = l.getTutor().getRatingAvg();
+                        return rating != null && rating.compareTo(minRating) >= 0;
+                    })
+                    .filter(l -> {
+                        if (q == null || q.isBlank()) return true;
+                        String query = q.toLowerCase(locale);
+                        return l.getTitle().toLowerCase(locale).contains(query)
+                                || l.getSubject().getName().toLowerCase(locale).contains(query)
+                                || l.getTutor().getFullName().toLowerCase(locale).contains(query)
+                                || (l.getLessonDescription() != null && l.getLessonDescription().toLowerCase(locale).contains(query));
+                    })
+                    .sorted(getComparator(sort))
+                    .toList();
 
-        return new PageImpl<>(pageContent, pageable, filtered.size());
+            int start = (int) pageable.getOffset();
+            int end = Math.min(start + pageable.getPageSize(), filtered.size());
+            List<ListingResponse> pageContent = start >= filtered.size()
+                    ? List.of()
+                    : filtered.subList(start, end).stream().map(ListingResponse::fromEntity).toList();
+
+            return new PageImpl<>(pageContent, pageable, filtered.size());
+        }
+
+        Page<TutorListing> paged = tutorListingRepository.searchActiveListingsPaged(subjectId, minPrice, maxPrice, online, pageable);
+        return paged.map(ListingResponse::fromEntity);
+    }
+
+    private Comparator<TutorListing> getComparator(String sort) {
+        return (l1, l2) -> {
+            if ("price_asc".equals(sort)) {
+                return l1.getHourlyRate().compareTo(l2.getHourlyRate());
+            } else if ("price_desc".equals(sort)) {
+                return l2.getHourlyRate().compareTo(l1.getHourlyRate());
+            } else if ("rating".equals(sort)) {
+                BigDecimal r1 = l1.getTutor().getRatingAvg() != null ? l1.getTutor().getRatingAvg() : BigDecimal.ZERO;
+                BigDecimal r2 = l2.getTutor().getRatingAvg() != null ? l2.getTutor().getRatingAvg() : BigDecimal.ZERO;
+                return r2.compareTo(r1);
+            } else {
+                BigDecimal p1 = l1.getTutor().getPopularityScore() != null ? l1.getTutor().getPopularityScore() : BigDecimal.ZERO;
+                BigDecimal p2 = l2.getTutor().getPopularityScore() != null ? l2.getTutor().getPopularityScore() : BigDecimal.ZERO;
+                return p2.compareTo(p1);
+            }
+        };
     }
 
     private void validateListingContent(String lessonDesc, String aboutTutor) {
