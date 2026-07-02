@@ -154,6 +154,7 @@ export default function SearchScreen() {
         horizontal
         data={categories}
         showsHorizontalScrollIndicator={false}
+        style={{ flexGrow: 0 }}
         contentContainerStyle={{ paddingHorizontal: spacing.md, gap: spacing.sm, marginBottom: spacing.sm }}
         renderItem={({ item }) => (
           <TouchableOpacity

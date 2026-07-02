@@ -26,7 +26,7 @@ function RootLayoutInner() {
     const isSharedScreen = segments[0] === "tutor";
 
     if (!isAuthenticated && !inAuthGroup && !isSharedScreen) {
-      router.replace("/auth");
+      router.replace("/auth/login");
     } else if (isAuthenticated && inAuthGroup) {
       router.replace("/(tabs)");
     }
