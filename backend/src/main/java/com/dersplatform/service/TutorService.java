@@ -4,7 +4,6 @@ import com.dersplatform.exception.ApiException;
 import com.dersplatform.model.dto.response.TutorSummaryResponse;
 import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.model.entity.TutorAvailability;
-import com.dersplatform.model.entity.TutorSubject;
 import com.dersplatform.model.entity.User;
 import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.SubscriptionRepository;
@@ -18,9 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +33,7 @@ public class TutorService {
     private final TutorAvailabilityRepository tutorAvailabilityRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final TutorListingRepository tutorListingRepository;
+    private final ScoringService scoringService;
 
     public Page<TutorSummaryResponse> listTutors(UUID subjectId, BigDecimal minPrice, BigDecimal maxPrice,
                                                   BigDecimal minRating, Pageable pageable) {
@@ -134,35 +132,6 @@ public class TutorService {
     }
 
     public void computePopularityScore(UUID tutorId) {
-        userRepository.findById(tutorId).ifPresent(tutor -> {
-            if (tutor.getRole() != Role.TUTOR) return;
-
-            double ratingScore = tutor.getRatingAvg() != null
-                    ? (tutor.getRatingAvg().doubleValue() / 5.0) * 30 : 0;
-            double countScore = tutor.getRatingCount() != null
-                    ? Math.min(tutor.getRatingCount() / 50.0, 1.0) * 20 : 0;
-            double verifiedScore = tutor.isIdentityVerified() ? 15 : 0;
-            double bioScore = (tutor.getBio() != null && !tutor.getBio().isBlank()) ? 10 : 0;
-            double eduScore = (tutor.getEducation() != null && !tutor.getEducation().isBlank()) ? 5 : 0;
-            double expScore = tutor.getExperienceYears() != null
-                    ? Math.min(tutor.getExperienceYears() / 20.0, 1.0) * 10 : 0;
-            double onlineScore = tutor.isOnline() ? 10 : 0;
-
-            double base = ratingScore + countScore + verifiedScore + bioScore + eduScore + expScore + onlineScore;
-
-            double multiplier = 1.0;
-            var sub = subscriptionRepository.findByTutorIdAndIsActiveTrue(tutorId);
-            if (sub.isPresent()) {
-                multiplier = switch (sub.get().getPlanType()) {
-                    case VIP -> 2.0;
-                    case PREMIUM -> 1.5;
-                    case BASIC -> 1.2;
-                };
-            }
-
-            double score = base * multiplier;
-            tutor.setPopularityScore(BigDecimal.valueOf(score).setScale(2, RoundingMode.HALF_UP));
-            userRepository.save(tutor);
-        });
+        scoringService.recompute(tutorId);
     }
 }

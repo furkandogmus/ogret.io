@@ -25,4 +25,13 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
 
     @Query("SELECT l FROM Lesson l JOIN FETCH l.student JOIN FETCH l.tutor JOIN FETCH l.subject WHERE l.id = :id")
     java.util.Optional<Lesson> findByIdWithJoins(UUID id);
+
+    @Query("SELECT COUNT(l) FROM Lesson l WHERE l.tutor.id = :tutorId AND l.status IN ('COMPLETED', 'CANCELLED')")
+    long countResolvedByTutorId(UUID tutorId);
+
+    @Query("SELECT COUNT(l) FROM Lesson l WHERE l.tutor.id = :tutorId AND l.status = 'COMPLETED'")
+    long countCompletedByTutorId(UUID tutorId);
+
+    @Query("SELECT COALESCE(MAX(l.lessonDate), NULL) FROM Lesson l WHERE l.tutor.id = :tutorId AND l.status = 'COMPLETED'")
+    java.time.LocalDate findLastLessonDateByTutorId(UUID tutorId);
 }

@@ -33,6 +33,7 @@ public class LessonService {
     private final TutorListingRepository tutorListingRepository;
     private final TutorAvailabilityRepository tutorAvailabilityRepository;
     private final NotificationService notificationService;
+    private final ScoringService scoringService;
 
     @Transactional
     public LessonResponse createLesson(UUID studentId, CreateLessonRequest request) {
@@ -153,6 +154,7 @@ public class LessonService {
         notificationService.notifyLessonCancelled(
                 canceller, otherParty, lesson.getSubject().getName(), isStudent);
 
+        scoringService.recompute(isTutor ? userId : lesson.getTutor().getId());
         return LessonResponse.fromEntity(lesson);
     }
 
@@ -201,6 +203,7 @@ public class LessonService {
         notificationService.notifyLessonCompleted(
                 lesson.getTutor(), lesson.getStudent(), lesson.getSubject().getName());
 
+        scoringService.recompute(tutorId);
         return LessonResponse.fromEntity(lesson);
     }
 
