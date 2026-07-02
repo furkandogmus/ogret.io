@@ -1,8 +1,10 @@
 package com.dersplatform.controller;
 
+import com.dersplatform.model.dto.request.ReviewVerificationRequest;
 import com.dersplatform.model.dto.response.LessonResponse;
 import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.service.AdminService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,11 +43,11 @@ public class AdminController {
     @PutMapping("/verifications/{id}")
     public ResponseEntity<Void> reviewVerification(
             @PathVariable UUID id,
-            @RequestBody Map<String, Object> body) {
+            @Valid @RequestBody ReviewVerificationRequest request) {
         adminService.reviewVerification(
                 id,
-                (boolean) body.getOrDefault("approved", false),
-                (String) body.get("adminNote"));
+                request.isApproved(),
+                request.getAdminNote());
         return ResponseEntity.ok().build();
     }
 

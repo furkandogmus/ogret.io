@@ -1,30 +1,3 @@
-export interface Review {
-  name: string;
-  photo: string;
-  rating: number;
-  date: string;
-  text: string;
-}
-
-export interface Tutor {
-  id: number;
-  name: string;
-  photo: string;
-  title: string;
-  subject: string;
-  subjects: string[];
-  rating: number;
-  reviewCount: number;
-  price: number;
-  experience: number;
-  bio: string;
-  education: string;
-  tags: string[];
-  verified: boolean;
-  online: boolean;
-  reviews: Review[];
-}
-
 export interface Category {
   name: string;
   icon: React.ComponentType<{ className?: string }>;

@@ -15,15 +15,18 @@ public class JwtTokenProvider {
 
     private final SecretKey accessSecretKey;
     private final SecretKey refreshSecretKey;
+    private final SecretKey passwordResetSecretKey;
     private final long accessTokenExpiration;
     private final long refreshTokenExpiration;
+    private static final long PASSWORD_RESET_EXPIRATION = 900_000;
 
     public JwtTokenProvider(
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.access-token-expiration}") long accessExpiration,
             @Value("${app.jwt.refresh-token-expiration}") long refreshExpiration) {
         this.accessSecretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.refreshSecretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.refreshSecretKey = Keys.hmacShaKeyFor((secret + "-refresh").getBytes(StandardCharsets.UTF_8));
+        this.passwordResetSecretKey = Keys.hmacShaKeyFor((secret + "-password-reset").getBytes(StandardCharsets.UTF_8));
         this.accessTokenExpiration = accessExpiration;
         this.refreshTokenExpiration = refreshExpiration;
     }
@@ -48,13 +51,31 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    public String generatePasswordResetToken(UUID userId) {
+        return Jwts.builder()
+                .subject(userId.toString())
+                .claim("purpose", "password_reset")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + PASSWORD_RESET_EXPIRATION))
+                .signWith(passwordResetSecretKey)
+                .compact();
+    }
+
     public UUID getUserIdFromToken(String token) {
         return UUID.fromString(parseClaims(token).getSubject());
     }
 
     public boolean validateToken(String token) {
+        return validateTokenWithKey(token, accessSecretKey);
+    }
+
+    public boolean validateRefreshToken(String token) {
+        return validateTokenWithKey(token, refreshSecretKey);
+    }
+
+    private boolean validateTokenWithKey(String token, SecretKey key) {
         try {
-            parseClaims(token);
+            parseClaims(token, key);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
@@ -62,8 +83,12 @@ public class JwtTokenProvider {
     }
 
     private Claims parseClaims(String token) {
+        return parseClaims(token, accessSecretKey);
+    }
+
+    private Claims parseClaims(String token, SecretKey key) {
         return Jwts.parser()
-                .verifyWith(accessSecretKey)
+                .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

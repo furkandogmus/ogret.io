@@ -131,8 +131,10 @@ public class TutorListingService {
     }
 
     public List<ListingResponse> searchListings(UUID subjectId, BigDecimal minPrice, BigDecimal maxPrice,
-                                                BigDecimal minRating, Boolean online, String sort) {
+                                                BigDecimal minRating, Boolean online, String sort, String q) {
         List<TutorListing> all = tutorListingRepository.findByStatusOrderByCreatedAtDesc("ACTIVE");
+
+        var locale = new java.util.Locale("tr", "TR");
 
         return all.stream()
                 .filter(l -> subjectId == null || l.getSubject().getId().equals(subjectId))
@@ -144,6 +146,14 @@ public class TutorListingService {
                     return rating != null && rating.compareTo(minRating) >= 0;
                 })
                 .filter(l -> online == null || !online || l.isAllowsOnline())
+                .filter(l -> {
+                    if (q == null || q.isBlank()) return true;
+                    String query = q.toLowerCase(locale);
+                    return l.getTitle().toLowerCase(locale).contains(query)
+                            || l.getSubject().getName().toLowerCase(locale).contains(query)
+                            || l.getTutor().getFullName().toLowerCase(locale).contains(query)
+                            || (l.getLessonDescription() != null && l.getLessonDescription().toLowerCase(locale).contains(query));
+                })
                 .sorted((l1, l2) -> {
                     if ("price_asc".equals(sort)) {
                         return l1.getHourlyRate().compareTo(l2.getHourlyRate());

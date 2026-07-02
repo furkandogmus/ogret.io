@@ -88,7 +88,8 @@ public class TutorListingController {
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) BigDecimal minRating,
             @RequestParam(required = false) Boolean online,
-            @RequestParam(required = false) String sort) {
-        return ResponseEntity.ok(tutorListingService.searchListings(subjectId, minPrice, maxPrice, minRating, online, sort));
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String q) {
+        return ResponseEntity.ok(tutorListingService.searchListings(subjectId, minPrice, maxPrice, minRating, online, sort, q));
     }
 }

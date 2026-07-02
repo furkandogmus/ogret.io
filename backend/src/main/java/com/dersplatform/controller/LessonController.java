@@ -1,6 +1,7 @@
 package com.dersplatform.controller;
 
 import com.dersplatform.model.dto.request.CreateLessonRequest;
+import com.dersplatform.model.dto.request.UpdateMeetingLinkRequest;
 import com.dersplatform.model.dto.response.LessonResponse;
 import com.dersplatform.service.LessonService;
 import jakarta.validation.Valid;
@@ -12,7 +13,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -58,10 +58,10 @@ public class LessonController {
     @PutMapping("/{id}/meeting-link")
     public ResponseEntity<LessonResponse> updateMeetingLink(
             @PathVariable UUID id,
-            @RequestBody Map<String, String> body,
+            @Valid @RequestBody UpdateMeetingLinkRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(lessonService.updateMeetingLink(
-                id, UUID.fromString(userDetails.getUsername()), body.get("meetingLink")));
+                id, UUID.fromString(userDetails.getUsername()), request.getMeetingLink()));
     }
 
     @PutMapping("/{id}/cancel")
