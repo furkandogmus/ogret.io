@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.dersplatform.service.LessonServiceTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-07-02T12:23:37.823Z" hostname="Users-MacBook-Pro.local" time="0.104">
+  <properties/>
+  <testcase name="confirmLesson_ShouldThrow_whenNotTutor()" classname="com.dersplatform.service.LessonServiceTest" time="0.097"/>
+  <testcase name="confirmLesson_ShouldUpdateStatus()" classname="com.dersplatform.service.LessonServiceTest" time="0.002"/>
+  <testcase name="cancelLesson_ShouldUpdateStatus()" classname="com.dersplatform.service.LessonServiceTest" time="0.001"/>
+  <testcase name="createLesson_ShouldCreatePendingLesson()" classname="com.dersplatform.service.LessonServiceTest" time="0.002"/>
+  <testcase name="getStudentLessons_ShouldReturnList()" classname="com.dersplatform.service.LessonServiceTest" time="0.001"/>
+  <testcase name="completeLesson_ShouldUpdateStatus()" classname="com.dersplatform.service.LessonServiceTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
