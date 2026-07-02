@@ -12,5 +12,7 @@ public interface FavoriteTutorRepository extends JpaRepository<FavoriteTutor, Fa
     @Query("SELECT f FROM FavoriteTutor f JOIN FETCH f.tutor WHERE f.student.id = :studentId")
     List<FavoriteTutor> findByStudentId(UUID studentId);
 
+    long countByTutorId(UUID tutorId);
+
     boolean existsByStudentIdAndTutorId(UUID studentId, UUID tutorId);
 }

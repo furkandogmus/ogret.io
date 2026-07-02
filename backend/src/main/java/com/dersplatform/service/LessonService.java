@@ -90,6 +90,9 @@ public class LessonService {
 
         lesson = lessonRepository.save(lesson);
 
+        student.setLastActiveAt(java.time.LocalDateTime.now());
+        userRepository.save(student);
+
         // Notify the tutor about the new lesson request
         notificationService.notifyLessonRequest(student, tutor, subject.getName());
 
@@ -123,6 +126,9 @@ public class LessonService {
         lesson.setStatus(LessonStatus.CONFIRMED);
         lesson = lessonRepository.save(lesson);
 
+        lesson.getTutor().setLastActiveAt(java.time.LocalDateTime.now());
+        userRepository.save(lesson.getTutor());
+
         // Notify the student that their lesson was confirmed
         notificationService.notifyLessonConfirmed(
                 lesson.getTutor(), lesson.getStudent(), lesson.getSubject().getName());
@@ -153,6 +159,9 @@ public class LessonService {
         User otherParty = isStudent ? lesson.getTutor() : lesson.getStudent();
         notificationService.notifyLessonCancelled(
                 canceller, otherParty, lesson.getSubject().getName(), isStudent);
+
+        canceller.setLastActiveAt(java.time.LocalDateTime.now());
+        userRepository.save(canceller);
 
         scoringService.recompute(isTutor ? userId : lesson.getTutor().getId());
         return LessonResponse.fromEntity(lesson);
@@ -202,6 +211,9 @@ public class LessonService {
         // Notify the student that the lesson is completed
         notificationService.notifyLessonCompleted(
                 lesson.getTutor(), lesson.getStudent(), lesson.getSubject().getName());
+
+        lesson.getTutor().setLastActiveAt(java.time.LocalDateTime.now());
+        userRepository.save(lesson.getTutor());
 
         scoringService.recompute(tutorId);
         return LessonResponse.fromEntity(lesson);

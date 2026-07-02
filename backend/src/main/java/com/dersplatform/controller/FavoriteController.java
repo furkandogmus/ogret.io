@@ -6,6 +6,7 @@ import com.dersplatform.model.entity.User;
 import com.dersplatform.repository.FavoriteTutorRepository;
 import com.dersplatform.repository.UserRepository;
 import com.dersplatform.exception.ApiException;
+import com.dersplatform.service.ScoringService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +24,7 @@ public class FavoriteController {
 
     private final FavoriteTutorRepository favoriteRepository;
     private final UserRepository userRepository;
+    private final ScoringService scoringService;
 
     @GetMapping
     @PreAuthorize("hasRole('STUDENT')")
@@ -45,6 +47,7 @@ public class FavoriteController {
             User student = userRepository.findById(studentId).orElseThrow();
             User tutor = userRepository.findById(tutorId).orElseThrow(() -> ApiException.notFound("Öğretmen bulunamadı"));
             favoriteRepository.save(FavoriteTutor.builder().student(student).tutor(tutor).build());
+            scoringService.recompute(tutorId);
         }
         return ResponseEntity.ok().build();
     }
@@ -56,6 +59,7 @@ public class FavoriteController {
             @AuthenticationPrincipal UserDetails userDetails) {
         UUID studentId = UUID.fromString(userDetails.getUsername());
         favoriteRepository.deleteById(new FavoriteTutor.FavoriteTutorId(studentId, tutorId));
+        scoringService.recompute(tutorId);
         return ResponseEntity.ok().build();
     }
 }

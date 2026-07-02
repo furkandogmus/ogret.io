@@ -18,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,6 +66,7 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> ApiException.unauthorized("E-posta veya şifre hatalı"));
@@ -75,6 +77,10 @@ public class AuthService {
                         request.getPassword()
                 )
         );
+
+        user.setLastActiveAt(LocalDateTime.now());
+        user.setOnline(true);
+        userRepository.save(user);
 
         return buildAuthResponse(user);
     }

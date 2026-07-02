@@ -6,12 +6,17 @@ import com.dersplatform.model.dto.response.MessageResponse;
 import com.dersplatform.model.entity.Message;
 import com.dersplatform.model.entity.User;
 import com.dersplatform.model.enums.MessageType;
+import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.MessageRepository;
 import com.dersplatform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,6 +39,13 @@ public class MessageService {
         User receiver = userRepository.findById(request.getReceiverId())
                 .orElseThrow(() -> ApiException.notFound("Alıcı bulunamadı"));
 
+        sender.setLastActiveAt(LocalDateTime.now());
+        userRepository.save(sender);
+
+        if (sender.getRole() == Role.TUTOR) {
+            computeResponseTime(sender, receiver);
+        }
+
         Message message = Message.builder()
                 .sender(sender)
                 .receiver(receiver)
@@ -48,6 +60,32 @@ public class MessageService {
         notificationService.notifyNewMessage(sender, receiver, request.getContent());
 
         return MessageResponse.fromEntity(message);
+    }
+
+    private void computeResponseTime(User tutor, User student) {
+        var conversation = messageRepository.findConversation(tutor.getId(), student.getId());
+        if (conversation.size() < 2) return;
+
+        Message lastStudentMsg = null;
+        for (int i = conversation.size() - 1; i >= 0; i--) {
+            Message msg = conversation.get(i);
+            if (msg.getSender().getId().equals(student.getId())) {
+                lastStudentMsg = msg;
+                break;
+            }
+        }
+        if (lastStudentMsg == null) return;
+
+        long responseMinutes = ChronoUnit.MINUTES.between(lastStudentMsg.getCreatedAt(), LocalDateTime.now());
+        if (responseMinutes < 1) responseMinutes = 1;
+
+        BigDecimal current = tutor.getResponseTimeHours();
+        if (current == null || current.compareTo(BigDecimal.ZERO) == 0) {
+            tutor.setResponseTimeHours(BigDecimal.valueOf(responseMinutes / 60.0).setScale(1, RoundingMode.HALF_UP));
+        } else {
+            double weighted = (current.doubleValue() * 0.7) + ((responseMinutes / 60.0) * 0.3);
+            tutor.setResponseTimeHours(BigDecimal.valueOf(weighted).setScale(1, RoundingMode.HALF_UP));
+        }
     }
 
     public List<MessageResponse> getConversation(UUID userId1, UUID userId2) {

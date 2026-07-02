@@ -24,6 +24,8 @@ public class TutorSummaryResponse {
     private boolean isIdentityVerified;
     private BigDecimal popularityScore;
     private BigDecimal responseTimeHours;
+    private BigDecimal lessonCompletionRate;
+    private Integer profileCompletionScore;
     private String premiumPlan;
     private List<String> subjects;
     private List<String> tags;
@@ -43,6 +45,8 @@ public class TutorSummaryResponse {
                 .isIdentityVerified(tutor.isIdentityVerified())
                 .popularityScore(tutor.getPopularityScore())
                 .responseTimeHours(tutor.getResponseTimeHours())
+                .lessonCompletionRate(tutor.getLessonCompletionRate())
+                .profileCompletionScore(tutor.getProfileCompletionScore())
                 .premiumPlan(premiumPlan)
                 .subjects(subjects)
                 .tags(List.of())
