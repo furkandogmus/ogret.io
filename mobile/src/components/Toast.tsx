@@ -48,6 +48,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <Animated.View
           pointerEvents="none"
           style={[styles.container, { opacity, backgroundColor: colorMap[toast.type] }]}
+          accessibilityRole="alert"
+          accessibilityLabel={toast.message}
+          accessibilityLiveRegion="assertive"
         >
           <Ionicons name={iconMap[toast.type]} size={18} color="#fff" />
           <Text style={styles.text}>{toast.message}</Text>

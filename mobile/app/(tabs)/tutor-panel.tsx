@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshContr
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { LessonCard } from "../../src/components/LessonCard";
+import { EmptyState } from "../../src/components/EmptyState";
 import { useAuth } from "../../src/providers/AuthProvider";
 import { useToast } from "../../src/components/Toast";
 import { lessonApi } from "../../src/api/services";
@@ -100,15 +101,12 @@ export default function TutorPanel() {
         removeClippedSubviews={Platform.OS === "android"}
         contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
         renderItem={({ item }) => (
-          <LessonCard lesson={item} userRole="TUTOR" onPress={() => router.push(`/lesson/${item.id}`)} onCancel={item.status === "PENDING" ? () => handleCancel(item.id) : undefined} onComplete={item.status === "CONFIRMED" ? () => handleConfirm(item.id) : undefined} />
+          <LessonCard lesson={item} userRole="TUTOR" onPress={() => router.push(`/lesson/${item.id}`)} onCancel={item.status === "PENDING" ? () => handleCancel(item.id) : undefined} onComplete={item.status === "CONFIRMED" ? () => handleConfirm(item.id) : item.status === "IN_PROGRESS" ? async () => { try { await lessonApi.complete(item.id); toast.show("Ders tamamlandı", "success"); fetchLessons(); } catch { toast.show("Tamamlanamadı", "error"); } } : undefined} />
         )}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchLessons(); }} tintColor={colors.primary} />}
         ListEmptyComponent={
           loading ? <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
-          : <View style={{ alignItems: "center", marginTop: 40 }}>
-              <Ionicons name="calendar-outline" size={48} color={colors.textMuted} />
-              <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: spacing.sm }}>Henüz ders talebi yok</Text>
-            </View>
+          : <EmptyState icon="calendar-outline" title="Henüz ders talebi yok" subtitle="Yeni talepler burada görünecek" />
         }
       />
     </View>

@@ -93,3 +93,75 @@ export interface Subscription {
   isActive: boolean;
   paymentMethod?: string;
 }
+
+export interface Reference {
+  id: string;
+  tutorId: string;
+  tutorName: string;
+  recommenderName: string;
+  recommenderEmail: string;
+  recommenderTitle: string;
+  comment: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  createdAt: string;
+}
+
+export interface TutorListing {
+  id: string;
+  tutorId: string;
+  tutorName: string;
+  tutorAvatar?: string;
+  subjectId: string;
+  subjectName: string;
+  title: string;
+  lessonDescription: string;
+  aboutTutor: string;
+  hourlyRate: number;
+  allowsTutorHome: boolean;
+  allowsStudentHome: boolean;
+  allowsOnline: boolean;
+  maxTravelDistanceKm?: number;
+  languages: string[];
+  status: string;
+}
+
+export interface WsNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  link?: string;
+  senderName?: string;
+  senderAvatar?: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface WsMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar?: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface DashboardStats {
+  totalUsers: number;
+  totalTutors: number;
+  totalLessons: number;
+  totalRevenue?: number;
+}
+
+export interface CreateListingRequest {
+  subjectId: string;
+  title: string;
+  lessonDescription: string;
+  aboutTutor: string;
+  hourlyRate: number;
+  allowsTutorHome: boolean;
+  allowsStudentHome: boolean;
+  allowsOnline: boolean;
+  maxTravelDistanceKm?: number;
+  languages: string[];
+}

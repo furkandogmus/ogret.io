@@ -3,6 +3,8 @@ import { Animated, Text } from "react-native";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { colors } from "../constants/theme";
 
+import { colors } from "../constants/theme";
+
 export function NetworkBanner() {
   const isConnected = useNetworkStatus();
   const translateY = useRef(new Animated.Value(-40)).current;

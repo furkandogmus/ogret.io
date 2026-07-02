@@ -3,6 +3,7 @@ import { View, Text, FlatList, ActivityIndicator, RefreshControl, Platform } fro
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { TutorCard } from "../../src/components/TutorCard";
+import { EmptyState } from "../../src/components/EmptyState";
 import { favoriteApi } from "../../src/api/services";
 import type { User } from "../../src/types";
 import { colors, spacing } from "../../src/constants/theme";
@@ -78,10 +79,7 @@ export default function FavoritesScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchFavorites(); }} tintColor={colors.primary} />}
         ListEmptyComponent={
           loading ? <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
-          : <View style={{ alignItems: "center", marginTop: 40 }}>
-              <Ionicons name="heart-outline" size={48} color={colors.textMuted} />
-              <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: spacing.sm }}>Henüz favori öğretmenin yok</Text>
-            </View>
+          : <EmptyState icon="heart-outline" title="Henüz favori öğretmenin yok" subtitle="Öğretmen profillerinde kalbe tıklayarak favorilere ekle" />
         }
       />
     </View>

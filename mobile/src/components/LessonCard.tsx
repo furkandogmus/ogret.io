@@ -1,7 +1,8 @@
+import { memo } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "./Avatar";
-import { colors, spacing, radius } from "../constants/theme";
+import { colors, spacing, radius, statusColors, statusLabels } from "../constants/theme";
 import type { Lesson } from "../types";
 
 interface Props {
@@ -13,22 +14,6 @@ interface Props {
   onMeetingLink?: () => void;
 }
 
-const statusColors: Record<string, string> = {
-  PENDING: colors.warning,
-  CONFIRMED: colors.primary,
-  IN_PROGRESS: colors.success,
-  COMPLETED: colors.textMuted,
-  CANCELLED: colors.error,
-};
-
-const statusLabels: Record<string, string> = {
-  PENDING: "Bekliyor",
-  CONFIRMED: "Onaylandı",
-  IN_PROGRESS: "Devam Ediyor",
-  COMPLETED: "Tamamlandı",
-  CANCELLED: "İptal Edildi",
-};
-
 const statusIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
   PENDING: "time",
   CONFIRMED: "checkmark-circle",
@@ -37,7 +22,7 @@ const statusIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
   CANCELLED: "close-circle",
 };
 
-export function LessonCard({ lesson, userRole, onPress, onCancel, onComplete, onMeetingLink }: Props) {
+function LessonCardComponent({ lesson, userRole, onPress, onCancel, onComplete, onMeetingLink }: Props) {
   const otherUser = userRole === "STUDENT" ? lesson.tutor : lesson.student;
   const canCancel = lesson.status === "PENDING";
   const canComplete = lesson.status === "CONFIRMED" || lesson.status === "IN_PROGRESS";
@@ -104,3 +89,5 @@ export function LessonCard({ lesson, userRole, onPress, onCancel, onComplete, on
     </TouchableOpacity>
   );
 }
+
+export const LessonCard = memo(LessonCardComponent);

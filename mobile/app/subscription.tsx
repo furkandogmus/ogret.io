@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Button } from "../src/components/Button";
@@ -12,7 +13,7 @@ interface Plan {
   features: string[]; popular?: boolean;
 }
 
-const plans: Plan[] = [
+const defaultPlans: Plan[] = [
   { type: "BASIC", name: "Basic", price: 49, icon: "rocket-outline", features: ["Standart profil", "10 ders talebi/ay", "Temel istatistikler"] },
   { type: "PREMIUM", name: "Premium", price: 99, icon: "diamond-outline", features: ["Öne çıkan profil", "Sınırsız talep", "Profil analitiği", "Öncelikli destek"], popular: true },
   { type: "VIP", name: "VIP", price: 199, icon: "star-outline", features: ["En üst sıra", "VIP rozeti", "Anında bildirim", "Öncelikli destek"] },
@@ -21,16 +22,41 @@ const plans: Plan[] = [
 export default function SubscriptionScreen() {
   const router = useRouter();
   const toast = useToast();
+  const [plans, setPlans] = useState<Plan[]>(defaultPlans);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [plansRes, mySubRes] = await Promise.all([
+          subscriptionApi.getPlans().catch(() => ({ data: null })),
+          subscriptionApi.getMy().catch(() => ({ data: null })),
+        ]);
+        if (plansRes.data) setPlans(plansRes.data);
+        if (mySubRes.data) setCurrentPlan(mySubRes.data.planType);
+      } catch { /* */ }
+      setLoading(false);
+    })();
+  }, []);
 
   const handleSubscribe = async (planType: string) => {
     try {
       await subscriptionApi.subscribe(planType);
       toast.show("Abonelik başlatıldı", "success");
-      router.back();
+      setCurrentPlan(planType);
     } catch {
       toast.show("Abonelik başlatılamadı", "error");
     }
   };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -63,6 +89,11 @@ export default function SubscriptionScreen() {
               <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
                 <Ionicons name={plan.icon} size={24} color={plan.popular ? colors.primary : colors.textSecondary} />
                 <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>{plan.name}</Text>
+              {currentPlan === plan.type && (
+                <View style={{ backgroundColor: colors.success + "30", borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 2, marginLeft: spacing.sm }}>
+                  <Text style={{ color: colors.success, fontSize: 10, fontWeight: "700" }}>AKTİF</Text>
+                </View>
+              )}
               </View>
               <View style={{ flexDirection: "row", alignItems: "baseline" }}>
                 <Text style={{ color: colors.text, fontSize: 24, fontWeight: "700" }}>₺{plan.price}</Text>
