@@ -7,6 +7,7 @@ import {
 import { subjectApi, listingApi } from "../api/services";
 import type { SubjectResponse, ListingResponse, Page } from "../api/services";
 import { TutorCard } from "../components/shared/TutorCard";
+import { useSeo } from "../hooks/useSeo";
 
 const SORT_OPTIONS = [
   { value: "score", label: "En İyi Eşleşme" },
@@ -36,6 +37,12 @@ export function SearchPage() {
   const onlyOnline = searchParams.get("online") === "true";
   const sort = searchParams.get("sort") || "score";
   const page = Number(searchParams.get("page")) || 0;
+
+  useSeo({
+    title: q ? `"${q}" için Özel Ders İlanları` : "Özel Ders İlanları",
+    description: "Binlerce uzman öğretmen arasından size en uygun özel ders ilanını bulun. Online veya yüz yüze ders seçenekleri.",
+    canonical: "https://ogret.io/arama",
+  });
 
   const [searchInput, setSearchInput] = useState(q);
 
@@ -107,10 +114,13 @@ export function SearchPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <h1 className="text-lg font-bold text-stone-900">{q ? `"${q}" için Özel Ders İlanları` : "Özel Ders İlanları"}</h1>
       <div className="flex items-center gap-3">
-        <form onSubmit={(e) => { e.preventDefault(); updateParams({ q: searchInput }); }} className="flex-1 relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <form role="search" onSubmit={(e) => { e.preventDefault(); updateParams({ q: searchInput }); }} className="flex-1 relative">
+          <label htmlFor="search-input" className="sr-only">İlan veya ders ara</label>
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
           <input
+            id="search-input"
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -118,7 +128,9 @@ export function SearchPage() {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
           />
         </form>
+        <label htmlFor="sort-select" className="sr-only">Sıralama</label>
         <select
+          id="sort-select"
           value={sort}
           onChange={(e) => updateParams({ sort: e.target.value })}
           className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -129,6 +141,7 @@ export function SearchPage() {
         </select>
         <button
           onClick={() => setShowFilters(!showFilters)}
+          aria-label="Filtreleri aç/kapa"
           className={`p-2.5 rounded-xl border transition-colors ${
             showFilters ? "bg-primary text-white border-primary" : "border-border text-muted-foreground hover:text-foreground"
           }`}

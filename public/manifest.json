@@ -1,0 +1,18 @@
+{
+  "name": "öğret.io - Online Özel Ders Platformu",
+  "short_name": "öğret.io",
+  "description": "Türkiye'nin en iyi online özel ders platformu.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "tr"
+}

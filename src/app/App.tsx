@@ -24,6 +24,13 @@ const ProfileEditPage = lazy(() => import("./pages/ProfileEditPage").then(m => (
 const WriteReferencePage = lazy(() => import("./pages/WriteReferencePage").then(m => ({ default: m.WriteReferencePage })));
 const CreateListingWizardPage = lazy(() => import("./pages/CreateListingWizardPage").then(m => ({ default: m.CreateListingWizardPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
+const FaqPage = lazy(() => import("./pages/FaqPage").then(m => ({ default: m.FaqPage })));
+const AboutPage = lazy(() => import("./pages/AboutPage").then(m => ({ default: m.AboutPage })));
+const ContactPage = lazy(() => import("./pages/ContactPage").then(m => ({ default: m.ContactPage })));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage").then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import("./pages/TermsPage").then(m => ({ default: m.TermsPage })));
+const BlogIndexPage = lazy(() => import("./pages/blog/BlogIndexPage").then(m => ({ default: m.BlogIndexPage })));
+const BlogPostPage = lazy(() => import("./pages/blog/BlogPostPage").then(m => ({ default: m.BlogPostPage })));
 
 export default function App() {
   return (
@@ -56,6 +63,13 @@ export default function App() {
               <Route path="/admin" element={<AuthGuard role="ADMIN"><AdminDashboard /></AuthGuard>} />
               <Route path="/abonelik" element={<SubscriptionPage />} />
               <Route path="/email-dogrula" element={<EmailVerificationPage />} />
+              <Route path="/blog" element={<BlogIndexPage />} />
+              <Route path="/blog/:slug" element={<BlogPostPage />} />
+              <Route path="/sikca-sorulan-sorular" element={<FaqPage />} />
+              <Route path="/hakkimizda" element={<AboutPage />} />
+              <Route path="/iletisim" element={<ContactPage />} />
+              <Route path="/gizlilik" element={<PrivacyPage />} />
+              <Route path="/kullanim-kosullari" element={<TermsPage />} />
               <Route path="/dogrulama" element={<VerificationPage />} />
               <Route path="/profil/duzenle" element={<AuthGuard><ProfileEditPage /></AuthGuard>} />
               <Route path="*" element={<NotFoundPage />} />

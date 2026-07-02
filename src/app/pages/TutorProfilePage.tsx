@@ -8,8 +8,10 @@ import { tutorApi, reviewApi, referenceApi, listingApi } from "../api/services";
 import type { UserResponse, ReviewResponse, ReferenceResponse, ListingResponse } from "../api/services";
 import { StarRating } from "../components/shared/StarRating";
 import { Avatar } from "../components/shared/Avatar";
+import { JsonLd } from "../components/shared/JsonLd";
 import { useModal } from "../providers/ModalProvider";
 import { useAuth } from "../providers/AuthProvider";
+import { useSeo } from "../hooks/useSeo";
 
 interface AvailabilitySlot {
   dayOfWeek: number;
@@ -22,6 +24,11 @@ const ALL_HOURS = Array.from({ length: 10 }, (_, i) => i + 9);
 
 export function TutorProfilePage() {
   const { id } = useParams();
+  useSeo({
+    title: tutor ? `${tutor.fullName} - Özel Ders Öğretmeni` : "Öğretmen Profili",
+    description: tutor?.bio || "Alanında uzman öğretmenimizle tanışın. Online özel ders için hemen iletişime geçin.",
+    canonical: id ? `https://ogret.io/ogretmen/${id}` : undefined,
+  });
   const navigate = useNavigate();
   const { openModal } = useModal();
   const { isAuthenticated, user } = useAuth();
@@ -102,17 +109,28 @@ export function TutorProfilePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <nav className="flex items-center gap-1.5 text-xs text-stone-400 font-medium mb-4">
+      <nav className="flex items-center gap-1.5 text-xs text-stone-400 font-medium mb-4" aria-label="Sayfa yolu">
         <Link to="/" className="hover:text-stone-600 transition-colors">Ana Sayfa</Link>
-        <ChevronRight className="w-3 h-3" />
+        <ChevronRight className="w-3 h-3" aria-hidden="true" />
         <Link to="/arama" className="hover:text-stone-600 transition-colors">Öğretmenler</Link>
         {tutor && (
           <>
-            <ChevronRight className="w-3 h-3" />
-            <span className="text-stone-700 font-semibold">{tutor.fullName}</span>
+            <ChevronRight className="w-3 h-3" aria-hidden="true" />
+            <span className="text-stone-700 font-semibold" aria-current="page">{tutor.fullName}</span>
           </>
         )}
       </nav>
+      {tutor && (
+        <JsonLd data={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ogret.io/" },
+            { "@type": "ListItem", position: 2, name: "Öğretmenler", item: "https://ogret.io/arama" },
+            { "@type": "ListItem", position: 3, name: tutor.fullName, item: `https://ogret.io/ogretmen/${id}` },
+          ],
+        }} />
+      )}
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 mb-6 transition-colors font-semibold"

@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../providers/AuthProvider";
 import { toast } from "sonner";
 import { userApi, subjectApi, tutorApi, fileApi } from "../api/services";
+import { JsonLd } from "../components/shared/JsonLd";
 import type { SubjectResponse } from "../api/services";
 import { Avatar } from "../components/shared/Avatar";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "../components/ui/form";
@@ -229,11 +230,19 @@ export function ProfileEditPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <nav className="flex items-center gap-1.5 text-xs text-stone-400 font-medium mb-4">
+      <nav className="flex items-center gap-1.5 text-xs text-stone-400 font-medium mb-4" aria-label="Sayfa yolu">
         <Link to="/" className="hover:text-stone-600 transition-colors">Ana Sayfa</Link>
-        <ChevronRight className="w-3 h-3" />
-        <span className="text-stone-700 font-semibold">Profil Düzenle</span>
+        <ChevronRight className="w-3 h-3" aria-hidden="true" />
+        <span className="text-stone-700 font-semibold" aria-current="page">Profil Düzenle</span>
       </nav>
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ogret.io/" },
+          { "@type": "ListItem", position: 2, name: "Profil Düzenle", item: "https://ogret.io/profil/duzenle" },
+        ],
+      }} />
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => navigate(-1)}

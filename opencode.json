@@ -1,0 +1,32 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md",
+    "PRD-UI.md",
+    "SPEC.md",
+    "PRD-MOBILE.md",
+    "SPEC-MOBILE.md"
+  ],
+  "command": {
+    "build": {
+      "description": "Build frontend + backend",
+      "template": "Build both frontend and backend:\n- Frontend: pnpm build (Vite)\n- Backend: cd backend && ./gradlew build (Spring Boot + Java 17)"
+    },
+    "test": {
+      "description": "Run all tests",
+      "template": "Run the full test suite:\n- Backend: cd backend && ./gradlew test (JUnit 5)\n- Frontend E2E: pnpm test:e2e (Playwright)"
+    },
+    "deploy": {
+      "description": "Deploy with Docker Compose",
+      "template": "Build and deploy using Docker:\n1. pnpm build (frontend)\n2. cd backend && ./gradlew build (backend JAR)\n3. docker compose -f docker-compose.prod.yml build\n4. docker compose -f docker-compose.prod.yml up -d"
+    },
+    "migration": {
+      "description": "Create Flyway migration",
+      "template": "Create a new Flyway migration file in backend/src/main/resources/db/migration with naming convention V{timestamp}__{description}.sql. The description is: $ARGUMENTS"
+    },
+    "component": {
+      "description": "Create a new React component",
+      "template": "Create a new React component named $ARGUMENTS in src/components/ with TypeScript, proper typing, and basic structure matching the project conventions (shadcn/ui, Tailwind CSS v4)."
+    }
+  }
+}

@@ -2,8 +2,13 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { authApi } from "../api/services";
+import { useSeo } from "../hooks/useSeo";
 
 export function EmailVerificationPage() {
+  useSeo({
+    title: "E-posta Doğrulama",
+    description: "E-posta adresinizi doğrulayın ve hesabınızı aktifleştirin.",
+  });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");

@@ -2,8 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { BookOpen, Mail, ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
 import { authApi } from "../api/services";
+import { useSeo } from "../hooks/useSeo";
 
 export function ForgotPasswordPage() {
+  useSeo({
+    title: "Şifremi Unuttum",
+    description: "Şifrenizi mi unuttunuz? E-posta adresinizi girerek şifrenizi sıfırlayabilirsiniz.",
+  });
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,6 +29,7 @@ export function ForgotPasswordPage() {
   };
 
   return (
+    <main>
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
@@ -97,5 +103,6 @@ export function ForgotPasswordPage() {
         )}
       </div>
     </div>
+    </main>
   );
 }
