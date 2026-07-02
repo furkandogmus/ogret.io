@@ -120,7 +120,6 @@ public class TutorService {
                 .toList();
     }
 
-    @org.springframework.cache.annotation.Cacheable(value = "tutorDetail", key = "#tutorId", unless = "#result == null")
     public UserResponse getTutorDetail(UUID tutorId) {
         User tutor = userRepository.findById(tutorId)
                 .orElseThrow(() -> ApiException.notFound("Öğretmen bulunamadı"));
