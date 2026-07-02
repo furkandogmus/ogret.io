@@ -48,14 +48,15 @@ export default function SearchScreen() {
         tutorApi.list({ sort, size: 20, page: currentPage }),
         favoriteApi.list().catch(() => ({ data: [] })),
       ]);
+      const newTutors = tutorsRes.data?.content ?? [];
       if (loadMore) {
-        setTutors(prev => [...prev, ...tutorsRes.data.content]);
+        setTutors(prev => [...prev, ...newTutors]);
       } else {
-        setTutors(tutorsRes.data.content);
+        setTutors(newTutors);
       }
       pageRef.current = currentPage;
       setPage(currentPage);
-      setFavoriteIds(new Set(favRes.data.map((u) => u.id)));
+      setFavoriteIds(new Set((favRes.data ?? []).map((u: any) => u.id)));
       setHasMore(currentPage < tutorsRes.data.totalPages - 1);
     } catch {
       toast.show("Öğretmenler yüklenemedi", "error");
