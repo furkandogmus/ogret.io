@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Avatar } from "../../src/components/Avatar";
@@ -50,6 +50,10 @@ export default function MessagesScreen() {
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.user.id}
+        windowSize={10}
+        maxToRenderPerBatch={10}
+        initialNumToRender={10}
+        removeClippedSubviews={Platform.OS === "android"}
         contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
         renderItem={({ item }) => (
           <TouchableOpacity

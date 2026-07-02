@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Alert, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -18,7 +19,7 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const sections = [
+  const sections = useMemo(() => [
     {
       title: "Genel",
       items: [
@@ -41,7 +42,7 @@ export default function SettingsScreen() {
         { icon: "log-out-outline" as const, label: "Çıkış Yap", onPress: handleLogout, danger: true },
       ],
     },
-  ];
+  ], [handleLogout]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
