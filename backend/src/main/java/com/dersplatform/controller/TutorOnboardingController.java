@@ -8,6 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
@@ -52,7 +53,7 @@ public class TutorOnboardingController {
         UUID userId = UUID.fromString(userDetails.getUsername());
         var user = tutorOnboardingService.updateStep2(
                 userId,
-                body.get("hourlyRate") != null ? (Integer) body.get("hourlyRate") : null,
+                body.get("hourlyRate") != null ? new BigDecimal(body.get("hourlyRate").toString()) : null,
                 body.get("experienceYears") != null ? (Integer) body.get("experienceYears") : null);
         return ResponseEntity.ok(Map.of(
                 "id", user.getId(),
