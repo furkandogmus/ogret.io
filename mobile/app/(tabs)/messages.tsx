@@ -33,10 +33,11 @@ export default function MessagesScreen() {
     if (!me) { setLoading(false); return; }
     try {
       const [allRes, unreadRes] = await Promise.all([
-        messageApi.getAll().catch(() => ({ data: [] })),
+        messageApi.getAll().catch(() => null),
         messageApi.getUnread(),
       ]);
-      const allMessages = Array.isArray(allRes.data) ? allRes.data : [];
+      const unreadData = Array.isArray(unreadRes.data) ? unreadRes.data : [];
+      const allMessages = allRes ? (Array.isArray(allRes.data) ? allRes.data : unreadData) : unreadData;
       const unreadSet = new Set((Array.isArray(unreadRes.data) ? unreadRes.data : []).map(m => m.id));
       const grouped = new Map<string, { messages: Message[]; lastMessage: Message }>();
       for (const msg of allMessages) {
