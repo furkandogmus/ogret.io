@@ -9,10 +9,16 @@ import { NotificationProvider } from "../src/providers/NotificationProvider";
 import { ToastProvider } from "../src/components/Toast";
 import { NetworkBanner } from "../src/components/NetworkBanner";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
+import { ThemeProvider, useTheme } from "../src/providers/ThemeProvider";
 import { colors } from "../src/constants/theme";
 import * as SplashScreen from "expo-splash-screen";
 
 SplashScreen.preventAutoHideAsync();
+
+function StatusBarTheme() {
+  const { isDark } = useTheme();
+  return <StatusBar style={isDark ? "light" : "dark"} />;
+}
 
 function RootLayoutInner() {
   const { loading, isAuthenticated } = useAuth();
@@ -61,6 +67,11 @@ function RootLayoutInner() {
         <Stack.Screen name="tutor/listings" options={{ headerShown: false, animation: "slide_from_right" }} />
         <Stack.Screen name="tutor/references" options={{ headerShown: false, animation: "slide_from_bottom" }} />
         <Stack.Screen name="settings" options={{ headerShown: false, animation: "slide_from_right" }} />
+        <Stack.Screen name="auth/reset-password" options={{ headerShown: false, animation: "slide_from_bottom" }} />
+        <Stack.Screen name="auth/email-verify" options={{ headerShown: false, animation: "slide_from_bottom" }} />
+        <Stack.Screen name="blog/index" options={{ headerShown: false, animation: "slide_from_right" }} />
+        <Stack.Screen name="blog/[slug]" options={{ headerShown: false, animation: "slide_from_right" }} />
+        <Stack.Screen name="tutor/write-reference" options={{ headerShown: false, animation: "slide_from_bottom" }} />
         <Stack.Screen name="payment/methods" options={{ headerShown: false, animation: "slide_from_right" }} />
       </Stack>
     </NotificationProvider>
@@ -73,12 +84,14 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AuthProvider>
           <ToastProvider>
-            <WebSocketProvider>
-              <StatusBar style="dark" />
+            <ThemeProvider>
+              <StatusBarTheme />
+          <WebSocketProvider>
               <NetworkBanner />
               <RootLayoutInner />
             </WebSocketProvider>
-          </ToastProvider>
+          </ThemeProvider>
+        </ToastProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </ErrorBoundary>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Input } from "../../src/components/Input";
@@ -7,7 +7,7 @@ import { Button } from "../../src/components/Button";
 import { DateTimePicker } from "../../src/components/DateTimePicker";
 import { useToast } from "../../src/components/Toast";
 import { tutorApi, subjectApi, lessonApi, listingApi } from "../../src/api/services";
-import type { Subject } from "../../src/types";
+import type { Subject, TutorListing } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
 import { formatLocalDate } from "../../src/utils/dateFormat";
 
@@ -35,7 +35,7 @@ export default function LessonRequestScreen() {
         ]);
         setSubjects(subjectsRes.data);
         // Extract subject IDs from the tutor's published listings
-        const ids = (listingsRes.data || []).map((l: any) => l.subjectId);
+        const ids = (listingsRes.data || []).map((l: TutorListing) => l.subjectId);
         setTutorSubjectIds(ids);
       } catch {
         toast.show("Bilgiler yüklenemedi", "error");
@@ -79,7 +79,7 @@ export default function LessonRequestScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ color: colors.textMuted }}>Yükleniyor...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }

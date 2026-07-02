@@ -113,7 +113,7 @@ export default function ProfileEditScreen() {
 
       <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
         {/* Profile Info Section */}
-        <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "700", textTransform: "uppercase", marginBottom: spacing.md, tracking: 1 }}>
+        <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "700", textTransform: "uppercase", marginBottom: spacing.md, letterSpacing: 1 }}>
           Genel Bilgiler
         </Text>
         
@@ -127,7 +127,7 @@ export default function ProfileEditScreen() {
         {/* Tutor Settings Section */}
         {user?.role === "TUTOR" && (
           <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.lg, marginTop: spacing.md }}>
-            <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "700", textTransform: "uppercase", marginBottom: spacing.md, tracking: 1 }}>
+            <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "700", textTransform: "uppercase", marginBottom: spacing.md, letterSpacing: 1 }}>
               Öğretmenlik Ayarları
             </Text>
 

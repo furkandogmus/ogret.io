@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { Input } from "../../src/components/Input";
 import { Button } from "../../src/components/Button";
 import { useToast } from "../../src/components/Toast";
-import { api } from "../../src/api/client";
+import { authApi } from "../../src/api/services";
 import { colors, spacing } from "../../src/constants/theme";
 
 export default function ForgotPasswordScreen() {
@@ -22,7 +22,7 @@ export default function ForgotPasswordScreen() {
     }
     setLoading(true);
     try {
-      await api.post("/auth/forgot-password", { email });
+      await authApi.forgotPassword(email);
       setSent(true);
       toast.show("Şifre sıfırlama bağlantısı gönderildi", "success");
     } catch {
@@ -54,7 +54,10 @@ export default function ForgotPasswordScreen() {
           </>
         )}
         {sent && (
-          <Button title="Giriş Yap" onPress={() => router.push("/auth/login")} variant="outline" size="lg" />
+          <View style={{ gap: spacing.md }}>
+            <Button title="Giriş Yap" onPress={() => router.push("/auth/login")} variant="outline" size="lg" />
+            <Button title="Şifre Sıfırlama Sayfasına Git" onPress={() => router.push("/auth/reset-password")} variant="outline" size="lg" />
+          </View>
         )}
       </View>
     </KeyboardAvoidingView>

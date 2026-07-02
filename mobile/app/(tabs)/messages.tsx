@@ -6,6 +6,7 @@ import { Avatar } from "../../src/components/Avatar";
 import { EmptyState } from "../../src/components/EmptyState";
 import { useAuth } from "../../src/providers/AuthProvider";
 import { useWebSocket } from "../../src/providers/WebSocketProvider";
+import { useToast } from "../../src/components/Toast";
 import { messageApi } from "../../src/api/services";
 import type { Message } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
@@ -26,32 +27,38 @@ export default function MessagesScreen() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const toast = useToast();
 
   const buildConversations = useCallback(async () => {
     try {
       const { data: allMessages } = await messageApi.getUnread();
-      const grouped = new Map<string, Message[]>();
-      for (const msg of allMessages) {
+      const grouped = new Map<string, { messages: Message[]; lastMessage: Message }>();
+      for (const msg of Array.isArray(allMessages) ? allMessages : []) {
         const otherId = msg.senderId === me?.id ? msg.receiverId : msg.senderId;
-        const existing = grouped.get(otherId) || [];
-        existing.push(msg);
-        grouped.set(otherId, existing);
+        const existing = grouped.get(otherId);
+        if (existing) {
+          existing.messages.push(msg);
+          if (new Date(msg.createdAt).getTime() > new Date(existing.lastMessage.createdAt).getTime()) {
+            existing.lastMessage = msg;
+          }
+        } else {
+          grouped.set(otherId, { messages: [msg], lastMessage: msg });
+        }
       }
       const convos: Conversation[] = [];
-      for (const [userId, msgs] of grouped) {
-        const lastMsg = msgs[msgs.length - 1];
+      for (const [userId, { messages: msgs, lastMessage }] of grouped) {
         convos.push({
           userId,
-          userName: lastMsg.senderId === me?.id ? lastMsg.receiverName : lastMsg.senderName,
-          userAvatar: lastMsg.senderId === me?.id ? lastMsg.receiverAvatar : lastMsg.senderAvatar,
+          userName: lastMessage.senderId === me?.id ? lastMessage.receiverName : lastMessage.senderName,
+          userAvatar: lastMessage.senderId === me?.id ? lastMessage.receiverAvatar : lastMessage.senderAvatar,
           userOnline: false,
-          lastMessage: lastMsg,
+          lastMessage,
           unread: msgs.filter((m) => m.receiverId === me?.id && !m.read).length,
         });
       }
       convos.sort((a, b) => new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime());
       setConversations(convos);
-    } catch { /* */ }
+    } catch { toast.show("Mesajlar yüklenemedi", "error"); }
     setLoading(false);
     setRefreshing(false);
   }, [me?.id]);

@@ -1,15 +1,27 @@
-import { useMemo } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Alert, Linking } from "react-native";
+import { useState, useMemo } from "react";
+import { View, Text, TouchableOpacity, ScrollView, Alert, Linking, TextInput, Modal, KeyboardAvoidingView, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "../src/providers/AuthProvider";
 import { useHaptics } from "../src/hooks/useHaptics";
+import { useToast } from "../src/components/Toast";
+import { useTheme } from "../src/providers/ThemeProvider";
+import { Button } from "../src/components/Button";
+import { authApi } from "../src/api/services";
 import { colors, spacing, radius } from "../src/constants/theme";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { logout, user } = useAuth();
   const haptics = useHaptics();
+  const toast = useToast();
+
+  const { isDark, toggle: toggleTheme } = useTheme();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const handleLogout = () => {
     haptics.heavy();
@@ -19,12 +31,42 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      toast.show("Tüm alanları doldurun", "error");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.show("Şifre en az 6 karakter olmalı", "error");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.show("Yeni şifreler eşleşmiyor", "error");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await authApi.changePassword(currentPassword, newPassword);
+      toast.show("Şifre başarıyla değiştirildi", "success");
+      setShowPasswordModal(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch {
+      toast.show("Şifre değiştirilemedi", "error");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const sections = useMemo(() => [
     {
       title: "Genel",
       items: [
         { icon: "language-outline" as const, label: "Dil", value: "Türkçe", disabled: true },
-        { icon: "lock-closed-outline" as const, label: "Şifre Değiştir", disabled: true },
+        { icon: isDark ? "moon-outline" as const : "sunny-outline" as const, label: "Görünüm", value: isDark ? "Karanlık" : "Aydınlık", onPress: toggleTheme },
+        { icon: "lock-closed-outline" as const, label: "Şifre Değiştir", onPress: () => { setShowPasswordModal(true); setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); } },
+        { icon: "mail-outline" as const, label: "E-posta Doğrulama", onPress: () => Linking.openURL("https://ogret.io/email-dogrula") },
       ],
     },
     {
@@ -40,9 +82,13 @@ export default function SettingsScreen() {
     {
       title: "Destek",
       items: [
-        { icon: "help-circle-outline" as const, label: "Yardım", onPress: () => Linking.openURL("https://ogret.io/yardim") },
-        { icon: "document-text-outline" as const, label: "Kullanım Koşulları", onPress: () => Linking.openURL("https://ogret.io/kosullar") },
+        { icon: "help-circle-outline" as const, label: "Yardım", onPress: () => Linking.openURL("https://ogret.io/sikca-sorulan-sorular") },
+        { icon: "information-circle-outline" as const, label: "Hakkımızda", onPress: () => Linking.openURL("https://ogret.io/hakkimizda") },
+        { icon: "call-outline" as const, label: "İletişim", onPress: () => Linking.openURL("https://ogret.io/iletisim") },
+        { icon: "document-text-outline" as const, label: "Kullanım Koşulları", onPress: () => Linking.openURL("https://ogret.io/kullanim-kosullari") },
         { icon: "shield-outline" as const, label: "Gizlilik Politikası", onPress: () => Linking.openURL("https://ogret.io/gizlilik") },
+        { icon: "warning-outline" as const, label: "Yasal Uyarı", onPress: () => Linking.openURL("https://ogret.io/yasal") },
+        { icon: "flag-outline" as const, label: "Anlaşmazlık Bildirimi", onPress: () => Linking.openURL("https://ogret.io/anlasmazlik") },
       ],
     },
     {
@@ -51,7 +97,7 @@ export default function SettingsScreen() {
         { icon: "log-out-outline" as const, label: "Çıkış Yap", onPress: handleLogout, danger: true },
       ],
     },
-  ], [handleLogout, user?.role]);
+  ], [handleLogout, user?.role, isDark, toggleTheme]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -103,6 +149,53 @@ export default function SettingsScreen() {
           öğret.io v1.0.0
         </Text>
       </ScrollView>
+
+      <Modal visible={showPasswordModal} animationType="slide" transparent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <TouchableOpacity style={{ flex: 1, backgroundColor: "#00000080", justifyContent: "flex-end" }} activeOpacity={1} onPress={() => setShowPasswordModal(false)}>
+            <TouchableOpacity activeOpacity={1} style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingTop: spacing.lg, paddingBottom: spacing.xxl }}>
+              <View style={{ width: 40, height: 4, backgroundColor: colors.textMuted, borderRadius: 2, alignSelf: "center", marginBottom: spacing.lg }} />
+              <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600", textAlign: "center", marginBottom: spacing.lg }}>Şifre Değiştir</Text>
+              <View style={{ paddingHorizontal: spacing.md, gap: spacing.sm }}>
+                <View>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: 6 }}>Mevcut Şifre</Text>
+                  <TextInput
+                    secureTextEntry
+                    value={currentPassword}
+                    onChangeText={setCurrentPassword}
+                    placeholder="••••••••"
+                    placeholderTextColor={colors.textMuted}
+                    style={{ backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, height: 48, color: colors.text, fontSize: 15 }}
+                  />
+                </View>
+                <View>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: 6 }}>Yeni Şifre</Text>
+                  <TextInput
+                    secureTextEntry
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    placeholder="En az 6 karakter"
+                    placeholderTextColor={colors.textMuted}
+                    style={{ backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, height: 48, color: colors.text, fontSize: 15 }}
+                  />
+                </View>
+                <View>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: 6 }}>Yeni Şifre (Tekrar)</Text>
+                  <TextInput
+                    secureTextEntry
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholder="Yeni şifrenizi tekrar girin"
+                    placeholderTextColor={colors.textMuted}
+                    style={{ backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, height: 48, color: colors.text, fontSize: 15 }}
+                  />
+                </View>
+                <Button title="Şifreyi Değiştir" onPress={handleChangePassword} loading={changingPassword} size="lg" style={{ marginTop: spacing.sm }} />
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }

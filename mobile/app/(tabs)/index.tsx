@@ -1,14 +1,16 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { View, Text, FlatList, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { TutorCard } from "../../src/components/TutorCard";
 import { TutorCardSkeleton } from "../../src/components/Skeleton";
 import { EmptyState } from "../../src/components/EmptyState";
-import { Badge } from "../../src/components/Badge";
+import { useToast } from "../../src/components/Toast";
 import { tutorApi, favoriteApi } from "../../src/api/services";
 import type { TutorSummary } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
+
+const BLOG_ROUTE = "/blog/index";
 
 const categories = [
   { name: "Tümü", icon: "grid" as const },
@@ -32,20 +34,35 @@ export default function SearchScreen() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [onlineOnly, setOnlineOnly] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const pageRef = useRef(0);
+  const toast = useToast();
 
-  const fetchTutors = useCallback(async () => {
+  const fetchTutors = useCallback(async (loadMore = false) => {
+    if (!loadMore) setLoading(true);
     try {
+      const currentPage = loadMore ? pageRef.current + 1 : 0;
       const [tutorsRes, favRes] = await Promise.all([
-        tutorApi.list({ sort, size: 50 }),
+        tutorApi.list({ sort, size: 20, page: currentPage }),
         favoriteApi.list().catch(() => ({ data: [] })),
       ]);
-      setTutors(tutorsRes.data.content);
+      if (loadMore) {
+        setTutors(prev => [...prev, ...tutorsRes.data.content]);
+      } else {
+        setTutors(tutorsRes.data.content);
+      }
+      pageRef.current = currentPage;
+      setPage(currentPage);
       setFavoriteIds(new Set(favRes.data.map((u) => u.id)));
+      setHasMore(currentPage < tutorsRes.data.totalPages - 1);
     } catch {
-      // hata yönetimi
+      toast.show("Öğretmenler yüklenemedi", "error");
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   }, [sort]);
 
@@ -61,7 +78,7 @@ export default function SearchScreen() {
         await favoriteApi.add(tutorId);
         setFavoriteIds((prev) => new Set(prev).add(tutorId));
       }
-    } catch { /* */ }
+    } catch { toast.show("İşlem başarısız", "error"); }
   };
 
   const filtered = useMemo(() => tutors.filter((t) => {
@@ -96,6 +113,13 @@ export default function SearchScreen() {
               style={{ flex: 1, color: colors.text, fontSize: 14, marginLeft: 8 }}
             />
           </View>
+          <TouchableOpacity
+            onPress={() => router.push(BLOG_ROUTE)}
+            accessibilityLabel="Blog"
+            style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center" }}
+          >
+            <Ionicons name="newspaper-outline" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setShowFilters(!showFilters)}
             accessibilityLabel="Filtrele"
@@ -196,6 +220,13 @@ export default function SearchScreen() {
         maxToRenderPerBatch={10}
         initialNumToRender={10}
         removeClippedSubviews={Platform.OS === "android"}
+        onEndReached={() => {
+          if (!hasMore || loading || loadingMore) return;
+          setLoadingMore(true);
+          fetchTutors(true);
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
         contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
         renderItem={({ item }) => (
           <TutorCard tutor={item} onPress={() => router.push(`/tutor/${item.id}`)} favorited={favoriteIds.has(item.id)} onFavoriteToggle={() => handleFavoriteToggle(item.id)} />

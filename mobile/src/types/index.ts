@@ -1,3 +1,10 @@
+export interface SubjectInfo {
+  id: string;
+  name: string;
+  slug?: string;
+  category?: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -17,6 +24,7 @@ export interface User {
   identityVerified: boolean;
   popularityScore?: number;
   responseTimeHours?: number;
+  subjects?: SubjectInfo[];
 }
 
 export interface TutorSummary {

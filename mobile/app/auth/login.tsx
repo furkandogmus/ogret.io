@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, Switch } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as LocalAuthentication from "expo-local-authentication";
@@ -19,13 +19,18 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [saveBiometric, setSaveBiometric] = useState(false);
 
   useEffect(() => {
     (async () => {
       const compatible = await LocalAuthentication.hasHardwareAsync();
       const enrolled = await LocalAuthentication.isEnrolledAsync();
       const saved = await SecureStore.getItemAsync("biometricEmail");
-      setBiometricAvailable(compatible && enrolled && !!saved);
+      const hasSaved = !!(compatible && enrolled && !!saved);
+      setBiometricAvailable(compatible && enrolled);
+      if (hasSaved && !saved) setBiometricAvailable(false);
+      const creds = await SecureStore.getItemAsync("biometricCredentials");
+      setSaveBiometric(!!creds);
     })();
   }, []);
 
@@ -33,18 +38,24 @@ export default function LoginScreen() {
     const result = await LocalAuthentication.authenticateAsync({ promptMessage: "öğret.io'ya giriş" });
     if (result.success) {
       const savedEmail = await SecureStore.getItemAsync("biometricEmail");
-      const savedPassword = await SecureStore.getItemAsync("biometricPassword");
-      if (savedEmail && savedPassword) {
+      if (savedEmail) {
         setEmail(savedEmail);
-        setPassword(savedPassword);
-        setLoading(true);
-        try {
-          await login(savedEmail, savedPassword);
-          router.replace("/(tabs)");
-        } catch {
-          Alert.alert("Hata", "Oturum açılamadı");
-        } finally {
-          setLoading(false);
+        const savedCredentials = await SecureStore.getItemAsync("biometricCredentials");
+        if (savedCredentials) {
+          try {
+            const { pwd } = JSON.parse(savedCredentials);
+            setPassword(pwd);
+            setLoading(true);
+            await login(savedEmail, pwd);
+            router.replace("/(tabs)");
+          } catch {
+            Alert.alert("Hata", "Oturum açılamadı. Şifrenizi tekrar girin.");
+            setShowPassword(false);
+          } finally {
+            setLoading(false);
+          }
+        } else {
+          setShowPassword(false);
         }
       }
     }
@@ -58,9 +69,34 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(email, password);
-      if (email && password) {
+      if (email) {
         await SecureStore.setItemAsync("biometricEmail", email);
-        await SecureStore.setItemAsync("biometricPassword", password);
+      }
+      router.replace("/(tabs)");
+    } catch (err: any) {
+      Alert.alert("Hata", err?.response?.data?.message || "Giriş yapılamadı");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBiometricSaveCredentials = async (pwd: string) => {
+    try {
+      await SecureStore.setItemAsync("biometricCredentials", JSON.stringify({ pwd }));
+    } catch { /* */ }
+  };
+
+  const handleLoginWithBiometricSave = async () => {
+    if (!email || !password) {
+      Alert.alert("Hata", "E-posta ve şifre gerekli");
+      return;
+    }
+    setLoading(true);
+    try {
+      await login(email, password);
+      if (email) {
+        await SecureStore.setItemAsync("biometricEmail", email);
+        await handleBiometricSaveCredentials(password);
       }
       router.replace("/(tabs)");
     } catch (err: any) {
@@ -109,13 +145,19 @@ export default function LoginScreen() {
           }
         />
 
-        <Button title="Giriş Yap" onPress={handleLogin} loading={loading} size="lg" />
+        <Button title="Giriş Yap" onPress={saveBiometric ? handleLoginWithBiometricSave : handleLogin} loading={loading} size="lg" />
 
         {biometricAvailable && (
-          <TouchableOpacity onPress={handleBiometric} style={{ marginTop: spacing.md, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: spacing.sm }}>
-            <Ionicons name="finger-print" size={20} color={colors.primary} />
-            <Text style={{ color: colors.primary, fontSize: 13, fontWeight: "500" }}>Parmak İzi / Yüz ile Giriş</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity onPress={handleBiometric} style={{ marginTop: spacing.md, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: spacing.sm }}>
+              <Ionicons name="finger-print" size={20} color={colors.primary} />
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: "500" }}>Parmak İzi / Yüz ile Giriş</Text>
+            </TouchableOpacity>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: spacing.sm }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Biyometrik girişi hatırla</Text>
+              <Switch value={saveBiometric} onValueChange={setSaveBiometric} trackColor={{ false: colors.surfaceLight, true: colors.primaryLight }} thumbColor={saveBiometric ? colors.primary : colors.textMuted} />
+            </View>
+          </>
         )}
 
         <TouchableOpacity onPress={() => router.push("/auth/forgot-password")} style={{ marginTop: spacing.sm, alignItems: "center" }}>

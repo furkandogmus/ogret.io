@@ -7,7 +7,7 @@ import { Avatar } from "../../src/components/Avatar";
 import { AvatarPicker } from "../../src/components/AvatarPicker";
 import { useAuth } from "../../src/providers/AuthProvider";
 import { useToast } from "../../src/components/Toast";
-import { fileApi } from "../../src/api/services";
+import { fileApi, userApi } from "../../src/api/services";
 import { colors, spacing, radius } from "../../src/constants/theme";
 
 export default function ProfileScreen() {
@@ -27,6 +27,9 @@ export default function ProfileScreen() {
   const handleAvatarPicked = async (uri: string) => {
     try {
       const { data } = await fileApi.upload(uri);
+      if (data.url) {
+        await userApi.updateAvatar(data.url);
+      }
       await refreshUser();
       toast.show("Fotoğraf güncellendi", "success");
     } catch {
@@ -54,6 +57,7 @@ export default function ProfileScreen() {
     { icon: "person-outline" as const, label: "Profili Düzenle", route: "/profile/edit" },
     { icon: "heart-outline" as const, label: "Favorilerim", route: "/favorites/index" },
     { icon: "wallet-outline" as const, label: "Ödeme Yöntemleri", route: "/payment/methods" },
+    { icon: "newspaper-outline" as const, label: "Blog", route: "/blog/index" },
     { icon: "settings-outline" as const, label: "Ayarlar", route: "/settings" },
     { icon: "log-out-outline" as const, label: "Çıkış Yap", action: handleLogout, danger: true },
   ], [user?.role]);
@@ -109,7 +113,7 @@ export default function ProfileScreen() {
           {menuItems.map((item, i) => (
             <TouchableOpacity
               key={i}
-              onPress={() => item.action ? item.action() : item.route ? (router.push as any)(item.route) : {}}
+              onPress={() => { if (item.action) item.action(); else if (item.route) router.push(item.route as any); }}
               style={{
                 flexDirection: "row",
                 alignItems: "center",
