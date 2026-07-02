@@ -45,6 +45,9 @@ backend-run: ## Run backend with Gradle
 frontend-run: ## Run frontend dev server
 	npm run dev
 
+mobile-run: ## Run mobile Expo server with Node 20 LTS
+	cd mobile && PATH="/opt/homebrew/opt/node@20/bin:$$PATH" npx expo start --clear
+
 stop: ## Terminate development processes on backend (8080), frontend (5173) and mobile (8081) ports
 	@echo "Port 8080 üzerindeki Backend servisi durduruluyor..."
 	@lsof -t -i :8080 | xargs kill -9 2>/dev/null || echo "Backend servisi zaten çalışmıyor."
