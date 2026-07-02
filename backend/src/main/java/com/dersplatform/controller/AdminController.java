@@ -1,10 +1,15 @@
 package com.dersplatform.controller;
 
+import com.dersplatform.model.dto.request.ReviewVerificationRequest;
 import com.dersplatform.model.dto.response.LessonResponse;
 import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.service.AdminService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     private final AdminService adminService;
@@ -24,8 +30,8 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getUsers() {
-        return ResponseEntity.ok(adminService.getUsers());
+    public ResponseEntity<Page<UserResponse>> getUsers(Pageable pageable) {
+        return ResponseEntity.ok(adminService.getUsers(pageable));
     }
 
     @PutMapping("/users/{id}/verify")
@@ -41,16 +47,16 @@ public class AdminController {
     @PutMapping("/verifications/{id}")
     public ResponseEntity<Void> reviewVerification(
             @PathVariable UUID id,
-            @RequestBody Map<String, Object> body) {
+            @Valid @RequestBody ReviewVerificationRequest request) {
         adminService.reviewVerification(
                 id,
-                (boolean) body.getOrDefault("approved", false),
-                (String) body.get("adminNote"));
+                request.isApproved(),
+                request.getAdminNote());
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/lessons")
-    public ResponseEntity<List<LessonResponse>> getLessons() {
-        return ResponseEntity.ok(adminService.getLessons());
+    public ResponseEntity<Page<LessonResponse>> getLessons(Pageable pageable) {
+        return ResponseEntity.ok(adminService.getLessons(pageable));
     }
 }

@@ -1,6 +1,6 @@
-import type { Tutor, Conversation, Message, EarningData } from "../types";
+import type { Conversation, Message, EarningData } from "../types";
 
-export const TUTORS: Tutor[] = [
+export const TUTORS = [
   {
     id: 1,
     name: "Zeynep Kaya",

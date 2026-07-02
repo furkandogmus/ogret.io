@@ -364,6 +364,7 @@ export const listingApi = {
     api.get<ListingResponse>(`/tutors/listings/${id}`),
 
   searchListings: (params: {
+    q?: string;
     subjectId?: string;
     minPrice?: number;
     maxPrice?: number;

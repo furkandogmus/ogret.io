@@ -1,18 +1,19 @@
 package com.dersplatform.controller;
 
 import com.dersplatform.model.dto.request.CreateLessonRequest;
+import com.dersplatform.model.dto.request.UpdateMeetingLinkRequest;
 import com.dersplatform.model.dto.response.LessonResponse;
 import com.dersplatform.service.LessonService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -23,6 +24,7 @@ public class LessonController {
     private final LessonService lessonService;
 
     @PostMapping
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<LessonResponse> createLesson(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody CreateLessonRequest request) {
@@ -42,6 +44,7 @@ public class LessonController {
     }
 
     @PutMapping("/{id}/confirm")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<LessonResponse> confirmLesson(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -56,12 +59,13 @@ public class LessonController {
     }
 
     @PutMapping("/{id}/meeting-link")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<LessonResponse> updateMeetingLink(
             @PathVariable UUID id,
-            @RequestBody Map<String, String> body,
+            @Valid @RequestBody UpdateMeetingLinkRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(lessonService.updateMeetingLink(
-                id, UUID.fromString(userDetails.getUsername()), body.get("meetingLink")));
+                id, UUID.fromString(userDetails.getUsername()), request.getMeetingLink()));
     }
 
     @PutMapping("/{id}/cancel")
@@ -72,7 +76,16 @@ public class LessonController {
         return ResponseEntity.ok(lessonService.cancelLesson(id, UUID.fromString(userDetails.getUsername()), reason));
     }
 
+    @PutMapping("/{id}/start")
+    @PreAuthorize("hasRole('TUTOR')")
+    public ResponseEntity<LessonResponse> startLesson(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(lessonService.startLesson(id, UUID.fromString(userDetails.getUsername())));
+    }
+
     @PutMapping("/{id}/complete")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<LessonResponse> completeLesson(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails userDetails) {

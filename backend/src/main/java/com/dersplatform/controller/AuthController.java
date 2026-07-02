@@ -1,8 +1,12 @@
 package com.dersplatform.controller;
 
+import com.dersplatform.model.dto.request.ForgotPasswordRequest;
 import com.dersplatform.model.dto.request.LoginRequest;
 import com.dersplatform.model.dto.request.RefreshTokenRequest;
 import com.dersplatform.model.dto.request.RegisterRequest;
+import com.dersplatform.model.dto.request.ResetPasswordRequest;
+import com.dersplatform.model.dto.request.VerifyEmailRequest;
+import com.dersplatform.model.dto.request.VerifyPhoneRequest;
 import com.dersplatform.model.dto.response.AuthResponse;
 import com.dersplatform.service.AuthService;
 import jakarta.validation.Valid;
@@ -36,26 +40,26 @@ public class AuthController {
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<Map<String, String>> verifyEmail(@RequestBody Map<String, String> body) {
-        authService.verifyEmail(body.get("token"));
+    public ResponseEntity<Map<String, String>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request);
         return ResponseEntity.ok(Map.of("message", "E-posta başarıyla doğrulandı"));
     }
 
     @PostMapping("/verify-phone")
-    public ResponseEntity<Map<String, String>> verifyPhone(@RequestBody Map<String, String> body) {
-        authService.verifyPhone(body.get("code"));
+    public ResponseEntity<Map<String, String>> verifyPhone(@Valid @RequestBody VerifyPhoneRequest request) {
+        authService.verifyPhone(request);
         return ResponseEntity.ok(Map.of("message", "Telefon başarıyla doğrulandı"));
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> body) {
-        authService.forgotPassword(body.get("email"));
+    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.getEmail());
         return ResponseEntity.ok(Map.of("message", "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi"));
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> body) {
-        authService.resetPassword(body.get("token"), body.get("password"));
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.getToken(), request.getPassword());
         return ResponseEntity.ok(Map.of("message", "Şifreniz başarıyla sıfırlandı"));
     }
 }

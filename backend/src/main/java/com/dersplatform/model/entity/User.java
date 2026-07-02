@@ -69,6 +69,13 @@ public class User {
     @Column(precision = 5, scale = 1)
     private BigDecimal responseTimeHours;
 
+    private LocalDateTime lastActiveAt;
+
+    @Column(precision = 3, scale = 2)
+    private BigDecimal lessonCompletionRate;
+
+    private Integer profileCompletionScore;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import {
   Search, ArrowRight, Star, BookOpen, Calculator, Globe, Code2, Music, GraduationCap, Zap,
   Dna, Beaker, Map, Hourglass, Camera, Palette, Mic
@@ -59,7 +60,7 @@ export function LandingPage() {
   useEffect(() => {
     tutorApi.list({ sort: "rating", size: 6 })
       .then(({ data }) => setFeaturedTutors(data.content || []))
-      .catch(() => console.error("Öğretmenler yüklenemedi"))
+      .catch(() => toast.error("Öğretmenler yüklenemedi"))
       .finally(() => setTutorsLoading(false));
 
     subjectApi.list()

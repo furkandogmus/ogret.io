@@ -29,6 +29,8 @@ public class UserResponse {
     private boolean isIdentityVerified;
     private BigDecimal popularityScore;
     private BigDecimal responseTimeHours;
+    private BigDecimal lessonCompletionRate;
+    private Integer profileCompletionScore;
 
     public static UserResponse fromEntity(User user) {
         return UserResponse.builder()
@@ -50,6 +52,8 @@ public class UserResponse {
                 .isIdentityVerified(user.isIdentityVerified())
                 .popularityScore(user.getPopularityScore())
                 .responseTimeHours(user.getResponseTimeHours())
+                .lessonCompletionRate(user.getLessonCompletionRate())
+                .profileCompletionScore(user.getProfileCompletionScore())
                 .build();
     }
 }

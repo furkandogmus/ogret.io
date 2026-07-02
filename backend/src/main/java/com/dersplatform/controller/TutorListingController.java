@@ -6,8 +6,11 @@ import com.dersplatform.model.dto.response.ListingResponse;
 import com.dersplatform.service.TutorListingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +27,7 @@ public class TutorListingController {
     private final TutorListingService tutorListingService;
 
     @PostMapping("/tutors/me/listings")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<ListingResponse> createListing(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody CreateListingRequest request) {
@@ -36,6 +40,7 @@ public class TutorListingController {
     }
 
     @GetMapping("/tutors/me/listings")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<List<ListingResponse>> getMyListings(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) String status) {
@@ -47,6 +52,7 @@ public class TutorListingController {
     }
 
     @PutMapping("/tutors/me/listings/{id}")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<ListingResponse> updateListing(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID id,
@@ -59,6 +65,7 @@ public class TutorListingController {
     }
 
     @DeleteMapping("/tutors/me/listings/{id}")
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<Void> deleteListing(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID id) {
@@ -82,13 +89,15 @@ public class TutorListingController {
     }
 
     @GetMapping("/tutors/listings")
-    public ResponseEntity<List<ListingResponse>> searchListings(
+    public ResponseEntity<Page<ListingResponse>> searchListings(
             @RequestParam(required = false) UUID subjectId,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) BigDecimal minRating,
             @RequestParam(required = false) Boolean online,
-            @RequestParam(required = false) String sort) {
-        return ResponseEntity.ok(tutorListingService.searchListings(subjectId, minPrice, maxPrice, minRating, online, sort));
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String q,
+            Pageable pageable) {
+        return ResponseEntity.ok(tutorListingService.searchListings(subjectId, minPrice, maxPrice, minRating, online, sort, q, pageable));
     }
 }

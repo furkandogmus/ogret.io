@@ -8,6 +8,7 @@ import com.dersplatform.repository.TutorVerificationRepository;
 import com.dersplatform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ public class VerificationController {
     private final UserRepository userRepository;
 
     @PostMapping
+    @PreAuthorize("hasRole('TUTOR')")
     public ResponseEntity<Map<String, Object>> submitVerification(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody Map<String, String> body) {

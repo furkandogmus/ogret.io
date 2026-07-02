@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router";
+import { toast } from "sonner";
 import {
   Search, SlidersHorizontal, X,
 } from "lucide-react";
@@ -30,7 +31,7 @@ export function SearchPage() {
   const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
 
   useEffect(() => {
-    subjectApi.list().then(({ data }) => setSubjects(data)).catch(() => console.error("Konular yuklenemedi"));
+    subjectApi.list().then(({ data }) => setSubjects(data)).catch(() => toast.error("Konular yüklenemedi"));
   }, []);
 
   // Sync state when searchParams URL query changes
@@ -57,26 +58,16 @@ export function SearchPage() {
     setLoading(true);
     try {
       const { data } = await listingApi.searchListings({
+        q: debouncedSearch || undefined,
         subjectId: selectedSubject || undefined,
         maxPrice: maxPrice < 1000 ? maxPrice : undefined,
         minRating: minRating > 0 ? minRating : undefined,
         online: onlyOnline || undefined,
         sort,
       });
-      let filtered = data || [];
-      if (debouncedSearch) {
-        const q = debouncedSearch.toLocaleLowerCase('tr-TR');
-        filtered = filtered.filter(
-          (l) =>
-            l.title.toLocaleLowerCase('tr-TR').includes(q) ||
-            l.subjectName.toLocaleLowerCase('tr-TR').includes(q) ||
-            l.tutorName.toLocaleLowerCase('tr-TR').includes(q) ||
-            l.lessonDescription.toLocaleLowerCase('tr-TR').includes(q)
-        );
-      }
-      setResults(filtered);
+      setResults(data || []);
     } catch {
-      console.error("Arama sonuclari yuklenemedi");
+      toast.error("Arama sonuçları yüklenemedi");
     } finally {
       setLoading(false);
     }

@@ -7,6 +7,7 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
+import { toast } from "sonner";
 import { useAuth } from "../providers/AuthProvider";
 import { lessonApi, referenceApi, listingApi } from "../api/services";
 import type { LessonResponse, ListingResponse } from "../api/services";
@@ -42,7 +43,7 @@ export function TutorDashboard() {
       const { data } = await listingApi.getMyListings();
       setListings(data);
     } catch {
-      console.error("İlanlar yüklenemedi");
+      toast.error("İlanlar yüklenemedi");
     }
   };
 
@@ -52,7 +53,7 @@ export function TutorDashboard() {
       await listingApi.delete(id);
       fetchListings();
     } catch {
-      console.error("İlan silinemedi");
+      toast.error("İlan silinemedi");
     }
   };
 
@@ -61,7 +62,7 @@ export function TutorDashboard() {
       const { data } = await referenceApi.getMyReferences();
       setReferences(data);
     } catch {
-      console.error("Referanslar yüklenemedi");
+      toast.error("Referanslar yüklenemedi");
     }
   };
   const fetchLessons = async () => {
@@ -69,7 +70,7 @@ export function TutorDashboard() {
       const { data } = await lessonApi.list("tutor");
       setLessons(data);
     } catch {
-      console.error("Dersler yuklenemedi");
+      toast.error("Dersler yüklenemedi");
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ export function TutorDashboard() {
       await lessonApi.confirm(id);
       fetchLessons();
     } catch {
-      console.error("Ders onaylanamadi");
+      toast.error("Ders onaylanamadı");
     }
   };
 
@@ -89,7 +90,7 @@ export function TutorDashboard() {
       await lessonApi.cancel(id, "Öğretmen tarafından reddedildi");
       fetchLessons();
     } catch {
-      console.error("Ders iptal edilemedi");
+      toast.error("Ders iptal edilemedi");
     }
   };
 
@@ -100,7 +101,7 @@ export function TutorDashboard() {
       await lessonApi.updateMeetingLink(lessonId, link);
       fetchLessons();
     } catch {
-      console.error("Meeting linki güncellenemedi");
+      toast.error("Meeting linki güncellenemedi");
     }
   };
 
@@ -109,7 +110,7 @@ export function TutorDashboard() {
       await lessonApi.complete(id);
       fetchLessons();
     } catch {
-      console.error("Ders tamamlanamadi");
+      toast.error("Ders tamamlanamadı");
     }
   };
 

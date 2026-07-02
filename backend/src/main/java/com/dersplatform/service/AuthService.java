@@ -11,10 +11,14 @@ import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.UserRepository;
 import com.dersplatform.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +30,12 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final JavaMailSender mailSender;
+
+    @Value("${app.base-url:http://localhost:5173}")
+    private String baseUrl;
+
+    private static final long ACCESS_TOKEN_TTL = 900000;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -53,70 +63,46 @@ public class AuthService {
 
         user = userRepository.save(user);
 
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
-
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(900000)
-                .user(UserResponse.fromEntity(user))
-                .build();
+        return buildAuthResponse(user);
     }
 
+    @Transactional
     public AuthResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> ApiException.unauthorized("E-posta veya şifre hatalı"));
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        userRepository.findByEmail(request.getEmail())
-                                .orElseThrow(() -> ApiException.unauthorized("E-posta veya şifre hatalı"))
-                                .getId().toString(),
+                        user.getId().toString(),
                         request.getPassword()
                 )
         );
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> ApiException.unauthorized("E-posta veya şifre hatalı"));
+        user.setLastActiveAt(LocalDateTime.now());
+        user.setOnline(true);
+        userRepository.save(user);
 
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
-
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(900000)
-                .user(UserResponse.fromEntity(user))
-                .build();
+        return buildAuthResponse(user);
     }
 
     public AuthResponse refresh(RefreshTokenRequest request) {
-        if (!jwtTokenProvider.validateToken(request.getRefreshToken())) {
+        if (!jwtTokenProvider.validateRefreshToken(request.getRefreshToken())) {
             throw ApiException.unauthorized("Geçersiz refresh token");
         }
 
-        var userId = jwtTokenProvider.getUserIdFromToken(request.getRefreshToken());
+        var userId = jwtTokenProvider.getUserIdFromRefreshToken(request.getRefreshToken());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
 
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
-
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(900000)
-                .user(UserResponse.fromEntity(user))
-                .build();
+        return buildAuthResponse(user);
     }
 
     @Transactional
-    public void verifyEmail(String token) {
-        if (token == null || token.isBlank()) {
+    public void verifyEmail(VerifyEmailRequest request) {
+        if (request.getToken() == null || request.getToken().isBlank()) {
             throw ApiException.badRequest("Doğrulama token'ı gerekli");
         }
-        UUID userId = jwtTokenProvider.getUserIdFromToken(token);
+        UUID userId = jwtTokenProvider.getUserIdFromToken(request.getToken());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
         user.setVerified(true);
@@ -124,8 +110,8 @@ public class AuthService {
     }
 
     @Transactional
-    public void verifyPhone(String code) {
-        if (code == null || code.isBlank()) {
+    public void verifyPhone(VerifyPhoneRequest request) {
+        if (request.getCode() == null || request.getCode().isBlank()) {
             throw ApiException.badRequest("Doğrulama kodu gerekli");
         }
         throw ApiException.badRequest("SMS doğrulama henüz yapılandırılmadı");
@@ -136,8 +122,32 @@ public class AuthService {
         if (email == null || email.isBlank()) {
             throw ApiException.badRequest("E-posta adresi gerekli");
         }
-        userRepository.findByEmail(email)
-                .orElseThrow(() -> ApiException.notFound("Bu e-posta ile kayıtlı kullanıcı bulunamadı"));
+        var userOpt = userRepository.findByEmail(email);
+
+        if (userOpt.isEmpty()) {
+            return;
+        }
+
+        User user = userOpt.get();
+        String resetToken = jwtTokenProvider.generatePasswordResetToken(user.getId());
+        String resetLink = baseUrl + "/sifre-sifirla?token=" + resetToken;
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(user.getEmail());
+            message.setSubject("Şifre Sıfırlama - öğret.io");
+            message.setText(
+                    "Merhaba " + user.getFullName() + ",\n\n"
+                    + "Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n"
+                    + resetLink + "\n\n"
+                    + "Bu bağlantı 15 dakika süreyle geçerlidir.\n"
+                    + "Eğer şifre sıfırlama talebinde bulunmadıysanız bu e-postayı dikkate almayın.\n\n"
+                    + "öğret.io"
+            );
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw ApiException.internalServerError("Şifre sıfırlama e-postası gönderilemedi");
+        }
     }
 
     @Transactional
@@ -145,10 +155,23 @@ public class AuthService {
         if (token == null || password == null || token.isBlank() || password.isBlank()) {
             throw ApiException.badRequest("Token ve yeni şifre gerekli");
         }
-        UUID userId = jwtTokenProvider.getUserIdFromToken(token);
+        UUID userId = jwtTokenProvider.getUserIdFromPasswordResetToken(token);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
         user.setPasswordHash(passwordEncoder.encode(password));
         userRepository.save(user);
+    }
+
+    private AuthResponse buildAuthResponse(User user) {
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(ACCESS_TOKEN_TTL)
+                .user(UserResponse.fromEntity(user))
+                .build();
     }
 }

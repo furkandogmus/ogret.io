@@ -6,8 +6,10 @@ import com.dersplatform.model.entity.User;
 import com.dersplatform.repository.FavoriteTutorRepository;
 import com.dersplatform.repository.UserRepository;
 import com.dersplatform.exception.ApiException;
+import com.dersplatform.service.ScoringService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +24,10 @@ public class FavoriteController {
 
     private final FavoriteTutorRepository favoriteRepository;
     private final UserRepository userRepository;
+    private final ScoringService scoringService;
 
     @GetMapping
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<List<UserResponse>> getFavorites(@AuthenticationPrincipal UserDetails userDetails) {
         UUID studentId = UUID.fromString(userDetails.getUsername());
         List<UserResponse> tutors = favoriteRepository.findByStudentId(studentId)
@@ -34,6 +38,7 @@ public class FavoriteController {
     }
 
     @PostMapping("/{tutorId}")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<Void> addFavorite(
             @PathVariable UUID tutorId,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -42,16 +47,19 @@ public class FavoriteController {
             User student = userRepository.findById(studentId).orElseThrow();
             User tutor = userRepository.findById(tutorId).orElseThrow(() -> ApiException.notFound("Öğretmen bulunamadı"));
             favoriteRepository.save(FavoriteTutor.builder().student(student).tutor(tutor).build());
+            scoringService.recompute(tutorId);
         }
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{tutorId}")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<Void> removeFavorite(
             @PathVariable UUID tutorId,
             @AuthenticationPrincipal UserDetails userDetails) {
         UUID studentId = UUID.fromString(userDetails.getUsername());
         favoriteRepository.deleteById(new FavoriteTutor.FavoriteTutorId(studentId, tutorId));
+        scoringService.recompute(tutorId);
         return ResponseEntity.ok().build();
     }
 }
