@@ -21,9 +21,8 @@ export default function LessonDetailScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await lessonApi.list();
-        const found = Array.isArray(data) ? data.find((l: Lesson) => l.id === id) : null;
-        setLesson(found || null);
+        const { data } = await lessonApi.getById(id);
+        setLesson(data);
       } catch { /* */ }
     })();
   }, [id]);
@@ -34,7 +33,9 @@ export default function LessonDetailScreen() {
   const isStudent = me?.id === lesson.student.id;
   const isTutor = me?.id === lesson.tutor.id;
   const canReview = lesson.status === "COMPLETED" && isStudent;
-  const canReschedule = ["PENDING", "CONFIRMED"].includes(lesson.status);
+  const canReschedule = ["PENDING", "CONFIRMED"].includes(lesson.status) && isStudent;
+  const canTutorCancel = lesson.status === "CONFIRMED" && isTutor;
+  const showConfirmButtons = lesson.status === "PENDING" && isTutor;
 
   const handleCopyLink = async () => {
     if (lesson.meetingLink) {
@@ -68,7 +69,10 @@ export default function LessonDetailScreen() {
         <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border }}>
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: spacing.md }}>Ders Bilgileri</Text>
           <Row icon="book-outline" label="Konu" value={lesson.subject.name} />
-          <Row icon="calendar-outline" label="Tarih" value={new Date(lesson.lessonDate).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })} />
+          <Row icon="calendar-outline" label="Tarih" value={(() => {
+            const [y, m, d] = lesson.lessonDate.split("-").map(Number);
+            return new Date(y, m - 1, d).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+          })()} />
           <Row icon="time-outline" label="Saat" value={`${lesson.startTime.slice(0, 5)} - ${lesson.endTime.slice(0, 5)} (${lesson.durationMinutes} dk)`} />
           <Row icon="cash-outline" label="Ücret" value={`₺${lesson.price}`} />
           {lesson.notes && <Row icon="document-text-outline" label="Notlar" value={lesson.notes} />}
@@ -92,10 +96,48 @@ export default function LessonDetailScreen() {
           </View>
         )}
 
+        {showConfirmButtons && (
+          <View style={{ flexDirection: "row", gap: spacing.sm }}>
+            <Button
+              title="Onayla"
+              onPress={async () => {
+                try {
+                  const { data } = await lessonApi.confirm(id);
+                  setLesson(data);
+                  toast.show("Ders onaylandı", "success");
+                } catch {
+                  toast.show("Ders onaylanamadı", "error");
+                }
+              }}
+              variant="primary"
+              size="md"
+              style={{ flex: 1 }}
+            />
+            <Button
+              title="Reddet"
+              onPress={() => {
+                Alert.alert("Reddet", "Ders talebini reddetmek istediğinize emin misiniz?", [
+                  { text: "Vazgeç", style: "cancel" },
+                  { text: "Reddet", style: "destructive", onPress: async () => {
+                    try {
+                      await lessonApi.cancel(id, "Tutor rejected");
+                      toast.show("Ders reddedildi", "success");
+                      router.back();
+                    } catch { toast.show("İşlem başarısız", "error"); }
+                  }},
+                ]);
+              }}
+              variant="outline"
+              size="md"
+              style={{ flex: 1 }}
+            />
+          </View>
+        )}
+
         {canReschedule && (
           <View style={{ flexDirection: "row", gap: spacing.sm }}>
             <Button title="Yeniden Planla" onPress={() => router.push(`/lesson/request?tutorId=${lesson.tutor.id}`)} variant="outline" size="md" icon={<Ionicons name="calendar" size={16} color={colors.primary} />} style={{ flex: 1 }} />
-            <Button title={isStudent ? "İptal Et" : "Reddet"} onPress={() => {
+            <Button title="İptal Et" onPress={() => {
               Alert.alert("İptal Et", "Emin misiniz?", [
                 { text: "Vazgeç", style: "cancel" },
                 { text: "İptal Et", style: "destructive", onPress: async () => {
@@ -108,6 +150,21 @@ export default function LessonDetailScreen() {
               ]);
             }} variant="outline" size="md" style={{ flex: 1 }} haptic="medium" />
           </View>
+        )}
+
+        {canTutorCancel && (
+          <Button title="Dersi İptal Et" onPress={() => {
+            Alert.alert("İptal Et", "Emin misiniz?", [
+              { text: "Vazgeç", style: "cancel" },
+              { text: "İptal Et", style: "destructive", onPress: async () => {
+                try {
+                  await lessonApi.cancel(id, "Cancelled by tutor");
+                  toast.show("Ders iptal edildi", "success");
+                  router.back();
+                } catch { toast.show("İptal edilemedi", "error"); }
+              }},
+            ]);
+          }} variant="outline" size="md" haptic="medium" />
         )}
 
         {canReview && (

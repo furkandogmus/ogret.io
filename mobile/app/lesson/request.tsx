@@ -131,7 +131,10 @@ export default function LessonRequestScreen() {
             <View style={{ backgroundColor: colors.surfaceLight, borderRadius: radius.md, padding: spacing.md, marginTop: spacing.lg, flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
               <Ionicons name="calendar-outline" size={20} color={colors.primary} />
               <Text style={{ color: colors.text, fontSize: 14 }}>
-                {new Date(selectedDate).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
+                {(() => {
+                  const [y, m, d] = selectedDate.split("-").map(Number);
+                  return new Date(y, m - 1, d).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+                })()}
                 {" • "}{selectedStart} - {selectedEnd}
               </Text>
             </View>

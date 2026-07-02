@@ -50,7 +50,10 @@ function LessonCardComponent({ lesson, userRole, onPress, onCancel, onComplete, 
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
           <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-            {new Date(lesson.lessonDate).toLocaleDateString("tr-TR")}
+            {(() => {
+              const [y, m, d] = lesson.lessonDate.split("-").map(Number);
+              return new Date(y, m - 1, d).toLocaleDateString("tr-TR");
+            })()}
           </Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
