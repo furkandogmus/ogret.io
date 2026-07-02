@@ -1,4 +1,4 @@
-export const lightColors = {
+export const colors = {
   primary: "#059669",
   primaryLight: "#34d399",
   primaryDark: "#047857",
@@ -10,7 +10,6 @@ export const lightColors = {
   text: "#292524",
   textSecondary: "#78716c",
   textMuted: "#a8a090",
-  buttonText: "#ffffff",
   success: "#16a34a",
   warning: "#ff9f0a",
   error: "#d4183d",
@@ -20,31 +19,6 @@ export const lightColors = {
   premium: "#ff9f0a",
   vip: "#d4183d",
 };
-
-export const darkColors = {
-  primary: "#34d399",
-  primaryLight: "#6ee7b7",
-  primaryDark: "#059669",
-  background: "#0f0f0f",
-  surface: "#1a1a1a",
-  surfaceLight: "#2a2a2a",
-  card: "#1f1f1f",
-  border: "#333333",
-  text: "#f0ece5",
-  textSecondary: "#a8a090",
-  textMuted: "#6b6560",
-  buttonText: "#0f0f0f",
-  success: "#4ade80",
-  warning: "#fbbf24",
-  error: "#f87171",
-  star: "#fbbf24",
-  online: "#4ade80",
-  verified: "#34d399",
-  premium: "#fbbf24",
-  vip: "#f87171",
-};
-
-export const colors = lightColors;
 
 export const statusColors: Record<string, string> = {
   PENDING: colors.warning,

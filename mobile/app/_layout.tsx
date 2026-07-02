@@ -9,16 +9,10 @@ import { NotificationProvider } from "../src/providers/NotificationProvider";
 import { ToastProvider } from "../src/components/Toast";
 import { NetworkBanner } from "../src/components/NetworkBanner";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
-import { ThemeProvider, useTheme } from "../src/providers/ThemeProvider";
 import { colors } from "../src/constants/theme";
 import * as SplashScreen from "expo-splash-screen";
 
 SplashScreen.preventAutoHideAsync();
-
-function StatusBarTheme() {
-  const { isDark } = useTheme();
-  return <StatusBar style={isDark ? "light" : "dark"} />;
-}
 
 function RootLayoutInner() {
   const { loading, isAuthenticated } = useAuth();
@@ -84,13 +78,11 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AuthProvider>
           <ToastProvider>
-            <ThemeProvider>
-              <StatusBarTheme />
           <WebSocketProvider>
+              <StatusBar style="dark" />
               <NetworkBanner />
               <RootLayoutInner />
             </WebSocketProvider>
-          </ThemeProvider>
         </ToastProvider>
         </AuthProvider>
       </SafeAreaProvider>
