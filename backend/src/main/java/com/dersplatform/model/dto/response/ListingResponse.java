@@ -26,6 +26,7 @@ public class ListingResponse {
     private boolean allowsOnline;
     private Integer maxTravelDistanceKm;
     private List<String> languages;
+    private Integer experienceYears;
     private String status;
     private String createdAt;
 
@@ -46,6 +47,7 @@ public class ListingResponse {
                 .allowsOnline(listing.isAllowsOnline())
                 .maxTravelDistanceKm(listing.getMaxTravelDistanceKm())
                 .languages(listing.getLanguages())
+                .experienceYears(listing.getExperienceYears())
                 .status(listing.getStatus())
                 .createdAt(listing.getCreatedAt() != null ? listing.getCreatedAt().toString() : null)
                 .build();

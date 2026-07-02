@@ -65,6 +65,7 @@ public class TutorListingService {
                 .allowsStudentHome(request.isAllowsStudentHome())
                 .allowsOnline(request.isAllowsOnline())
                 .maxTravelDistanceKm(request.getMaxTravelDistanceKm())
+                .experienceYears(request.getExperienceYears())
                 .languages(request.getLanguages() == null || request.getLanguages().isEmpty() ? List.of("Türkçe") : request.getLanguages())
                 .status("ACTIVE")
                 .build();
@@ -95,6 +96,7 @@ public class TutorListingService {
         listing.setAllowsTutorHome(request.isAllowsTutorHome());
         listing.setAllowsStudentHome(request.isAllowsStudentHome());
         listing.setAllowsOnline(request.isAllowsOnline());
+        listing.setExperienceYears(request.getExperienceYears());
         listing.setMaxTravelDistanceKm(request.getMaxTravelDistanceKm());
         if (request.getLanguages() != null && !request.getLanguages().isEmpty()) {
             listing.setLanguages(request.getLanguages());

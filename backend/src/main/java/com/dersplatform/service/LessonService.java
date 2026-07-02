@@ -113,6 +113,13 @@ public class LessonService {
                 .toList();
     }
 
+    public List<LessonResponse> getTutorLessonsByStudent(UUID tutorId, UUID studentId) {
+        return lessonRepository.findByTutorIdAndStudentIdOrderByCreatedAtDesc(tutorId, studentId)
+                .stream()
+                .map(LessonResponse::fromEntity)
+                .toList();
+    }
+
     @Transactional
     public LessonResponse confirmLesson(UUID lessonId, UUID tutorId) {
         Lesson lesson = lessonRepository.findByIdWithJoins(lessonId)

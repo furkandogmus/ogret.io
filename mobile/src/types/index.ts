@@ -130,6 +130,7 @@ export interface TutorListing {
   lessonDescription: string;
   aboutTutor: string;
   hourlyRate: number;
+  experienceYears?: number;
   allowsTutorHome: boolean;
   allowsStudentHome: boolean;
   allowsOnline: boolean;
@@ -172,6 +173,7 @@ export interface CreateListingRequest {
   lessonDescription: string;
   aboutTutor: string;
   hourlyRate: number;
+  experienceYears?: number;
   allowsTutorHome: boolean;
   allowsStudentHome: boolean;
   allowsOnline: boolean;

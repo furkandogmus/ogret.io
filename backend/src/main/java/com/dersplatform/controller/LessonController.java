@@ -35,9 +35,13 @@ public class LessonController {
     @GetMapping
     public ResponseEntity<List<LessonResponse>> getMyLessons(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(defaultValue = "student") String as) {
+            @RequestParam(defaultValue = "student") String as,
+            @RequestParam(required = false) UUID studentId) {
         UUID userId = UUID.fromString(userDetails.getUsername());
         if ("tutor".equals(as)) {
+            if (studentId != null) {
+                return ResponseEntity.ok(lessonService.getTutorLessonsByStudent(userId, studentId));
+            }
             return ResponseEntity.ok(lessonService.getTutorLessons(userId));
         }
         return ResponseEntity.ok(lessonService.getStudentLessons(userId));

@@ -155,9 +155,9 @@ export default function ProfileScreen() {
           </View>
           {isTutor && (
             <View style={{ flex: 1, backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, alignItems: "center", borderWidth: 1, borderColor: colors.border }}>
-              <Ionicons name="cash" size={22} color={colors.success} />
-              <Text style={{ color: colors.text, fontWeight: "700", fontSize: 18, marginTop: 4 }}>₺{user?.hourlyRate || "-"}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11 }}>Saatlik</Text>
+              <Ionicons name="briefcase" size={22} color={colors.success} />
+              <Text style={{ color: colors.text, fontWeight: "700", fontSize: 18, marginTop: 4 }}>{user?.experienceYears || 0}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11 }}>Yıl Deneyim</Text>
             </View>
           )}
           <View style={{ flex: 1, backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, alignItems: "center", borderWidth: 1, borderColor: colors.border }}>
@@ -196,6 +196,7 @@ export default function ProfileScreen() {
                 lesson={lesson}
                 userRole={isTutor ? "TUTOR" : "STUDENT"}
                 onPress={() => router.push(`/lesson/${lesson.id}`)}
+                onAvatarPress={isTutor ? () => router.push(`/tutor/student-lessons/${lesson.student.id}` as any) : undefined}
                 onCancel={["PENDING", "CONFIRMED"].includes(lesson.status) ? () => handleCancel(lesson.id) : undefined}
                 onComplete={
                   lesson.status === "PENDING" && isTutor ? () => handleConfirm(lesson.id)

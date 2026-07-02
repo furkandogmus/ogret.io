@@ -33,4 +33,6 @@ public class CreateListingRequest {
     private Integer maxTravelDistanceKm;
 
     private List<String> languages;
+
+    private Integer experienceYears;
 }

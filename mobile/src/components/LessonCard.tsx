@@ -10,6 +10,7 @@ interface Props {
   lesson: Lesson;
   userRole: "STUDENT" | "TUTOR";
   onPress?: () => void;
+  onAvatarPress?: () => void;
   onCancel?: () => void;
   onComplete?: () => void;
   onMeetingLink?: () => void;
@@ -23,7 +24,7 @@ const statusIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
   CANCELLED: "close-circle",
 };
 
-function LessonCardComponent({ lesson, userRole, onPress, onCancel, onComplete, onMeetingLink }: Props) {
+function LessonCardComponent({ lesson, userRole, onPress, onAvatarPress, onCancel, onComplete, onMeetingLink }: Props) {
   const otherUser = userRole === "STUDENT" ? lesson.tutor : lesson.student;
   const canCancel = lesson.status === "PENDING";
   const canComplete = lesson.status === "IN_PROGRESS" || lesson.status === "PENDING" || lesson.status === "CONFIRMED";
@@ -33,7 +34,9 @@ function LessonCardComponent({ lesson, userRole, onPress, onCancel, onComplete, 
     <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
         <View style={{ flexDirection: "row", gap: spacing.sm, flex: 1 }}>
-          <Avatar uri={otherUser.avatarUrl} name={otherUser.fullName} size={40} />
+          <TouchableOpacity onPress={onAvatarPress} disabled={!onAvatarPress}>
+            <Avatar uri={otherUser.avatarUrl} name={otherUser.fullName} size={40} />
+          </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontWeight: "600", fontSize: 15 }} numberOfLines={1}>
               {otherUser.fullName}

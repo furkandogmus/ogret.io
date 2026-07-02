@@ -48,6 +48,8 @@ public class TutorListing {
     @Column(nullable = false)
     private boolean allowsOnline;
 
+    private Integer experienceYears;
+
     private Integer maxTravelDistanceKm;
 
     @Column(name = "languages", columnDefinition = "TEXT ARRAY")

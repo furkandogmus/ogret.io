@@ -31,8 +31,6 @@ export default function ProfileEditScreen() {
   };
   const [bio, setBio] = useState(user?.bio || "");
   const [education, setEducation] = useState(user?.education || "");
-  const [hourlyRate, setHourlyRate] = useState(user?.hourlyRate?.toString() || "");
-  const [experienceYears, setExperienceYears] = useState(user?.experienceYears?.toString() || "");
   
   // Subjects states (for tutors)
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
@@ -86,8 +84,6 @@ export default function ProfileEditScreen() {
         phone: cleanDigits ? `+90${cleanDigits}` : "",
         bio,
         education,
-        experienceYears: experienceYears ? Number(experienceYears) : undefined,
-        hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
       });
 
       // 2. If tutor, update subjects
@@ -139,31 +135,10 @@ export default function ProfileEditScreen() {
 
         {/* Tutor Settings Section */}
         {user?.role === "TUTOR" && (
-          <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.lg, marginTop: spacing.md }}>
+            <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.lg, marginTop: spacing.md }}>
             <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "700", textTransform: "uppercase", marginBottom: spacing.md, letterSpacing: 1 }}>
               Öğretmenlik Ayarları
             </Text>
-
-            <View style={{ flexDirection: "row", gap: spacing.md, marginBottom: spacing.lg }}>
-              <View style={{ flex: 1 }}>
-                <Input
-                  label="Saatlik Ücret (₺)"
-                  value={hourlyRate}
-                  onChangeText={setHourlyRate}
-                  keyboardType="numeric"
-                  placeholder="350"
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Input
-                  label="Deneyim (Yıl)"
-                  value={experienceYears}
-                  onChangeText={setExperienceYears}
-                  keyboardType="numeric"
-                  placeholder="5"
-                />
-              </View>
-            </View>
 
             {/* Subjects / Categories selection */}
             <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "600", marginBottom: spacing.sm }}>

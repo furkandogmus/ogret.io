@@ -34,6 +34,7 @@ export default function TutorListingsScreen() {
   const [lessonDescription, setLessonDescription] = useState("");
   const [aboutTutor, setAboutTutor] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
+  const [experienceYears, setExperienceYears] = useState("");
   const [allowsOnline, setAllowsOnline] = useState(true);
   const [allowsTutorHome, setAllowsTutorHome] = useState(false);
   const [allowsStudentHome, setAllowsStudentHome] = useState(false);
@@ -85,6 +86,7 @@ export default function TutorListingsScreen() {
     setLessonDescription("");
     setAboutTutor("");
     setHourlyRate("350");
+    setExperienceYears("");
     setAllowsOnline(true);
     setAllowsTutorHome(false);
     setAllowsStudentHome(false);
@@ -103,6 +105,7 @@ export default function TutorListingsScreen() {
     setLessonDescription(listing.lessonDescription);
     setAboutTutor(listing.aboutTutor);
     setHourlyRate(listing.hourlyRate.toString());
+    setExperienceYears(listing.experienceYears?.toString() || "");
     setAllowsOnline(listing.allowsOnline);
     setAllowsTutorHome(listing.allowsTutorHome);
     setAllowsStudentHome(listing.allowsStudentHome);
@@ -203,6 +206,7 @@ export default function TutorListingsScreen() {
       lessonDescription: lessonDescription.trim(),
       aboutTutor: aboutTutor.trim(),
       hourlyRate: Number(hourlyRate),
+      experienceYears: experienceYears ? Number(experienceYears) : undefined,
       allowsOnline,
       allowsTutorHome,
       allowsStudentHome,
@@ -369,7 +373,14 @@ export default function TutorListingsScreen() {
               </View>
 
               <Input label="İlan Başlığı" value={title} onChangeText={setTitle} placeholder="Örn: TYT/AYT Matematik ve Geometri Özel Dersi" />
-              <Input label="Saatlik Ücret (₺)" value={hourlyRate} onChangeText={setHourlyRate} keyboardType="numeric" placeholder="350" />
+              <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                <View style={{ flex: 1 }}>
+                  <Input label="Saatlik Ücret (₺)" value={hourlyRate} onChangeText={setHourlyRate} keyboardType="numeric" placeholder="350" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Input label="Deneyim (Yıl)" value={experienceYears} onChangeText={setExperienceYears} keyboardType="numeric" placeholder="5" />
+                </View>
+              </View>
               <Input label="Ders Açıklaması" value={lessonDescription} onChangeText={setLessonDescription} multiline placeholder="Ders işleme yönteminiz, materyalleriniz, vb..." />
               <Input label="Hakkınızda" value={aboutTutor} onChangeText={setAboutTutor} multiline placeholder="Eğitim geçmişiniz, tecrübeleriniz, başarılarınız..." />
               
@@ -645,13 +656,13 @@ export default function TutorListingsScreen() {
                 </View>
               )}
 
-              {/* STEP 6: Hourly Rate */}
+              {/* STEP 6: Pricing & Experience */}
               {step === 6 && (
                 <View style={{ gap: spacing.md }}>
-                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>Saatlik Ders Ücreti</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Bu ders konusu için talep ettiğiniz 1 saatlik ücreti (₺) belirleyin:</Text>
+                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>Ücret ve Deneyim</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Ders ücretinizi ve bu alandaki deneyim yılınızı belirleyin:</Text>
 
-                  <View style={{ marginTop: spacing.lg }}>
+                  <View style={{ marginTop: spacing.lg, gap: spacing.md }}>
                     <Input
                       label="Saatlik Ders Ücreti (₺)"
                       value={hourlyRate}
@@ -659,6 +670,13 @@ export default function TutorListingsScreen() {
                       keyboardType="numeric"
                       placeholder="350"
                       leftIcon={<Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: "700" }}>₺</Text>}
+                    />
+                    <Input
+                      label="Deneyim (Yıl)"
+                      value={experienceYears}
+                      onChangeText={setExperienceYears}
+                      keyboardType="numeric"
+                      placeholder="5"
                     />
                   </View>
                 </View>

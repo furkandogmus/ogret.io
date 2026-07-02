@@ -28,6 +28,9 @@ public class FileStorageService {
     @Value("${aws.s3.endpoint}")
     private String endpoint;
 
+    @Value("${aws.s3.public-url}")
+    private String publicUrl;
+
     @Value("${aws.s3.buckets.public}")
     private String publicBucket;
 
@@ -61,12 +64,7 @@ public class FileStorageService {
 
             log.info("Successfully uploaded file {} to bucket {}", fileKey, bucketName);
 
-            // Construct and return the S3 compatible path-style URL
-            String baseUrl = endpoint;
-            if (baseUrl.endsWith("/")) {
-                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-            }
-            return baseUrl + "/" + bucketName + "/" + fileKey;
+            return trimUrl(publicUrl) + "/" + bucketName + "/" + fileKey;
 
         } catch (IOException e) {
             log.error("Failed to read file input stream", e);
@@ -77,27 +75,33 @@ public class FileStorageService {
         }
     }
 
+    private String trimUrl(String url) {
+        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+    }
+
+    private String getBucketKeyFromUrl(String fileUrl, String baseUrl) {
+        String path = fileUrl.replace(trimUrl(baseUrl), "");
+        if (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        return path;
+    }
+
     public void deleteFile(String fileUrl) {
         if (fileUrl == null || fileUrl.isBlank()) {
             return;
         }
 
-        String baseUrl = endpoint;
-        if (baseUrl.endsWith("/")) {
-            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-        }
+        String baseUrl = trimUrl(publicUrl);
 
         if (!fileUrl.startsWith(baseUrl)) {
-            log.warn("Attempted to delete file with URL not matching endpoint: {}", fileUrl);
-            return; // Not hosted on our S3/MinIO
+            log.warn("Attempted to delete file with URL not matching public-url: {}", fileUrl);
+            return;
         }
 
+        String path = getBucketKeyFromUrl(fileUrl, baseUrl);
+
         try {
-            String path = fileUrl.replace(baseUrl, "");
-            if (path.startsWith("/")) {
-                path = path.substring(1);
-            }
-            
             int firstSlash = path.indexOf("/");
             if (firstSlash == -1) {
                 log.warn("Invalid file URL format for deletion: {}", fileUrl);
@@ -126,19 +130,13 @@ public class FileStorageService {
         String key = fileUrlOrKey;
         String bucket = privateBucket;
 
-        String baseUrl = endpoint;
-        if (baseUrl.endsWith("/")) {
-            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-        }
+        String baseUrl = trimUrl(publicUrl);
 
         if (fileUrlOrKey.startsWith("http://") || fileUrlOrKey.startsWith("https://")) {
             if (!fileUrlOrKey.startsWith(baseUrl)) {
-                return fileUrlOrKey; // Return as-is if external URL
+                return fileUrlOrKey;
             }
-            String path = fileUrlOrKey.replace(baseUrl, "");
-            if (path.startsWith("/")) {
-                path = path.substring(1);
-            }
+            String path = getBucketKeyFromUrl(fileUrlOrKey, baseUrl);
             int firstSlash = path.indexOf("/");
             if (firstSlash != -1) {
                 bucket = path.substring(0, firstSlash);

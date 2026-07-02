@@ -39,7 +39,7 @@ export const subjectApi = {
 };
 
 export const lessonApi = {
-  list: (as?: "student" | "tutor") => api.get<Lesson[]>("/lessons", { params: { as } }),
+  list: (as?: "student" | "tutor", studentId?: string) => api.get<Lesson[]>("/lessons", { params: { as, studentId } }),
   getById: (id: string) => api.get<Lesson>(`/lessons/${id}`),
   create: (data: { tutorId: string; subjectId: string; lessonDate: string; startTime: string; endTime: string; notes?: string }) =>
     api.post<Lesson>("/lessons", data),
