@@ -45,11 +45,13 @@ backend-run: ## Run backend with Gradle
 frontend-run: ## Run frontend dev server
 	npm run dev
 
-stop: ## Stop both backend and frontend dev servers
+stop: ## Terminate development processes on backend (8080), frontend (5173) and mobile (8081) ports
 	@echo "Port 8080 üzerindeki Backend servisi durduruluyor..."
 	@lsof -t -i :8080 | xargs kill -9 2>/dev/null || echo "Backend servisi zaten çalışmıyor."
 	@echo "Port 5173 üzerindeki Frontend servisi durduruluyor..."
 	@lsof -t -i :5173 | xargs kill -9 2>/dev/null || echo "Frontend servisi zaten çalışmıyor."
+	@echo "Port 8081 üzerindeki Mobile (Expo) servisi durduruluyor..."
+	@lsof -t -i :8081 | xargs kill -9 2>/dev/null || echo "Mobile servisi zaten çalışmıyor."
 
 stop-backend: ## Stop only the backend dev server
 	@echo "Port 8080 üzerindeki Backend servisi durduruluyor..."
