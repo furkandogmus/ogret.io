@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -10,24 +10,30 @@ import { userApi } from "../../src/api/services";
 import { colors, spacing, radius } from "../../src/constants/theme";
 
 
+function formatPhoneDisplay(digits: string) {
+  if (digits.length < 4) return digits;
+  const s = digits.slice(0, 3);
+  const m = digits.slice(3, 6);
+  const e = digits.slice(6, 8);
+  const l = digits.slice(8, 10);
+  let result = `${s} ${m}`;
+  if (e) result += ` ${e}`;
+  if (l) result += ` ${l}`;
+  return result;
+}
+
 export default function ProfileEditScreen() {
   const router = useRouter();
   const { user, refreshUser } = useAuth();
   const toast = useToast();
 
   const [fullName, setFullName] = useState(user?.fullName || "");
-  const [phone, setPhone] = useState(user?.phone?.replace("+90", "") || "");
-
-  const formatPhone = (text: string) => {
-    const digits = text.replace(/\D/g, "").slice(0, 10);
-    if (digits.length < 4) return digits;
-    if (digits.length < 7) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
-    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 8)} ${digits.slice(8)}`;
-  };
+  const rawPhone = (user?.phone || "").replace("+90", "");
+  const [phoneDigits, setPhoneDigits] = useState(rawPhone);
 
   const handlePhoneChange = (text: string) => {
-    const digits = text.replace(/\D/g, "");
-    if (digits.length <= 10) setPhone(formatPhone(digits));
+    const digits = text.replace(/\D/g, "").slice(0, 10);
+    setPhoneDigits(digits);
   };
   const [bio, setBio] = useState(user?.bio || "");
   const [education, setEducation] = useState(user?.education || "");
@@ -42,10 +48,9 @@ export default function ProfileEditScreen() {
 
     setLoading(true);
     try {
-      const cleanDigits = phone.replace(/\D/g, "");
       await userApi.updateProfile({
         fullName,
-        phone: cleanDigits ? `+90${cleanDigits}` : "",
+        phone: phoneDigits ? `+90${phoneDigits}` : "",
         bio,
         education,
       });
@@ -79,7 +84,7 @@ export default function ProfileEditScreen() {
         
         <View style={{ gap: spacing.sm, marginBottom: spacing.lg }}>
           <Input label="Ad Soyad" value={fullName} onChangeText={setFullName} placeholder="Adınız ve soyadınız" />
-          <Input label="Telefon" value={phone} onChangeText={handlePhoneChange} placeholder="5xx xxx xx xx" keyboardType="phone-pad" />
+          <Input label="Telefon" value={formatPhoneDisplay(phoneDigits)} onChangeText={handlePhoneChange} placeholder="5xx xxx xx xx" keyboardType="phone-pad" />
           <Input label="Eğitim" value={education} onChangeText={setEducation} placeholder="Örn: Boğaziçi Üniversitesi Matematik mezunu" />
           <Input label="Biyografi" value={bio} onChangeText={setBio} multiline placeholder="Kendinizden bahsedin, öğrencilerin sizi tanımasını sağlayın..." />
         </View>

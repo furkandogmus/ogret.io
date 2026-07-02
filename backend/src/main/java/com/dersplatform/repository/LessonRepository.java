@@ -26,6 +26,9 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
     @Query("SELECT l FROM Lesson l JOIN FETCH l.student JOIN FETCH l.tutor JOIN FETCH l.subject WHERE l.tutor.id = :tutorId AND l.student.id = :studentId ORDER BY l.createdAt DESC")
     List<Lesson> findByTutorIdAndStudentIdOrderByCreatedAtDesc(UUID tutorId, UUID studentId);
 
+    @Query("SELECT COUNT(l) > 0 FROM Lesson l WHERE ((l.tutor.id = :userId1 AND l.student.id = :userId2) OR (l.tutor.id = :userId2 AND l.student.id = :userId1)) AND l.status IN ('CONFIRMED', 'IN_PROGRESS', 'COMPLETED')")
+    boolean hasActiveLessonBetween(UUID userId1, UUID userId2);
+
     @Query("SELECT l FROM Lesson l JOIN FETCH l.student JOIN FETCH l.tutor JOIN FETCH l.subject WHERE l.id = :id")
     java.util.Optional<Lesson> findByIdWithJoins(UUID id);
 

@@ -8,7 +8,7 @@ import { Avatar } from "../../src/components/Avatar";
 import { useAuth } from "../../src/providers/AuthProvider";
 import { useWebSocket } from "../../src/providers/WebSocketProvider";
 import { useToast } from "../../src/components/Toast";
-import { messageApi, userApi } from "../../src/api/services";
+import { messageApi, userApi, lessonApi } from "../../src/api/services";
 import type { Message, User } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
 
@@ -19,6 +19,7 @@ export default function ChatScreen() {
   const toast = useToast();
   const { connected, incomingMessages, typingUsers, sendMessage: wsSend, sendTyping } = useWebSocket();
   const [otherUser, setOtherUser] = useState<User | null>(null);
+  const [hasActiveLesson, setHasActiveLesson] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const textRef = useRef(text);
@@ -29,12 +30,14 @@ export default function ChatScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const [userRes, msgRes] = await Promise.all([
+        const [userRes, msgRes, lessonRes] = await Promise.all([
           userApi.getById(id),
           messageApi.getConversation(id),
+          lessonApi.hasActiveLesson(id).catch(() => ({ data: { hasActiveLesson: false } })),
         ]);
         setOtherUser(userRes.data);
         setMessages(msgRes.data);
+        setHasActiveLesson(lessonRes.data.hasActiveLesson);
       } catch { /* */ }
     })();
   }, [id]);
@@ -80,9 +83,13 @@ export default function ChatScreen() {
             <Avatar uri={otherUser.avatarUrl} name={otherUser.fullName} size={36} online={otherUser.online} />
             <View style={{ marginLeft: spacing.sm, flex: 1 }}>
               <Text style={{ color: colors.text, fontWeight: "600", fontSize: 15 }}>{otherUser.fullName}</Text>
-              <Text style={{ color: connected && typingUsers.has(id) ? colors.primary : connected ? colors.online : colors.textMuted, fontSize: 11 }}>
-                {connected && typingUsers.has(id) ? "Yazıyor..." : connected ? "Çevrimiçi" : "WebSocket bağlanıyor..."}
-              </Text>
+              {hasActiveLesson && otherUser.phone ? (
+                <Text style={{ color: colors.textSecondary, fontSize: 12 }}>+90 {otherUser.phone.replace("+90", "").replace(/(\d{3})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4")}</Text>
+              ) : (
+                <Text style={{ color: connected && typingUsers.has(id) ? colors.primary : connected ? colors.online : colors.textMuted, fontSize: 11 }}>
+                  {connected && typingUsers.has(id) ? "Yazıyor..." : connected ? "Çevrimiçi" : "WebSocket bağlanıyor..."}
+                </Text>
+              )}
             </View>
             <TouchableOpacity onPress={async () => {
               try {

@@ -48,6 +48,7 @@ export const lessonApi = {
   start: (id: string) => api.put<Lesson>(`/lessons/${id}/start`),
   complete: (id: string) => api.put<Lesson>(`/lessons/${id}/complete`),
   updateMeetingLink: (id: string, link: string) => api.put<Lesson>(`/lessons/${id}/meeting-link`, { meetingLink: link }),
+  hasActiveLesson: (userId: string) => api.get<{ hasActiveLesson: boolean }>(`/lessons/has-active-with/${userId}`),
 };
 
 export const reviewApi = {

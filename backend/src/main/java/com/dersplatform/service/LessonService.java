@@ -113,6 +113,10 @@ public class LessonService {
                 .toList();
     }
 
+    public boolean hasActiveLessonBetween(UUID userId1, UUID userId2) {
+        return lessonRepository.hasActiveLessonBetween(userId1, userId2);
+    }
+
     public List<LessonResponse> getTutorLessonsByStudent(UUID tutorId, UUID studentId) {
         return lessonRepository.findByTutorIdAndStudentIdOrderByCreatedAtDesc(tutorId, studentId)
                 .stream()

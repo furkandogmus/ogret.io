@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -78,6 +79,15 @@ public class LessonController {
             @RequestParam(required = false) String reason,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(lessonService.cancelLesson(id, UUID.fromString(userDetails.getUsername()), reason));
+    }
+
+    @GetMapping("/has-active-with/{userId}")
+    public ResponseEntity<Map<String, Boolean>> hasActiveLesson(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID userId) {
+        UUID myId = UUID.fromString(userDetails.getUsername());
+        boolean hasActive = lessonService.hasActiveLessonBetween(myId, userId);
+        return ResponseEntity.ok(Map.of("hasActiveLesson", hasActive));
     }
 
     @PutMapping("/{id}/start")

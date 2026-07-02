@@ -34,9 +34,9 @@ public class TutorProfileController {
             @AuthenticationPrincipal UserDetails userDetails) {
         User tutor = userRepository.findById(UUID.fromString(userDetails.getUsername()))
                 .orElseThrow();
-        return ResponseEntity.ok(tutorSubjectRepository.findByTutorId(tutor.getId())
+        java.util.List<java.util.Map<String, Object>> result = tutorSubjectRepository.findByTutorId(tutor.getId())
                 .stream()
-                .map(ts -> {
+                .<java.util.Map<String, Object>>map(ts -> {
                     var map = new java.util.HashMap<String, Object>();
                     map.put("id", ts.getId().toString());
                     map.put("subjectId", ts.getSubject().getId().toString());
@@ -47,7 +47,8 @@ public class TutorProfileController {
                     }
                     return map;
                 })
-                .toList());
+                .toList();
+        return ResponseEntity.ok(result);
     }
 
     @PutMapping("/subjects")
