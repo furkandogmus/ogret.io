@@ -25,21 +25,21 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByFullNameContainingIgnoreCase(String name);
 
     @Query(value = """
-        SELECT u FROM User u
+        SELECT * FROM users u
         WHERE (:query IS NULL OR :query = '' OR
-               u.searchVector IS NOT NULL AND
-               u.searchVector @@ plainto_tsquery('turkish', :query))
+               u.search_vector IS NOT NULL AND
+               u.search_vector @@ plainto_tsquery('turkish', :query || ''))
         ORDER BY
-            CASE WHEN :query IS NOT NULL AND :query <> '' AND u.searchVector IS NOT NULL
-                 THEN ts_rank(u.searchVector, plainto_tsquery('turkish', :query))
+            CASE WHEN :query IS NOT NULL AND :query <> '' AND u.search_vector IS NOT NULL
+                 THEN ts_rank(u.search_vector, plainto_tsquery('turkish', :query || ''))
                  ELSE 0 END DESC
-        """)
+        """, nativeQuery = true)
     List<User> searchByFullText(@Param("query") String query);
 
     @Query(value = """
         SELECT u FROM User u
-        WHERE similarity(u.fullName, :query) > 0.3
-        ORDER BY similarity(u.fullName, :query) DESC
+        WHERE function('similarity', u.fullName, :query) > 0.3
+        ORDER BY function('similarity', u.fullName, :query) DESC
         """)
     List<User> searchByTrigramSimilarity(@Param("query") String query);
 }

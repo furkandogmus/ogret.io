@@ -227,7 +227,7 @@ public class AuthService {
 
     public boolean isTokenBlacklisted(String token) {
         String jti = jwtTokenProvider.getTokenId(token);
-        if (jti == null) return true;
+        if (jti == null) return false;
         return Boolean.TRUE.equals(stringRedisTemplate.hasKey("blacklist:" + jti));
     }
 

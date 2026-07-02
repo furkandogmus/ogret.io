@@ -127,6 +127,8 @@ class BlogServiceTest {
     @Test
     void createPost_ShouldReturnSavedPost() {
         when(userRepository.findById(author.getId())).thenReturn(Optional.of(author));
+        when(blogCategoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
+        when(blogTagRepository.findAllById(Set.of(tag.getId()))).thenReturn(List.of(tag));
         when(blogPostRepository.findBySlug(anyString())).thenReturn(Optional.empty());
         when(blogPostRepository.save(any(BlogPost.class))).thenReturn(post);
 

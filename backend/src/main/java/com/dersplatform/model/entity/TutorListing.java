@@ -50,7 +50,7 @@ public class TutorListing {
 
     private Integer maxTravelDistanceKm;
 
-    @Column(name = "languages", columnDefinition = "text[]")
+    @Column(name = "languages", columnDefinition = "TEXT ARRAY")
     private List<String> languages;
 
     @Column(nullable = false, length = 20)

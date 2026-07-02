@@ -124,7 +124,7 @@ class TutorOnboardingServiceTest {
         when(userRepository.findById(tutor.getId())).thenReturn(Optional.of(tutor));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        User result = onboardingService.updateStep2(tutor.getId(), BigDecimal.valueOf(600), 12);
+        User result = onboardingService.updateStep2(tutor.getId(), 600, 12);
 
         assertEquals(600, result.getHourlyRate().intValue());
         assertEquals(12, result.getExperienceYears());

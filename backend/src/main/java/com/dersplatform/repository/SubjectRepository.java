@@ -16,6 +16,6 @@ public interface SubjectRepository extends JpaRepository<Subject, UUID> {
     List<Subject> findByIsActiveTrue();
     List<Subject> findByIsActiveTrueOrderByName();
 
-    @Query("SELECT s FROM Subject s WHERE s.isActive = true AND (:query IS NULL OR :query = '' OR similarity(s.name, :query) > 0.2) ORDER BY similarity(s.name, :query) DESC")
+    @Query("SELECT s FROM Subject s WHERE s.isActive = true AND (:query IS NULL OR :query = '' OR function('similarity', s.name, :query) > 0.2) ORDER BY function('similarity', s.name, :query) DESC")
     List<Subject> searchByName(@Param("query") String query);
 }

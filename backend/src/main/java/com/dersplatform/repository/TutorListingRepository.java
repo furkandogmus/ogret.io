@@ -36,15 +36,7 @@ public interface TutorListingRepository extends JpaRepository<TutorListing, UUID
         AND (:minPrice IS NULL OR l.hourlyRate >= :minPrice)
         AND (:maxPrice IS NULL OR l.hourlyRate <= :maxPrice)
         AND (:online IS NULL OR :online = FALSE OR l.allowsOnline = TRUE)
-        AND (:query IS NULL OR :query = '' OR
-             l.searchVector IS NOT NULL AND
-             to_tsvector('turkish', COALESCE(l.title, '') || ' ' || COALESCE(l.lessonDescription, '') || ' ' || COALESCE(l.aboutTutor, '')) @@
-             plainto_tsquery('turkish', :query))
-        ORDER BY
-            CASE WHEN :query IS NOT NULL AND :query <> '' AND l.searchVector IS NOT NULL
-                 THEN ts_rank(l.searchVector, plainto_tsquery('turkish', :query))
-                 ELSE 0 END DESC,
-            t.popularityScore DESC
+        ORDER BY t.popularityScore DESC
         """)
     List<TutorListing> searchActiveListings(
         @Param("subjectId") UUID subjectId,
@@ -61,10 +53,6 @@ public interface TutorListingRepository extends JpaRepository<TutorListing, UUID
         AND (:minPrice IS NULL OR l.hourlyRate >= :minPrice)
         AND (:maxPrice IS NULL OR l.hourlyRate <= :maxPrice)
         AND (:online IS NULL OR :online = FALSE OR l.allowsOnline = TRUE)
-        AND (:query IS NULL OR :query = '' OR
-             l.searchVector IS NOT NULL AND
-             to_tsvector('turkish', COALESCE(l.title, '') || ' ' || COALESCE(l.lessonDescription, '') || ' ' || COALESCE(l.aboutTutor, '')) @@
-             plainto_tsquery('turkish', :query))
         """)
     Page<TutorListing> searchActiveListingsPaged(
         @Param("subjectId") UUID subjectId,
@@ -78,8 +66,8 @@ public interface TutorListingRepository extends JpaRepository<TutorListing, UUID
     @Query(value = """
         SELECT l FROM TutorListing l JOIN FETCH l.tutor t JOIN FETCH l.subject s
         WHERE l.status = 'ACTIVE'
-        AND similarity(l.title, :query) > 0.3
-        ORDER BY similarity(l.title, :query) DESC
+        AND function('similarity', l.title, :query) > 0.3
+        ORDER BY function('similarity', l.title, :query) DESC
         """)
     List<TutorListing> searchByTrigramSimilarity(@Param("query") String query);
 }
