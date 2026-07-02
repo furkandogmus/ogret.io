@@ -84,7 +84,21 @@ export default function LessonDetailScreen() {
             }
             return "Belirtilmemiş";
           })()} />
-          <Row icon="time-outline" label="Saat" value={`${lesson.startTime.slice(0, 5)} - ${lesson.endTime.slice(0, 5)} (${lesson.durationMinutes} dk)`} />
+          <Row icon="time-outline" label="Saat" value={(() => {
+            const formatTime = (val: any) => {
+              if (!val) return "";
+              if (Array.isArray(val)) {
+                const h = String(val[0]).padStart(2, "0");
+                const m = String(val[1] ?? 0).padStart(2, "0");
+                return `${h}:${m}`;
+              }
+              if (typeof val === "string") {
+                return val.slice(0, 5);
+              }
+              return String(val);
+            };
+            return `${formatTime(lesson.startTime)} - ${formatTime(lesson.endTime)} (${lesson.durationMinutes} dk)`;
+          })()} />
           <Row icon="cash-outline" label="Ücret" value={`₺${lesson.price}`} />
           {lesson.notes && <Row icon="document-text-outline" label="Notlar" value={lesson.notes} />}
           {lesson.cancellationReason && <Row icon="alert-circle-outline" label="İptal Nedeni" value={lesson.cancellationReason} color={colors.error} />}

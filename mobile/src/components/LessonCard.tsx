@@ -70,7 +70,21 @@ function LessonCardComponent({ lesson, userRole, onPress, onCancel, onComplete, 
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Ionicons name="time-outline" size={14} color={colors.textMuted} />
           <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-            {lesson.startTime.slice(0, 5)} - {lesson.endTime.slice(0, 5)}
+            {(() => {
+              const formatTime = (val: any) => {
+                if (!val) return "";
+                if (Array.isArray(val)) {
+                  const h = String(val[0]).padStart(2, "0");
+                  const m = String(val[1] ?? 0).padStart(2, "0");
+                  return `${h}:${m}`;
+                }
+                if (typeof val === "string") {
+                  return val.slice(0, 5);
+                }
+                return String(val);
+              };
+              return `${formatTime(lesson.startTime)} - ${formatTime(lesson.endTime)}`;
+            })()}
           </Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
