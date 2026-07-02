@@ -421,3 +421,56 @@ export const fileApi = {
   },
 };
 
+// ─── Blog ───
+
+export interface BlogCategoryResponse {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  sortOrder: number;
+}
+
+export interface BlogTagResponse {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface BlogPostResponse {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt?: string;
+  coverImage?: string;
+  author?: { id: string; fullName: string; avatarUrl?: string };
+  category?: BlogCategoryResponse;
+  tags: BlogTagResponse[];
+  status: string;
+  publishedAt?: string;
+  readingTime?: number;
+  isFeatured: boolean;
+  viewCount: number;
+}
+
+export const blogApi = {
+  getPosts: (params?: { categoryId?: string; page?: number; size?: number }) =>
+    api.get<Page<BlogPostResponse>>("/blog/posts", { params }),
+
+  getPost: (slug: string) =>
+    api.get<BlogPostResponse>(`/blog/posts/${slug}`),
+
+  getFeatured: (params?: { page?: number; size?: number }) =>
+    api.get<Page<BlogPostResponse>>("/blog/featured", { params }),
+
+  getCategories: () =>
+    api.get<BlogCategoryResponse[]>("/blog/categories"),
+
+  getTags: () =>
+    api.get<BlogTagResponse[]>("/blog/tags"),
+
+  recordView: (id: string) =>
+    api.post(`/blog/posts/${id}/view`),
+};
+

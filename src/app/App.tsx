@@ -21,6 +21,8 @@ const VerificationPage = lazy(() => import("./pages/VerificationPage"));
 const ProfileEditPage = lazy(() => import("./pages/ProfileEditPage"));
 const WriteReferencePage = lazy(() => import("./pages/WriteReferencePage"));
 const CreateListingWizardPage = lazy(() => import("./pages/CreateListingWizardPage"));
+const BlogListPage = lazy(() => import("./pages/BlogListPage"));
+const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 function PageLoader() {
@@ -61,6 +63,8 @@ export default function App() {
               <Route path="/abonelik" element={<SubscriptionPage />} />
               <Route path="/dogrulama" element={<VerificationPage />} />
               <Route path="/profil/duzenle" element={<ProfileEditPage />} />
+              <Route path="/blog" element={<BlogListPage />} />
+              <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
