@@ -11,8 +11,9 @@ export function useWebSocket() {
   useEffect(() => {
     if (!token) return;
 
+    const wsUrl = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:8080/ws/chat`;
     const client = new Client({
-      brokerURL: `/ws/chat`,
+      brokerURL: wsUrl,
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {
