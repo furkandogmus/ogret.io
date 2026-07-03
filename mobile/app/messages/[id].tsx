@@ -28,11 +28,10 @@ export default function ChatScreen() {
   const flatListRef = useRef<FlatList>(null);
   const typingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const initialLoadTimestampRef = useRef(0);
+  const initialLoadDoneRef = useRef(false);
 
   useEffect(() => {
-    const loadTs = Date.now();
-    initialLoadTimestampRef.current = loadTs;
+    initialLoadDoneRef.current = false;
     (async () => {
       let userRes, msgRes, lessonRes;
       try { userRes = await userApi.getById(id); } catch (e) { console.warn("getById failed:", e?.response?.status, e?.config?.url); }
@@ -41,13 +40,27 @@ export default function ChatScreen() {
       if (userRes) setOtherUser(userRes.data);
 
       if (msgRes) {
-        setMessages(msgRes.data);
-        const unreadIds = (msgRes.data as Message[]).filter((m) => m.senderId === id && !m.read).map((m) => m.id);
+        let loaded = msgRes.data as Message[];
+        const pending = incomingMessages.filter(
+          (m) => m.senderId?.toLowerCase() === id?.toLowerCase() ||
+                 (m.senderId?.toLowerCase() === me?.id?.toLowerCase() && m.receiverId?.toLowerCase() === id?.toLowerCase())
+        );
+        const existingIds = new Set(loaded.map((m) => m.id));
+        for (const p of pending) {
+          if (!existingIds.has(p.id)) {
+            loaded = [...loaded, p as unknown as Message];
+            existingIds.add(p.id);
+          }
+        }
+        setMessages(loaded);
+
+        const unreadIds = loaded.filter((m) => m.senderId === id && !m.read).map((m) => m.id);
         for (const mid of unreadIds) {
           messageApi.markAsRead(mid).catch(() => {});
         }
       }
       setHasActiveLesson(lessonRes?.data?.hasActiveLesson ?? false);
+      initialLoadDoneRef.current = true;
     })();
   }, [id]);
 
@@ -58,16 +71,11 @@ export default function ChatScreen() {
   }, []);
 
   useEffect(() => {
-    if (incomingMessages.length === 0) return;
+    if (!initialLoadDoneRef.current || incomingMessages.length === 0) return;
 
-    const ts = initialLoadTimestampRef.current;
     const relevant = incomingMessages.filter(
-      (m) => {
-        const msgTs = new Date(m.createdAt).getTime();
-        if (ts > 0 && msgTs < ts) return false;
-        return m.senderId?.toLowerCase() === id?.toLowerCase() ||
-               (m.senderId?.toLowerCase() === me?.id?.toLowerCase() && m.receiverId?.toLowerCase() === id?.toLowerCase());
-      }
+      (m) => m.senderId?.toLowerCase() === id?.toLowerCase() ||
+             (m.senderId?.toLowerCase() === me?.id?.toLowerCase() && m.receiverId?.toLowerCase() === id?.toLowerCase())
     );
     if (relevant.length === 0) return;
 
