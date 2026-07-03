@@ -4,7 +4,6 @@ import { View, ActivityIndicator } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "../src/providers/AuthProvider";
-import { WebSocketProvider } from "../src/providers/WebSocketProvider";
 import { NotificationProvider } from "../src/providers/NotificationProvider";
 import { ToastProvider } from "../src/components/Toast";
 import { NetworkBanner } from "../src/components/NetworkBanner";
@@ -77,11 +76,9 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <AuthProvider>
             <ToastProvider>
-            <WebSocketProvider>
-                <StatusBar style="dark" />
+            <StatusBar style="dark" />
                 <NetworkBanner />
                 <RootLayoutInner />
-              </WebSocketProvider>
           </ToastProvider>
           </AuthProvider>
         </SafeAreaProvider>

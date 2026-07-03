@@ -62,18 +62,3 @@ jest.mock("react-native-gesture-handler", () => {
   };
 });
 
-jest.mock("@stomp/stompjs", () => ({
-  Client: jest.fn(() => ({
-    activate: jest.fn(),
-    deactivate: jest.fn(),
-    publish: jest.fn(),
-    subscribe: jest.fn(() => ({ unsubscribe: jest.fn() })),
-    onConnect: jest.fn(),
-    onDisconnect: jest.fn(),
-    onStompError: jest.fn(),
-    onWebSocketError: jest.fn(),
-  })),
-  Stomp: {
-    over: jest.fn(),
-  },
-}));

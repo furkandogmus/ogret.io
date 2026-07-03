@@ -3,7 +3,6 @@ import { Platform } from "react-native";
 import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import { useAuth } from "./AuthProvider";
-import { useWebSocket } from "./WebSocketProvider";
 import { api } from "../api/client";
 
 const isExpoGo = Constants.appOwnership === "expo";
@@ -45,7 +44,6 @@ function mapLink(link?: string) {
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const { incomingNotifications } = useWebSocket();
   const notificationListener = useRef<any>();
   const responseListener = useRef<any>();
   const expoPushTokenRef = useRef<string | null>(null);
@@ -73,20 +71,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (responseListener.current) Notifications.removeNotificationSubscription(responseListener.current);
     };
   }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (incomingNotifications.length === 0 || !Notifications) return;
-    const last = incomingNotifications[incomingNotifications.length - 1];
-    Notifications.scheduleNotificationAsync({
-      content: {
-        title: last.title,
-        body: last.body,
-        data: { link: last.link },
-        sound: true,
-      },
-      trigger: null,
-    }).catch(() => {});
-  }, [incomingNotifications]);
 
   return (
     <NotificationContext.Provider value={{ expoPushToken: expoPushTokenRef.current }}>
