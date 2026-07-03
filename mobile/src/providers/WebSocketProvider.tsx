@@ -6,8 +6,8 @@ import { TOKEN_KEY, getApiBaseUrl } from "../api/client";
 import type { WsMessage, WsNotification } from "../types";
 
 // Polyfill TextEncoder and TextDecoder for Hermes/React Native compatibility with @stomp/stompjs
-if (typeof global.TextEncoder === "undefined") {
-  global.TextEncoder = class TextEncoder {
+if (typeof TextEncoder === "undefined") {
+  const encoderPolyfill = class TextEncoder {
     encode(str: string) {
       const arr = new Uint8Array(str.length * 3);
       let offset = 0;
@@ -26,10 +26,12 @@ if (typeof global.TextEncoder === "undefined") {
       return arr.subarray(0, offset);
     }
   } as any;
+  global.TextEncoder = encoderPolyfill;
+  (globalThis as any).TextEncoder = encoderPolyfill;
 }
 
-if (typeof global.TextDecoder === "undefined") {
-  global.TextDecoder = class TextDecoder {
+if (typeof TextDecoder === "undefined") {
+  const decoderPolyfill = class TextDecoder {
     decode(arr: Uint8Array) {
       let str = "";
       let i = 0;
@@ -48,6 +50,8 @@ if (typeof global.TextDecoder === "undefined") {
       return str;
     }
   } as any;
+  global.TextDecoder = decoderPolyfill;
+  (globalThis as any).TextDecoder = decoderPolyfill;
 }
 
 interface WebSocketContextType {
@@ -105,6 +109,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
       client = new Client({
         brokerURL: wsUrl,
+        webSocketFactory: () => new WebSocket(wsUrl),
         connectHeaders: { Authorization: `Bearer ${token}` },
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
