@@ -174,6 +174,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
     const startClient = async () => {
       const token = await getValidToken();
+      console.log("WS: Token status:", token ? "Found (length " + token.length + ")" : "Not Found");
       if (!token || !active) return;
 
       const wsUrl = getWsUrl();
@@ -184,8 +185,6 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         webSocketFactory: () => new WebSocket(wsUrl),
         connectHeaders: { Authorization: `Bearer ${token}` },
         reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
         debug: (str) => {
           console.log("STOMP Debug:", str);
         },
