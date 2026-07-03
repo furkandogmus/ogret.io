@@ -72,7 +72,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           "CONNECT",
           "accept-version:1.2",
           "host:localhost",
-          `Authorization:Bearer ${token}`,
+          `Authorization: Bearer ${token}`,
           "",
           "\u0000\n",
         ].join("\n");
