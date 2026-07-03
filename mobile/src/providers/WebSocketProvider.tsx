@@ -81,20 +81,44 @@ function getWsUrl() {
   }
 }
 
+function decodeJwt(token: string): any {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    let base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    while (base64.length % 4) {
+      base64 += "=";
+    }
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    let result = "";
+    for (let i = 0; i < base64.length; i += 4) {
+      const w = chars.indexOf(base64[i]);
+      const x = chars.indexOf(base64[i + 1]);
+      const y = chars.indexOf(base64[i + 2]);
+      const z = chars.indexOf(base64[i + 3]);
+      
+      const val1 = (w << 2) | (x >> 4);
+      const val2 = ((x & 15) << 4) | (y >> 2);
+      const val3 = ((y & 3) << 6) | z;
+      
+      if (w !== -1 && x !== -1) result += String.fromCharCode(val1);
+      if (y !== -1 && y !== 64) result += String.fromCharCode(val2);
+      if (z !== -1 && z !== 64) result += String.fromCharCode(val3);
+    }
+    return JSON.parse(decodeURIComponent(escape(result)));
+  } catch (e) {
+    console.warn("WS: decodeJwt error:", e);
+    return null;
+  }
+}
+
 async function getValidToken(): Promise<string | null> {
   try {
     const token = await SecureStore.getItemAsync(TOKEN_KEY);
     if (!token) return null;
 
-    const parts = token.split(".");
-    if (parts.length === 3) {
-      const base64Url = parts[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const decodedPayload = typeof atob !== "undefined"
-        ? atob(base64)
-        : require("buffer").Buffer.from(base64, "base64").toString("binary");
-      
-      const payload = JSON.parse(decodedPayload);
+    const payload = decodeJwt(token);
+    if (payload) {
       const exp = payload.exp;
       if (exp) {
         const currentTime = Math.floor(Date.now() / 1000);
