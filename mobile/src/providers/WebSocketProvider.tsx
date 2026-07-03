@@ -36,16 +36,15 @@ function getWsUrl() {
 }
 
 function buildConnectFrame(token: string): string {
-  const headers = [
+  return [
     "CONNECT",
     "accept-version:1.2",
     "host:localhost",
     "heart-beat:15000,15000",
     `Authorization:Bearer ${token}`,
     "",
-    "\u0000\n",
-  ];
-  return headers.join("\n");
+    "\u0000",
+  ].join("\n");
 }
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
