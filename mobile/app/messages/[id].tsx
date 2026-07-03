@@ -6,12 +6,15 @@ import * as Clipboard from "expo-clipboard";
 import { Avatar } from "../../src/components/Avatar";
 import { useAuth } from "../../src/providers/AuthProvider";
 import { useToast } from "../../src/components/Toast";
-import { messageApi, userApi, lessonApi } from "../../src/api/services";
+import { messageApi, userApi } from "../../src/api/services";
 import type { Message, User } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
 import { formatMessageTime } from "../../src/utils/dateFormat";
 
 const PAGE_SIZE = 20;
+const POLL_INTERVAL = 15000;
+const OFFLINE_POLL_INTERVAL = 30000;
+const STATUS_REFRESH_MS = 30000;
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -19,22 +22,19 @@ export default function ChatScreen() {
   const { user: me } = useAuth();
   const toast = useToast();
   const [otherUser, setOtherUser] = useState<User | null>(null);
-  const [hasActiveLesson, setHasActiveLesson] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [newMsgBanner, setNewMsgBanner] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const textRef = useRef(text);
   textRef.current = text;
   const flatListRef = useRef<FlatList>(null);
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isNearBottomRef = useRef(true);
   const pageRef = useRef(0);
   const hasMoreRef = useRef(true);
-
-  const POLL_INTERVAL_ONLINE = 15000;
-  const STATUS_REFRESH_MS = 30000;
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const statusRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const scrollToEnd = useCallback((animated = true) => {
     flatListRef.current?.scrollToEnd({ animated });
@@ -44,6 +44,7 @@ export default function ChatScreen() {
     try {
       const { data } = await messageApi.getConversation(id, page, PAGE_SIZE);
       const msgs = data as Message[];
+      if (!Array.isArray(msgs)) return;
       if (msgs.length < PAGE_SIZE) hasMoreRef.current = false;
       if (msgs.length === 0) return;
 
@@ -54,43 +55,69 @@ export default function ChatScreen() {
         return prepend ? [...newOnes, ...prev] : [...prev, ...newOnes];
       });
 
-      if (!prepend && msgs.length > 0) {
-        const latest = msgs[msgs.length - 1];
-        if (!isNearBottomRef.current) setNewMsgBanner(true);
+      if (!prepend && msgs.length > 0 && !isNearBottomRef.current) {
+        setNewMsgBanner(true);
       }
+    } catch (e) {
+      console.warn("loadPage error:", e);
+    }
+  }, [id]);
+
+  const markUnreadAsRead = useCallback(async () => {
+    try {
+      const { data } = await messageApi.getConversation(id, 0, PAGE_SIZE);
+      const msgs = data as Message[];
+      if (!Array.isArray(msgs)) return;
+      const unreadIds = msgs.filter((m) => m.senderId === id && !m.read).map((m) => m.id);
+      for (const mid of unreadIds) messageApi.markAsRead(mid).catch(() => {});
     } catch { /* ignore */ }
   }, [id]);
 
-  const pollNewMessages = useCallback(async () => {
-    await loadPage(0, false);
-  }, [loadPage]);
-
   const loadInitial = useCallback(async () => {
+    setInitialLoading(true);
     pageRef.current = 0;
     hasMoreRef.current = true;
     setNewMsgBanner(false);
 
-    const [userRes, lessonRes] = await Promise.all([
-      userApi.getById(id).catch(() => null),
-      lessonApi.hasActiveLesson(id).catch(() => null),
-    ]);
-
-    if (userRes) setOtherUser(userRes.data);
-    if (lessonRes) setHasActiveLesson(lessonRes.data?.hasActiveLesson ?? false);
-
-    await loadPage(0, false);
-    setTimeout(() => scrollToEnd(false), 100);
-
     try {
-      const { data: msgs } = await messageApi.getConversation(id, 0, PAGE_SIZE);
-      const unreadIds = (msgs as Message[]).filter((m) => m.senderId === id && !m.read).map((m) => m.id);
-      for (const mid of unreadIds) messageApi.markAsRead(mid).catch(() => {});
+      const [userRes] = await Promise.all([
+        userApi.getById(id).catch(() => null),
+        loadPage(0, false),
+      ]);
+      if (userRes) setOtherUser(userRes.data);
     } catch { /* ignore */ }
-  }, [id, loadPage, scrollToEnd]);
+
+    setTimeout(() => scrollToEnd(false), 150);
+    markUnreadAsRead();
+    setInitialLoading(false);
+  }, [id, loadPage, scrollToEnd, markUnreadAsRead]);
 
   useEffect(() => {
     loadInitial();
   }, [loadInitial]);
+
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      if (statusRef.current) clearInterval(statusRef.current);
+    };
+  }, []);
+
+  const online = otherUser?.online === true;
+  useEffect(() => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(() => { loadPage(0, false); }, online ? POLL_INTERVAL : OFFLINE_POLL_INTERVAL);
+  }, [online, loadPage]);
+
+  useEffect(() => {
+    if (statusRef.current) clearInterval(statusRef.current);
+    statusRef.current = setInterval(async () => {
+      try {
+        const { data } = await userApi.getById(id);
+        if (data?.online !== otherUser?.online) setOtherUser(data);
+      } catch { /* ignore */ }
+    }, STATUS_REFRESH_MS);
+  }, [id, otherUser?.online]);
 
   const loadOlder = useCallback(async () => {
     if (loadingMore || !hasMoreRef.current) return;
@@ -100,23 +127,6 @@ export default function ChatScreen() {
     pageRef.current = nextPage;
     setLoadingMore(false);
   }, [loadingMore, loadPage]);
-
-  const fetchStatus = useCallback(async () => {
-    try {
-      const { data } = await userApi.getById(id);
-      if (data?.online !== otherUser?.online) setOtherUser(data);
-    } catch { /* ignore */ }
-  }, [id, otherUser?.online]);
-
-  useEffect(() => {
-    if (!otherUser) return;
-    if (otherUser.online) pollIntervalRef.current = setInterval(pollNewMessages, POLL_INTERVAL_ONLINE);
-    statusIntervalRef.current = setInterval(fetchStatus, STATUS_REFRESH_MS);
-    return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
-    };
-  }, [otherUser?.online, pollNewMessages, fetchStatus]);
 
   const sendMessage = useCallback(async () => {
     const msg = textRef.current.trim();
@@ -136,8 +146,8 @@ export default function ChatScreen() {
     setTimeout(() => scrollToEnd(true), 50);
   }, [id, me?.id, scrollToEnd]);
 
-  const statusText = otherUser?.online ? "Çevrimiçi" : "Çevrimdışı";
-  const statusColor = otherUser?.online ? colors.online : colors.textMuted;
+  const statusText = online ? "Çevrimiçi" : "Çevrimdışı";
+  const statusColor = online ? colors.online : colors.textMuted;
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -147,63 +157,65 @@ export default function ChatScreen() {
         </TouchableOpacity>
         {otherUser && (
           <>
-            <Avatar uri={otherUser.avatarUrl} name={otherUser.fullName} size={36} online={otherUser.online} />
+            <Avatar uri={otherUser.avatarUrl} name={otherUser.fullName} size={36} online={online} />
             <View style={{ marginLeft: spacing.sm, flex: 1 }}>
               <Text style={{ color: colors.text, fontWeight: "600", fontSize: 15 }}>{otherUser.fullName}</Text>
-              {hasActiveLesson && otherUser.phone ? (
-                <Text style={{ color: colors.textSecondary, fontSize: 12 }}>+90 {otherUser.phone.replace("+90", "").replace(/(\d{3})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4")}</Text>
-              ) : (
-                <Text style={{ color: statusColor, fontSize: 11 }}>{statusText}</Text>
-              )}
+              <Text style={{ color: statusColor, fontSize: 11 }}>{statusText}</Text>
             </View>
           </>
         )}
       </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        windowSize={10}
-        maxToRenderPerBatch={10}
-        initialNumToRender={20}
-        removeClippedSubviews={Platform.OS === "android"}
-        contentContainerStyle={{ padding: spacing.md }}
-        onContentSizeChange={() => { if (isNearBottomRef.current) scrollToEnd(false); }}
-        onScroll={(e) => {
-          const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
-          isNearBottomRef.current = contentSize.height - contentOffset.y - layoutMeasurement.height < 60;
-          if (isNearBottomRef.current && newMsgBanner) setNewMsgBanner(false);
-          if (contentOffset.y < 40 && hasMoreRef.current && !loadingMore) loadOlder();
-        }}
-        scrollEventThrottle={100}
-        ListHeaderComponent={loadingMore ? <View style={{ padding: spacing.md }}><ActivityIndicator size="small" color={colors.primary} /></View> : hasMoreRef.current ? <View style={{ height: 20 }} /> : null}
-        renderItem={({ item }) => {
-          const isMine = item.senderId === me?.id;
-          return (
-            <View style={{ alignItems: isMine ? "flex-end" : "flex-start", marginBottom: spacing.sm }}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onLongPress={async () => { await Clipboard.setStringAsync(item.content); toast.show("Mesaj kopyalandı", "success"); }}
-                style={{ maxWidth: "80%", backgroundColor: isMine ? colors.primary : "#ecfdf5", borderRadius: radius.lg, borderBottomRightRadius: isMine ? 4 : radius.lg, borderBottomLeftRadius: !isMine ? 4 : radius.lg, padding: spacing.md }}
-              >
-                {!isMine && <Text style={{ color: colors.primary, fontSize: 11, fontWeight: "600", marginBottom: 2 }}>{item.senderName || otherUser?.fullName}</Text>}
-                <Text style={{ color: isMine ? "#fff" : colors.text, fontSize: 14 }}>{item.content}</Text>
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", marginTop: 4 }}>
-                  <Text style={{ color: isMine ? "#ffffffcc" : colors.textMuted, fontSize: 11, marginRight: 4 }}>{formatMessageTime(item.createdAt)}</Text>
-                  {isMine && <Ionicons name={item.read ? "checkmark-done" : "checkmark"} size={12} color={isMine ? "#ffffffcc" : colors.textMuted} />}
-                </View>
-              </TouchableOpacity>
+      {initialLoading ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          windowSize={10}
+          maxToRenderPerBatch={10}
+          initialNumToRender={20}
+          removeClippedSubviews={Platform.OS === "android"}
+          contentContainerStyle={{ padding: spacing.md }}
+          onContentSizeChange={() => { if (isNearBottomRef.current) scrollToEnd(false); }}
+          onScroll={(e) => {
+            const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+            isNearBottomRef.current = contentSize.height - contentOffset.y - layoutMeasurement.height < 60;
+            if (isNearBottomRef.current && newMsgBanner) setNewMsgBanner(false);
+            if (contentOffset.y < 40 && hasMoreRef.current && !loadingMore) loadOlder();
+          }}
+          scrollEventThrottle={100}
+          ListHeaderComponent={loadingMore ? <View style={{ padding: spacing.md }}><ActivityIndicator size="small" color={colors.primary} /></View> : hasMoreRef.current ? <View style={{ height: 20 }} /> : null}
+          renderItem={({ item }) => {
+            const isMine = item.senderId === me?.id;
+            return (
+              <View style={{ alignItems: isMine ? "flex-end" : "flex-start", marginBottom: spacing.sm }}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onLongPress={async () => { await Clipboard.setStringAsync(item.content); toast.show("Mesaj kopyalandı", "success"); }}
+                  style={{ maxWidth: "80%", backgroundColor: isMine ? colors.primary : "#ecfdf5", borderRadius: radius.lg, borderBottomRightRadius: isMine ? 4 : radius.lg, borderBottomLeftRadius: !isMine ? 4 : radius.lg, padding: spacing.md }}
+                >
+                  {!isMine && <Text style={{ color: colors.primary, fontSize: 11, fontWeight: "600", marginBottom: 2 }}>{item.senderName || otherUser?.fullName}</Text>}
+                  <Text style={{ color: isMine ? "#fff" : colors.text, fontSize: 14 }}>{item.content}</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", marginTop: 4 }}>
+                    <Text style={{ color: isMine ? "#ffffffcc" : colors.textMuted, fontSize: 11, marginRight: 4 }}>{formatMessageTime(item.createdAt)}</Text>
+                    {isMine && <Ionicons name={item.read ? "checkmark-done" : "checkmark"} size={12} color={isMine ? "#ffffffcc" : colors.textMuted} />}
+                  </View>
+                </TouchableOpacity>
+              </View>
+            );
+          }}
+          ListEmptyComponent={
+            <View style={{ alignItems: "center", marginTop: 40 }}>
+              <Ionicons name="chatbubble-ellipses-outline" size={48} color={colors.textMuted} />
+              <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: spacing.sm }}>Mesaj gönderin</Text>
             </View>
-          );
-        }}
-        ListEmptyComponent={
-          <View style={{ alignItems: "center", marginTop: 40 }}>
-            <Ionicons name="chatbubble-ellipses-outline" size={48} color={colors.textMuted} />
-            <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: spacing.sm }}>Mesaj gönderin</Text>
-          </View>
-        }
-      />
+          }
+        />
+      )}
 
       {newMsgBanner && (
         <TouchableOpacity onPress={() => { scrollToEnd(true); setNewMsgBanner(false); }}
