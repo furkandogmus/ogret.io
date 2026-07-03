@@ -81,6 +81,54 @@ function getWsUrl() {
   }
 }
 
+async function getValidToken(): Promise<string | null> {
+  try {
+    const token = await SecureStore.getItemAsync(TOKEN_KEY);
+    if (!token) return null;
+
+    const parts = token.split(".");
+    if (parts.length === 3) {
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const decodedPayload = typeof atob !== "undefined"
+        ? atob(base64)
+        : require("buffer").Buffer.from(base64, "base64").toString("binary");
+      
+      const payload = JSON.parse(decodedPayload);
+      const exp = payload.exp;
+      if (exp) {
+        const currentTime = Math.floor(Date.now() / 1000);
+        // If expired or expiring in less than 30 seconds, refresh it
+        if (exp - currentTime < 30) {
+          console.log("WS: Token is expired or close to expiring, refreshing...");
+          const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
+          if (refreshToken) {
+            const apiUrl = getApiBaseUrl();
+            const response = await fetch(`${apiUrl}/auth/refresh`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refreshToken }),
+            });
+            if (response.ok) {
+              const data = await response.json();
+              await SecureStore.setItemAsync(TOKEN_KEY, data.accessToken);
+              await SecureStore.setItemAsync(REFRESH_KEY, data.refreshToken);
+              console.log("WS: Token refreshed successfully!");
+              return data.accessToken;
+            } else {
+              console.warn("WS: Failed to refresh token, API returned status:", response.status);
+            }
+          }
+        }
+      }
+    }
+    return token;
+  } catch (err) {
+    console.error("WS: Error checking/refreshing token:", err);
+    return null;
+  }
+}
+
 export function WebSocketProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
   const clientRef = useRef<Client | null>(null);
@@ -101,7 +149,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     }
 
     const startClient = async () => {
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
+      const token = await getValidToken();
       if (!token || !active) return;
 
       const wsUrl = getWsUrl();

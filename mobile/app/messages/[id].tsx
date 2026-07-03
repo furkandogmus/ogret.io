@@ -18,7 +18,7 @@ export default function ChatScreen() {
   const router = useRouter();
   const { user: me } = useAuth();
   const toast = useToast();
-  const { connected, incomingMessages, typingUsers, sendMessage: wsSend, sendTyping } = useWebSocket();
+  const { connected, incomingMessages, typingUsers, sendMessage: wsSend, sendTyping, clearIncoming } = useWebSocket();
   const [otherUser, setOtherUser] = useState<User | null>(null);
   const [hasActiveLesson, setHasActiveLesson] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -50,10 +50,12 @@ export default function ChatScreen() {
   incomingRef.current = incomingMessages;
 
   useEffect(() => {
+    clearIncoming();
     return () => {
+      clearIncoming();
       if (typingDebounceRef.current) clearTimeout(typingDebounceRef.current);
     };
-  }, []);
+  }, [clearIncoming]);
 
   useEffect(() => {
     console.log("ChatScreen: incomingMessages length =", incomingMessages.length);
