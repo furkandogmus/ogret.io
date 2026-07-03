@@ -105,10 +105,13 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         if (!mountedRef.current) { ws.close(); return; }
         reconnectAttemptsRef.current = 0;
         setReconnecting(false);
-        ws.send(buildConnectFrame(token));
+        const cf = buildConnectFrame(token);
+        console.log("[WS] onopen, sending CONNECT frame");
+        ws.send(cf);
 
         connectedTimeout = setTimeout(() => {
           if (!mountedRef.current) return;
+          console.log("[WS] CONNECT timeout - no CONNECTED received");
           ws.close();
           const delay = Math.min(
             INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current),
@@ -129,6 +132,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           if (connectedTimeout) clearTimeout(connectedTimeout);
           setConnected(true);
           startPing(ws);
+          console.log("[WS] CONNECTED, subscribing to queues");
           const subs = [
             `SUBSCRIBE\nid:sub-0\ndestination:/user/queue/messages\n\n\u0000\n`,
             `SUBSCRIBE\nid:sub-1\ndestination:/user/queue/notifications\n\n\u0000\n`,
@@ -139,15 +143,20 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         }
 
         if (data.startsWith("MESSAGE")) {
+          console.log("[WS] MESSAGE frame, raw:", data.replace(/\u0000/g, "\\0").substring(0, 200));
           const lines = data.split("\n");
           const bodyIndex = lines.findIndex((l) => l.trim() === "");
           if (bodyIndex >= 0 && bodyIndex + 1 < lines.length) {
             const body = lines.slice(bodyIndex + 1).join("\n").replace(/\u0000$/, "").trim();
             try {
               const parsed = JSON.parse(body);
+              console.log("[WS] parsed msg id:", parsed.id, "senderId:", parsed.senderId, "has content:", !!parsed.content);
               if (parsed.id && parsed.content) {
                 const userId = parsed.senderId;
-                setIncomingMessages((prev) => [...prev, parsed]);
+                setIncomingMessages((prev) => {
+                  console.log("[WS] adding to incomingMessages, new len:", prev.length + 1);
+                  return [...prev, parsed];
+                });
                 if (userId) {
                   const timer = typingTimersRef.current.get(userId);
                   if (timer) clearTimeout(timer);
