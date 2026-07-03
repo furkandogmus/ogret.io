@@ -24,9 +24,14 @@ public class MessageController {
     @GetMapping
     public ResponseEntity<List<MessageResponse>> getConversation(
             @RequestParam UUID with,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size,
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(
-                messageService.getConversation(UUID.fromString(userDetails.getUsername()), with));
+        UUID me = UUID.fromString(userDetails.getUsername());
+        if (page == 0 && size >= 1000) {
+            return ResponseEntity.ok(messageService.getConversation(me, with));
+        }
+        return ResponseEntity.ok(messageService.getConversationPage(me, with, page, size));
     }
 
     @PostMapping
