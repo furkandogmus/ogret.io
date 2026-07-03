@@ -69,8 +69,12 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       };
 
       ws.onmessage = (event) => {
-        const data = event.data as string;
+        const rawData = event.data as string;
+        console.log("WS onmessage rawData:", rawData);
+        const data = rawData.trim();
+        
         if (data.startsWith("CONNECTED")) {
+          console.log("WS connected successfully!");
           setConnected(true);
           const subs = [
             `SUBSCRIBE\nid:sub-0\ndestination:/user/queue/messages\n\u0000`,
@@ -86,6 +90,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           const bodyIndex = lines.findIndex((l) => l.trim() === "");
           if (bodyIndex >= 0 && bodyIndex + 1 < lines.length) {
             const body = lines.slice(bodyIndex + 1).join("\n").replace(/\u0000$/, "").trim();
+            console.log("WS parsed MESSAGE body:", body);
             try {
               const parsed = JSON.parse(body);
               if (parsed.id && parsed.content) {

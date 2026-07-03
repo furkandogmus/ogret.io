@@ -146,7 +146,7 @@ export default function ChatScreen() {
                   await Clipboard.setStringAsync(item.content);
                   toast.show("Mesaj kopyalandı", "success");
                 }}
-                style={{ maxWidth: "80%", backgroundColor: isMine ? colors.primary : colors.card, borderRadius: radius.lg, borderBottomRightRadius: isMine ? 4 : radius.lg, borderBottomLeftRadius: !isMine ? 4 : radius.lg, padding: spacing.md }}
+                style={{ maxWidth: "80%", backgroundColor: isMine ? colors.primary : "#f4f4f5", borderRadius: radius.lg, borderBottomRightRadius: isMine ? 4 : radius.lg, borderBottomLeftRadius: !isMine ? 4 : radius.lg, padding: spacing.md }}
               >
                 <Text style={{ color: isMine ? "#fff" : colors.text, fontSize: 14 }}>{item.content}</Text>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", marginTop: 4 }}>
