@@ -46,9 +46,6 @@ export default function ChatScreen() {
     })();
   }, [id]);
 
-  const incomingRef = useRef(incomingMessages);
-  incomingRef.current = incomingMessages;
-
   useEffect(() => {
     return () => {
       if (typingDebounceRef.current) clearTimeout(typingDebounceRef.current);

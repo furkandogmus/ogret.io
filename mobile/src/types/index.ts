@@ -156,7 +156,13 @@ export interface WsMessage {
   senderId: string;
   senderName: string;
   senderAvatar?: string;
+  receiverId: string;
+  receiverName: string;
+  receiverAvatar?: string;
   content: string;
+  messageType: "TEXT" | "IMAGE" | "FILE" | "SYSTEM";
+  fileUrl?: string;
+  read: boolean;
   createdAt: string;
 }
 
