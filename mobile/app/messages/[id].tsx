@@ -32,6 +32,7 @@ export default function ChatScreen() {
 
   useEffect(() => {
     initialLoadDoneRef.current = false;
+    lastMsgIdRef.current = null;
     (async () => {
       let userRes, msgRes, lessonRes;
       try { userRes = await userApi.getById(id); } catch (e) { console.warn("getById failed:", e?.response?.status, e?.config?.url); }
@@ -53,6 +54,7 @@ export default function ChatScreen() {
           }
         }
         setMessages(loaded);
+        if (loaded.length > 0) lastMsgIdRef.current = loaded[loaded.length - 1].id;
 
         const unreadIds = loaded.filter((m) => m.senderId === id && !m.read).map((m) => m.id);
         for (const mid of unreadIds) {
@@ -64,11 +66,33 @@ export default function ChatScreen() {
     })();
   }, [id]);
 
+  const lastMsgIdRef = useRef<string | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
+    pollIntervalRef.current = setInterval(async () => {
+      if (!initialLoadDoneRef.current) return;
+      try {
+        const { data } = await messageApi.getConversation(id);
+        const msgs = data as Message[];
+        if (msgs.length === 0) return;
+        const latestRemote = msgs[msgs.length - 1];
+        if (latestRemote.id === lastMsgIdRef.current) return;
+        setMessages((prev) => {
+          if (lastMsgIdRef.current && latestRemote.id === lastMsgIdRef.current) return prev;
+          const existingIds = new Set(prev.map((m) => m.id));
+          const newOnes = msgs.filter((m) => !existingIds.has(m.id));
+          if (newOnes.length === 0) return prev;
+          return [...prev, ...newOnes];
+        });
+        lastMsgIdRef.current = msgs[msgs.length - 1].id;
+      } catch { /* ignore */ }
+    }, 3000);
     return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       if (typingDebounceRef.current) clearTimeout(typingDebounceRef.current);
     };
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (!initialLoadDoneRef.current || incomingMessages.length === 0) return;
