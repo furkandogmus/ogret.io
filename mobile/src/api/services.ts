@@ -59,7 +59,7 @@ export const reviewApi = {
 };
 
 export const messageApi = {
-  getConversation: (withUserId: string) => api.get<Message[]>("/messages", { params: { with: withUserId } }),
+  getConversation: (withUserId: string, page = 0, size = 30) => api.get<Message[]>("/messages", { params: { with: withUserId, page, size } }),
   getAll: () => api.get<Message[]>("/messages/all"),
   send: (data: { receiverId: string; content: string; lessonId?: string }) => api.post<Message>("/messages", data),
   getUnread: () => api.get<Message[]>("/messages/unread"),

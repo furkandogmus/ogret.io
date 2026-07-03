@@ -10,6 +10,8 @@ import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.MessageRepository;
 import com.dersplatform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -103,6 +106,13 @@ public class MessageService {
                 .stream()
                 .map(MessageResponse::fromEntity)
                 .toList();
+    }
+
+    public List<MessageResponse> getConversationPage(UUID userId1, UUID userId2, int page, int size) {
+        Page<Message> msgPage = messageRepository.findConversationPage(userId1, userId2, PageRequest.of(page, size));
+        List<MessageResponse> result = msgPage.stream().map(MessageResponse::fromEntity).toList();
+        Collections.reverse(result);
+        return result;
     }
 
     @Transactional
