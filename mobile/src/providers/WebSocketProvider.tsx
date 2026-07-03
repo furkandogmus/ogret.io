@@ -74,7 +74,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           "host:localhost",
           `Authorization:Bearer ${token}`,
           "",
-          "\u0000",
+          "\u0000\n",
         ].join("\n");
         ws.send(connectFrame);
       };
@@ -88,9 +88,9 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           console.log("WS connected successfully!");
           setConnected(true);
           const subs = [
-            `SUBSCRIBE\nid:sub-0\ndestination:/user/queue/messages\n\n\u0000`,
-            `SUBSCRIBE\nid:sub-1\ndestination:/user/queue/notifications\n\n\u0000`,
-            `SUBSCRIBE\nid:sub-2\ndestination:/user/queue/typing\n\n\u0000`,
+            `SUBSCRIBE\nid:sub-0\ndestination:/user/queue/messages\n\n\u0000\n`,
+            `SUBSCRIBE\nid:sub-1\ndestination:/user/queue/notifications\n\n\u0000\n`,
+            `SUBSCRIBE\nid:sub-2\ndestination:/user/queue/typing\n\n\u0000\n`,
           ];
           subs.forEach((f) => ws.send(f));
           return;
@@ -197,7 +197,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const sendTyping = useCallback((receiverId: string) => {
     const ws = wsRef.current;
     if (ws?.readyState !== WebSocket.OPEN) return;
-    const sendFrame = `SEND\ndestination:/app/chat.typing/${receiverId}\ncontent-length:0\n\n\u0000`;
+    const sendFrame = `SEND\ndestination:/app/chat.typing/${receiverId}\ncontent-length:0\n\n\u0000\n`;
     ws.send(sendFrame);
   }, []);
 
@@ -205,7 +205,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     const ws = wsRef.current;
     if (ws?.readyState !== WebSocket.OPEN) return;
     const body = JSON.stringify({ content });
-    const sendFrame = `SEND\ndestination:/app/chat.send/${receiverId}\ncontent-type:application/json\n\n${body}\u0000`;
+    const sendFrame = `SEND\ndestination:/app/chat.send/${receiverId}\ncontent-type:application/json\n\n${body}\u0000\n`;
     ws.send(sendFrame);
   }, []);
 

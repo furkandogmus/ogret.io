@@ -73,14 +73,18 @@ export function formatTimeRange(start: any, end: any): string {
  */
 export function formatMessageTime(createdAt: string): string {
   if (!createdAt) return "";
-  let dateStr = createdAt;
-  if (!dateStr.endsWith("Z") && !dateStr.includes("+") && !/-\d{2}:\d{2}$/.test(dateStr)) {
-    dateStr = dateStr.replace(" ", "T");
-    dateStr = dateStr + "+03:00";
-  }
   try {
-    const d = new Date(dateStr);
-    return d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+    // Extract raw HH:MM directly from "2026-07-03T03:25:00" or "2026-07-03 03:25:00"
+    const match = createdAt.match(/[T ](\d{2}):(\d{2})/);
+    if (match) {
+      return `${match[1]}:${match[2]}`;
+    }
+    // Fallback to local time of the parsed Date object
+    const d = new Date(createdAt);
+    if (isNaN(d.getTime())) return "";
+    const h = String(d.getHours()).padStart(2, "0");
+    const m = String(d.getMinutes()).padStart(2, "0");
+    return `${h}:${m}`;
   } catch {
     return "";
   }
