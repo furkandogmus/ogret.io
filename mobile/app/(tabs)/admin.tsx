@@ -21,7 +21,7 @@ export default function AdminPanel() {
         adminApi.getUsers(),
         adminApi.getDashboard(),
       ]);
-      setUsers(usersRes.data);
+      setUsers(usersRes.data.content || []);
       setStats(dashRes.data);
     } catch { toast.show("Veriler yüklenemedi", "error"); }
     setLoading(false);

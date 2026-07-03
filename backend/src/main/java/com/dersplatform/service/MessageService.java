@@ -10,6 +10,7 @@ import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.MessageRepository;
 import com.dersplatform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public MessageResponse sendMessage(UUID senderId, SendMessageRequest request) {
@@ -55,11 +57,16 @@ public class MessageService {
                 .build();
 
         message = messageRepository.save(message);
+        MessageResponse response = MessageResponse.fromEntity(message);
 
         // Push real-time notification to the receiver
         notificationService.notifyNewMessage(sender, receiver, request.getContent());
 
-        return MessageResponse.fromEntity(message);
+        // Push real-time message payload to the receiver's chat view
+        messagingTemplate.convertAndSendToUser(
+                receiver.getId().toString(), "/queue/messages", response);
+
+        return response;
     }
 
     private void computeResponseTime(User tutor, User student) {

@@ -55,26 +55,42 @@ export default function ChatScreen() {
   }, []);
 
   useEffect(() => {
-    const last = incomingMessages[incomingMessages.length - 1];
-    if (last && last.senderId === id) {
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === last.id)) return prev;
-        messageApi.markAsRead(last.id).catch(() => {});
-        return [...prev, last as unknown as Message];
+    if (incomingMessages.length === 0) return;
+    
+    // Find all incoming messages belonging to this specific conversation
+    const relevant = incomingMessages.filter(
+      (m) => m.senderId === id || (m.senderId === me?.id && m.receiverId === id)
+    );
+    if (relevant.length === 0) return;
+
+    setMessages((prev) => {
+      const existingIds = new Set(prev.map((m) => m.id));
+      const newMessages = relevant.filter((m) => !existingIds.has(m.id)) as unknown as Message[];
+      if (newMessages.length === 0) return prev;
+
+      // Mark incoming unread messages as read
+      newMessages.forEach((m) => {
+        if (m.senderId === id && !m.read) {
+          messageApi.markAsRead(m.id).catch(() => {});
+        }
       });
-    }
-  }, [incomingMessages.length, id]);
+
+      return [...prev, ...newMessages];
+    });
+  }, [incomingMessages, id, me?.id]);
 
   const sendMessage = useCallback(async () => {
     const msg = textRef.current.trim();
     if (!msg) return;
     try {
-      if (connected) wsSend(id, msg);
       const { data } = await messageApi.send({ receiverId: id, content: msg });
-      setMessages((prev) => [...prev, data]);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === data.id)) return prev;
+        return [...prev, data];
+      });
       setText("");
     } catch { /* */ }
-  }, [id, connected, wsSend]);
+  }, [id]);
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === "ios" ? "padding" : undefined}>

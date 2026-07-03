@@ -148,7 +148,7 @@ export function MessagesPage() {
 
   const fetchConversations = async () => {
     try {
-      const { data } = await messageApi.getUnread();
+      const { data } = await messageApi.getAll();
       const grouped: Record<string, Conversation> = {};
       data.forEach((msg) => {
         const isMe = msg.senderId === user?.id;

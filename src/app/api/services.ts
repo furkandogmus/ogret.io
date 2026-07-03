@@ -278,6 +278,9 @@ export const messageApi = {
   getUnread: () =>
     api.get<MessageResponse[]>("/messages/unread"),
 
+  getAll: () =>
+    api.get<MessageResponse[]>("/messages/all"),
+
   markAsRead: (id: string) =>
     api.put(`/messages/${id}/read`),
 };

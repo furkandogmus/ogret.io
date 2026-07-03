@@ -92,7 +92,7 @@ function LessonCardComponent({ lesson, userRole, onPress, onAvatarPress, onCance
         {canComplete && onComplete && (
           <TouchableOpacity onPress={onComplete} style={{ flex: 1, backgroundColor: colors.success + "20", borderRadius: radius.sm, padding: spacing.sm, alignItems: "center" }}>
             <Text style={{ color: colors.success, fontWeight: "600", fontSize: 13 }}>
-              {lesson.status === "PENDING" ? "Onayla" : "Tamamla"}
+              {lesson.status === "PENDING" ? "Onayla" : lesson.status === "CONFIRMED" && userRole === "TUTOR" ? "Başlat" : "Tamamla"}
             </Text>
           </TouchableOpacity>
         )}
