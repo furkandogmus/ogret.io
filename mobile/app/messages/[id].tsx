@@ -28,16 +28,21 @@ export default function ChatScreen() {
   const flatListRef = useRef<FlatList>(null);
   const typingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const initialLoadTimestampRef = useRef(0);
+
   useEffect(() => {
+    const loadTs = Date.now();
+    initialLoadTimestampRef.current = loadTs;
     (async () => {
       let userRes, msgRes, lessonRes;
       try { userRes = await userApi.getById(id); } catch (e) { console.warn("getById failed:", e?.response?.status, e?.config?.url); }
       try { msgRes = await messageApi.getConversation(id); } catch (e) { console.warn("getConversation failed:", e?.response?.status, e?.config?.url); }
       try { lessonRes = await lessonApi.hasActiveLesson(id); } catch (e) { console.warn("hasActiveLesson failed:", e?.response?.status, e?.config?.url); }
       if (userRes) setOtherUser(userRes.data);
+
       if (msgRes) {
         setMessages(msgRes.data);
-        const unreadIds = msgRes.data.filter((m: Message) => m.senderId === id && !m.read).map((m: Message) => m.id);
+        const unreadIds = (msgRes.data as Message[]).filter((m) => m.senderId === id && !m.read).map((m) => m.id);
         for (const mid of unreadIds) {
           messageApi.markAsRead(mid).catch(() => {});
         }
@@ -53,24 +58,24 @@ export default function ChatScreen() {
   }, []);
 
   useEffect(() => {
-    console.log("ChatScreen: incomingMessages length =", incomingMessages.length);
     if (incomingMessages.length === 0) return;
-    
-    // Find all incoming messages belonging to this specific conversation
+
+    const ts = initialLoadTimestampRef.current;
     const relevant = incomingMessages.filter(
-      (m) => m.senderId?.toLowerCase() === id?.toLowerCase() || 
-             (m.senderId?.toLowerCase() === me?.id?.toLowerCase() && m.receiverId?.toLowerCase() === id?.toLowerCase())
+      (m) => {
+        const msgTs = new Date(m.createdAt).getTime();
+        if (ts > 0 && msgTs < ts) return false;
+        return m.senderId?.toLowerCase() === id?.toLowerCase() ||
+               (m.senderId?.toLowerCase() === me?.id?.toLowerCase() && m.receiverId?.toLowerCase() === id?.toLowerCase());
+      }
     );
-    console.log("ChatScreen: relevant messages found =", relevant.length, "for partner ID =", id);
     if (relevant.length === 0) return;
 
     setMessages((prev) => {
       const existingIds = new Set(prev.map((m) => m.id));
       const newMessages = relevant.filter((m) => !existingIds.has(m.id)) as unknown as Message[];
-      console.log("ChatScreen: new messages to append =", newMessages.length);
       if (newMessages.length === 0) return prev;
 
-      // Mark incoming unread messages as read
       newMessages.forEach((m) => {
         if (m.senderId?.toLowerCase() === id?.toLowerCase() && !m.read) {
           messageApi.markAsRead(m.id).catch(() => {});
