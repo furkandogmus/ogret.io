@@ -85,7 +85,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           const lines = data.split("\n");
           const bodyIndex = lines.findIndex((l) => l.trim() === "");
           if (bodyIndex >= 0 && bodyIndex + 1 < lines.length) {
-            const body = lines.slice(bodyIndex + 1).join("\n").replace(/\u0000$/, "");
+            const body = lines.slice(bodyIndex + 1).join("\n").replace(/\u0000$/, "").trim();
             try {
               const parsed = JSON.parse(body);
               if (parsed.id && parsed.content) {
@@ -121,7 +121,9 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
                   return next;
                 });
               }
-            } catch { /* ignore */ }
+            } catch (err) {
+              console.error("WS JSON parse failed:", err, "for body:", body);
+            }
           }
           return;
         }
