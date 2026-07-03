@@ -55,22 +55,26 @@ export default function ChatScreen() {
   }, []);
 
   useEffect(() => {
+    console.log("ChatScreen: incomingMessages length =", incomingMessages.length);
     if (incomingMessages.length === 0) return;
     
     // Find all incoming messages belonging to this specific conversation
     const relevant = incomingMessages.filter(
-      (m) => m.senderId === id || (m.senderId === me?.id && m.receiverId === id)
+      (m) => m.senderId?.toLowerCase() === id?.toLowerCase() || 
+             (m.senderId?.toLowerCase() === me?.id?.toLowerCase() && m.receiverId?.toLowerCase() === id?.toLowerCase())
     );
+    console.log("ChatScreen: relevant messages found =", relevant.length, "for partner ID =", id);
     if (relevant.length === 0) return;
 
     setMessages((prev) => {
       const existingIds = new Set(prev.map((m) => m.id));
       const newMessages = relevant.filter((m) => !existingIds.has(m.id)) as unknown as Message[];
+      console.log("ChatScreen: new messages to append =", newMessages.length);
       if (newMessages.length === 0) return prev;
 
       // Mark incoming unread messages as read
       newMessages.forEach((m) => {
-        if (m.senderId === id && !m.read) {
+        if (m.senderId?.toLowerCase() === id?.toLowerCase() && !m.read) {
           messageApi.markAsRead(m.id).catch(() => {});
         }
       });
