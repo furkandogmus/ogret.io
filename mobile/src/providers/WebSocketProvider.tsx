@@ -193,19 +193,23 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
             
             if (type === "open") {
               ws.onopen = (event) => {
-                listeners.get("open")?.forEach((cb) => cb(event));
+                console.log("WS Native: onopen");
+                listeners.get("open")?.forEach((cb) => cb.call(ws, event));
               };
             } else if (type === "message") {
               ws.onmessage = (event) => {
-                listeners.get("message")?.forEach((cb) => cb(event));
+                console.log("WS Native: onmessage raw data =", event.data);
+                listeners.get("message")?.forEach((cb) => cb.call(ws, event));
               };
             } else if (type === "error") {
               ws.onerror = (event) => {
-                listeners.get("error")?.forEach((cb) => cb(event));
+                console.log("WS Native: onerror", event);
+                listeners.get("error")?.forEach((cb) => cb.call(ws, event));
               };
             } else if (type === "close") {
               ws.onclose = (event) => {
-                listeners.get("close")?.forEach((cb) => cb(event));
+                console.log("WS Native: onclose code =", event.code, "reason =", event.reason);
+                listeners.get("close")?.forEach((cb) => cb.call(ws, event));
               };
             }
           };
