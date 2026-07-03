@@ -196,18 +196,18 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
   const sendTyping = useCallback((receiverId: string) => {
     const ws = wsRef.current;
-    if (ws?.readyState !== WebSocket.OPEN) return;
+    if (!connected || ws?.readyState !== WebSocket.OPEN) return;
     const sendFrame = `SEND\ndestination:/app/chat.typing/${receiverId}\ncontent-length:0\n\n\u0000\n`;
     ws.send(sendFrame);
-  }, []);
+  }, [connected]);
 
   const sendMessage = useCallback((receiverId: string, content: string) => {
     const ws = wsRef.current;
-    if (ws?.readyState !== WebSocket.OPEN) return;
+    if (!connected || ws?.readyState !== WebSocket.OPEN) return;
     const body = JSON.stringify({ content });
     const sendFrame = `SEND\ndestination:/app/chat.send/${receiverId}\ncontent-type:application/json\n\n${body}\u0000\n`;
     ws.send(sendFrame);
-  }, []);
+  }, [connected]);
 
   const clearIncoming = useCallback(() => {
     setIncomingMessages([]);

@@ -16,6 +16,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -58,6 +59,9 @@ public class ChatController {
                 .build();
 
         message = messageRepository.save(message);
+        if (message.getCreatedAt() == null) {
+            message.setCreatedAt(LocalDateTime.now());
+        }
         MessageResponse response = MessageResponse.fromEntity(message);
 
         // Send the real-time message to the receiver's chat queue

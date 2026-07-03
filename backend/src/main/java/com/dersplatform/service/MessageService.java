@@ -57,6 +57,9 @@ public class MessageService {
                 .build();
 
         message = messageRepository.save(message);
+        if (message.getCreatedAt() == null) {
+            message.setCreatedAt(LocalDateTime.now());
+        }
         MessageResponse response = MessageResponse.fromEntity(message);
 
         // Push real-time notification to the receiver
