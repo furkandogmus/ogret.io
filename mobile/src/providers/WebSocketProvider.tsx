@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from "react";
 import * as SecureStore from "expo-secure-store";
+import { useAuth } from "./AuthProvider";
 import { TOKEN_KEY, getApiBaseUrl } from "../api/client";
 import type { WsMessage, WsNotification } from "../types";
 
@@ -33,6 +34,7 @@ function getWsUrl() {
 }
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuth();
   const wsRef = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
   const [incomingMessages, setIncomingMessages] = useState<WsMessage[]>([]);
@@ -46,16 +48,24 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
   const connect = useCallback(async () => {
     const token = await SecureStore.getItemAsync(TOKEN_KEY);
-    if (!token || !mountedRef.current) return;
+    if (!token || !mountedRef.current) {
+      console.log("WS connect cancelled: no token or not mounted");
+      return;
+    }
 
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      console.log("WS already open, skipping connect");
+      return;
+    }
 
     const url = getWsUrl();
+    console.log("WS connecting to url:", url);
     try {
       const ws = new WebSocket(url);
 
       ws.onopen = () => {
         if (!mountedRef.current) { ws.close(); return; }
+        console.log("WS socket connection opened");
         reconnectAttemptsRef.current = 0;
         setReconnecting(false);
         const connectFrame = [
@@ -136,7 +146,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         if (data.startsWith("RECEIPT") || data.startsWith("ERROR")) return;
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
+        console.log("WS connection closed:", event?.code, event?.reason);
         setConnected(false);
         if (!mountedRef.current) return;
         const delay = Math.min(
@@ -148,9 +159,13 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         reconnectTimeoutRef.current = setTimeout(() => connect(), delay);
       };
 
-      ws.onerror = () => { ws.close(); };
+      ws.onerror = (err) => {
+        console.error("WS error occurred:", err);
+        ws.close();
+      };
       wsRef.current = ws;
-    } catch {
+    } catch (e) {
+      console.error("WS init failed:", e);
       if (mountedRef.current) {
         reconnectTimeoutRef.current = setTimeout(() => connect(), 5000);
       }
@@ -159,14 +174,24 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     mountedRef.current = true;
-    connect();
+    if (isAuthenticated) {
+      console.log("User authenticated, calling WS connect()");
+      connect();
+    } else {
+      console.log("User not authenticated, closing WS");
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      setConnected(false);
+    }
     return () => {
       mountedRef.current = false;
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       typingTimersRef.current.forEach((t) => clearTimeout(t));
       wsRef.current?.close();
     };
-  }, [connect]);
+  }, [connect, isAuthenticated]);
 
   const sendTyping = useCallback((receiverId: string) => {
     const ws = wsRef.current;
