@@ -114,6 +114,9 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
+        debug: (str) => {
+          console.log("STOMP Debug:", str);
+        },
         onConnect: () => {
           if (!active) {
             client?.deactivate();
