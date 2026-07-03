@@ -67,3 +67,21 @@ export function formatLocalTime(val: any): string {
 export function formatTimeRange(start: any, end: any): string {
   return `${formatLocalTime(start)} - ${formatLocalTime(end)}`;
 }
+
+/**
+ * Formats a message ISO datetime string with fallback offset check for Hermes
+ */
+export function formatMessageTime(createdAt: string): string {
+  if (!createdAt) return "";
+  let dateStr = createdAt;
+  if (!dateStr.endsWith("Z") && !dateStr.includes("+") && !/-\d{2}:\d{2}$/.test(dateStr)) {
+    dateStr = dateStr.replace(" ", "T");
+    dateStr = dateStr + "+03:00";
+  }
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}

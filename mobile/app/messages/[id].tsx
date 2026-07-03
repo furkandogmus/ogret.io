@@ -11,6 +11,7 @@ import { useToast } from "../../src/components/Toast";
 import { messageApi, userApi, lessonApi } from "../../src/api/services";
 import type { Message, User } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
+import { formatMessageTime } from "../../src/utils/dateFormat";
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -146,7 +147,7 @@ export default function ChatScreen() {
                   await Clipboard.setStringAsync(item.content);
                   toast.show("Mesaj kopyalandı", "success");
                 }}
-                style={{ maxWidth: "80%", backgroundColor: isMine ? colors.primary : "#f4f4f5", borderRadius: radius.lg, borderBottomRightRadius: isMine ? 4 : radius.lg, borderBottomLeftRadius: !isMine ? 4 : radius.lg, padding: spacing.md }}
+                style={{ maxWidth: "80%", backgroundColor: isMine ? colors.primary : "#ecfdf5", borderRadius: radius.lg, borderBottomRightRadius: isMine ? 4 : radius.lg, borderBottomLeftRadius: !isMine ? 4 : radius.lg, padding: spacing.md }}
               >
                 {!isMine && (
                   <Text style={{ color: colors.primary, fontSize: 11, fontWeight: "600", marginBottom: 2 }}>
@@ -156,7 +157,7 @@ export default function ChatScreen() {
                 <Text style={{ color: isMine ? "#fff" : colors.text, fontSize: 14 }}>{item.content}</Text>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", marginTop: 4 }}>
                   <Text style={{ color: isMine ? "#ffffffcc" : colors.textMuted, fontSize: 11, marginRight: 4 }}>
-                    {new Date(item.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                    {formatMessageTime(item.createdAt)}
                   </Text>
                   {isMine && <Ionicons name={item.read ? "checkmark-done" : "checkmark"} size={12} color={isMine ? "#ffffffcc" : colors.textMuted} />}
                 </View>

@@ -73,6 +73,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           "accept-version:1.2",
           "host:localhost",
           `Authorization:Bearer ${token}`,
+          "",
           "\u0000",
         ].join("\n");
         ws.send(connectFrame);
@@ -87,9 +88,9 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           console.log("WS connected successfully!");
           setConnected(true);
           const subs = [
-            `SUBSCRIBE\nid:sub-0\ndestination:/user/queue/messages\n\u0000`,
-            `SUBSCRIBE\nid:sub-1\ndestination:/user/queue/notifications\n\u0000`,
-            `SUBSCRIBE\nid:sub-2\ndestination:/user/queue/typing\n\u0000`,
+            `SUBSCRIBE\nid:sub-0\ndestination:/user/queue/messages\n\n\u0000`,
+            `SUBSCRIBE\nid:sub-1\ndestination:/user/queue/notifications\n\n\u0000`,
+            `SUBSCRIBE\nid:sub-2\ndestination:/user/queue/typing\n\n\u0000`,
           ];
           subs.forEach((f) => ws.send(f));
           return;
