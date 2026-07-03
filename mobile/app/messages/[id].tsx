@@ -148,6 +148,11 @@ export default function ChatScreen() {
                 }}
                 style={{ maxWidth: "80%", backgroundColor: isMine ? colors.primary : "#f4f4f5", borderRadius: radius.lg, borderBottomRightRadius: isMine ? 4 : radius.lg, borderBottomLeftRadius: !isMine ? 4 : radius.lg, padding: spacing.md }}
               >
+                {!isMine && (
+                  <Text style={{ color: colors.primary, fontSize: 11, fontWeight: "600", marginBottom: 2 }}>
+                    {item.senderName || otherUser?.fullName}
+                  </Text>
+                )}
                 <Text style={{ color: isMine ? "#fff" : colors.text, fontSize: 14 }}>{item.content}</Text>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", marginTop: 4 }}>
                   <Text style={{ color: isMine ? "#ffffffcc" : colors.textMuted, fontSize: 11, marginRight: 4 }}>
