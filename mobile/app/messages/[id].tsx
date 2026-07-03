@@ -87,15 +87,34 @@ export default function ChatScreen() {
   const sendMessage = useCallback(async () => {
     const msg = textRef.current.trim();
     if (!msg) return;
+
+    // Clear input immediately for instant feel
+    setText("");
+
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage: Message = {
+      id: tempId,
+      senderId: me?.id ?? "",
+      receiverId: id,
+      content: msg,
+      messageType: "TEXT" as any,
+      read: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Append optimistic message immediately
+    setMessages((prev) => [...prev, optimisticMessage]);
+
     try {
       const { data } = await messageApi.send({ receiverId: id, content: msg });
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === data.id)) return prev;
-        return [...prev, data];
-      });
-      setText("");
-    } catch { /* */ }
-  }, [id]);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? (data as unknown as Message) : m))
+      );
+    } catch {
+      // Rollback optimistic message if call fails
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+    }
+  }, [id, me?.id]);
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
