@@ -109,7 +109,44 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
       client = new Client({
         brokerURL: wsUrl,
-        webSocketFactory: () => new WebSocket(wsUrl),
+        webSocketFactory: () => {
+          const ws = new WebSocket(wsUrl);
+          const listeners = new Map<string, Set<any>>();
+          
+          ws.addEventListener = (type: string, listener: any) => {
+            if (!listeners.has(type)) {
+              listeners.set(type, new Set());
+            }
+            listeners.get(type)!.add(listener);
+            
+            if (type === "open") {
+              ws.onopen = (event) => {
+                listeners.get("open")?.forEach((cb) => cb(event));
+              };
+            } else if (type === "message") {
+              ws.onmessage = (event) => {
+                listeners.get("message")?.forEach((cb) => cb(event));
+              };
+            } else if (type === "error") {
+              ws.onerror = (event) => {
+                listeners.get("error")?.forEach((cb) => cb(event));
+              };
+            } else if (type === "close") {
+              ws.onclose = (event) => {
+                listeners.get("close")?.forEach((cb) => cb(event));
+              };
+            }
+          };
+
+          ws.removeEventListener = (type: string, listener: any) => {
+            const list = listeners.get(type);
+            if (list) {
+              list.delete(listener);
+            }
+          };
+
+          return ws;
+        },
         connectHeaders: { Authorization: `Bearer ${token}` },
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
