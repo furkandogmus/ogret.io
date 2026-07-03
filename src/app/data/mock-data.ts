@@ -3,7 +3,7 @@ import type { Conversation, Message, EarningData } from "../types";
 export const TUTORS = [
   {
     id: 1,
-    name: "Zeynep Kaya",
+    name: "Rabia Çetingül",
     photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&auto=format",
     title: "Matematik Öğretmeni · Boğaziçi Mezunu",
     subject: "Matematik",
@@ -23,7 +23,7 @@ export const TUTORS = [
         photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&auto=format",
         rating: 5,
         date: "15 Mayıs 2025",
-        text: "Zeynep Hanım gerçekten harika bir öğretmen. Türev konusunu çok net ve anlaşılır anlattı. Her soruma sabırla cevap verdi.",
+        text: "Rabia Hanım gerçekten harika bir öğretmen. Türev konusunu çok net ve anlaşılır anlattı. Her soruma sabırla cevap verdi.",
       },
       {
         name: "Elif Koç",
@@ -173,7 +173,7 @@ export const HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 
 export const CONVERSATIONS: Conversation[] = [
   {
-    id: 1, name: "Zeynep Kaya",
+    id: 1, name: "Rabia Çetingül",
     photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=80&h=80&fit=crop&auto=format",
     lastMessage: "Yarınki ders için hazır mısınız?", time: "14:32", unread: 2, online: true,
   },

@@ -39,7 +39,7 @@ class TutorReferenceServiceTest {
         MockitoAnnotations.openMocks(this);
         tutorReferenceService = new TutorReferenceService(tutorReferenceRepository, userRepository, notificationService);
 
-        tutor = User.builder().id(UUID.randomUUID()).fullName("Zeynep Kaya").role(Role.TUTOR).build();
+        tutor = User.builder().id(UUID.randomUUID()).fullName("Rabia Çetingül").role(Role.TUTOR).build();
         student = User.builder().id(UUID.randomUUID()).fullName("Ahmet Öğrenci").role(Role.STUDENT).build();
     }
 

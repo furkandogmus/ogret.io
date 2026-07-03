@@ -27,8 +27,8 @@ const baseLesson: Lesson = {
   },
   tutor: {
     id: "tutor-1",
-    fullName: "Zeynep Kaya",
-    email: "zeynep@ogret.io",
+    fullName: "Rabia Çetingül",
+    email: "rabia@ogret.io",
     phone: "+905551234567",
     role: "TUTOR",
     online: true,
@@ -46,7 +46,7 @@ describe("LessonCard", () => {
     const { getByText } = render(
       <LessonCard lesson={baseLesson} userRole="STUDENT" />
     );
-    expect(getByText("Zeynep Kaya")).toBeTruthy();
+    expect(getByText("Rabia Çetingül")).toBeTruthy();
   });
 
   it("renders subject name", () => {

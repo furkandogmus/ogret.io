@@ -27,7 +27,7 @@ const mockTutors = {
     content: [
       {
         id: "tutor-1",
-        fullName: "Zeynep Kaya",
+        fullName: "Rabia Çetingül",
         ratingAvg: 4.5,
         ratingCount: 12,
         hourlyRate: 350,
@@ -118,7 +118,7 @@ describe("tutorApi", () => {
       params: { minRating: 4, subjectId: "subj-1" },
     });
     expect(data.content).toHaveLength(1);
-    expect(data.content[0].fullName).toBe("Zeynep Kaya");
+    expect(data.content[0].fullName).toBe("Rabia Çetingül");
   });
 
   it("list with all filter params", async () => {
@@ -197,7 +197,7 @@ describe("reviewApi", () => {
 describe("favoriteApi", () => {
   it("list calls GET /favorites", async () => {
     mockAxios.get.mockResolvedValue({
-      data: [{ id: "tutor-1", fullName: "Zeynep Kaya" }],
+      data: [{ id: "tutor-1", fullName: "Rabia Çetingül" }],
     });
     const { data } = await favoriteApi.list();
     expect(mockAxios.get).toHaveBeenCalledWith("/favorites");

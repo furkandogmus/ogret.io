@@ -4,7 +4,7 @@ import type { TutorSummary } from "../../types";
 
 const mockTutor: TutorSummary = {
   id: "tutor-1",
-  fullName: "Zeynep Kaya",
+  fullName: "Rabia Çetingül",
   avatarUrl: undefined,
   title: "Matematik Öğretmeni",
   bio: "5 yıllık deneyim",
@@ -21,7 +21,7 @@ const mockTutor: TutorSummary = {
 describe("TutorCard", () => {
   it("renders tutor name", () => {
     const { getByText } = render(<TutorCard tutor={mockTutor} onPress={() => {}} />);
-    expect(getByText("Zeynep Kaya")).toBeTruthy();
+    expect(getByText("Rabia Çetingül")).toBeTruthy();
   });
 
   it("renders hourly rate", () => {

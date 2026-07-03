@@ -51,7 +51,7 @@ class TutorControllerTest {
     void listTutors_ShouldReturn200() throws Exception {
         var tutor = TutorSummaryResponse.builder()
                 .id(UUID.randomUUID())
-                .fullName("Zeynep Kaya")
+                .fullName("Rabia Çetingül")
                 .title("Matematik Öğretmeni")
                 .hourlyRate(BigDecimal.valueOf(350))
                 .ratingAvg(BigDecimal.valueOf(4.9))
@@ -69,7 +69,7 @@ class TutorControllerTest {
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].fullName").value("Zeynep Kaya"))
+                .andExpect(jsonPath("$.content[0].fullName").value("Rabia Çetingül"))
                 .andExpect(jsonPath("$.content[0].hourlyRate").value(350))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
@@ -80,7 +80,7 @@ class TutorControllerTest {
 
         var response = com.dersplatform.model.dto.response.UserResponse.builder()
                 .id(tutorId)
-                .fullName("Zeynep Kaya")
+                .fullName("Rabia Çetingül")
                 .email("zeynep@example.com")
                 .build();
 
@@ -88,6 +88,6 @@ class TutorControllerTest {
 
         mockMvc.perform(get("/api/v1/tutors/{id}", tutorId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.fullName").value("Zeynep Kaya"));
+                .andExpect(jsonPath("$.fullName").value("Rabia Çetingül"));
     }
 }
