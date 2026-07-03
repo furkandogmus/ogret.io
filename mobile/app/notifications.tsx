@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useWebSocket } from "../src/providers/WebSocketProvider";
 import type { WsNotification } from "../src/types";
 import { colors, spacing, radius } from "../src/constants/theme";
 
@@ -28,17 +27,8 @@ const typeColors: Record<string, string> = {
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { incomingNotifications } = useWebSocket();
   const [notifications, setNotifications] = useState<WsNotification[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
-    setNotifications((prev) => {
-      const existingIds = new Set(prev.map((p) => p.id));
-      const newOnes = incomingNotifications.filter((n) => !existingIds.has(n.id));
-      return [...newOnes, ...prev].slice(0, 100);
-    });
-  }, [incomingNotifications]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

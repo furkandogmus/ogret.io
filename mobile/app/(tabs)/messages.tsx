@@ -5,7 +5,6 @@ import { useRouter } from "expo-router";
 import { Avatar } from "../../src/components/Avatar";
 import { EmptyState } from "../../src/components/EmptyState";
 import { useAuth } from "../../src/providers/AuthProvider";
-import { useWebSocket } from "../../src/providers/WebSocketProvider";
 import { useToast } from "../../src/components/Toast";
 import { messageApi } from "../../src/api/services";
 import type { Message } from "../../src/types";
@@ -23,7 +22,6 @@ interface Conversation {
 export default function MessagesScreen() {
   const router = useRouter();
   const { user: me } = useAuth();
-  const { incomingMessages } = useWebSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -70,12 +68,11 @@ export default function MessagesScreen() {
     setRefreshing(false);
   }, [me?.id]);
 
-  useEffect(() => { buildConversations(); }, [buildConversations]);
-
   useEffect(() => {
-    if (incomingMessages.length === 0) return;
     buildConversations();
-  }, [incomingMessages.length, buildConversations]);
+    const interval = setInterval(() => buildConversations(), 15000);
+    return () => clearInterval(interval);
+  }, [buildConversations]);
 
   const renderItem = useCallback(({ item }: { item: Conversation }) => (
     <TouchableOpacity
