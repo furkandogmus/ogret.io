@@ -181,48 +181,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
       client = new Client({
         brokerURL: wsUrl,
-        webSocketFactory: () => {
-          const ws = new WebSocket(wsUrl);
-          const listeners = new Map<string, Set<any>>();
-          
-          ws.addEventListener = (type: string, listener: any) => {
-            if (!listeners.has(type)) {
-              listeners.set(type, new Set());
-            }
-            listeners.get(type)!.add(listener);
-            
-            if (type === "open") {
-              ws.onopen = (event) => {
-                console.log("WS Native: onopen");
-                listeners.get("open")?.forEach((cb) => cb.call(ws, event));
-              };
-            } else if (type === "message") {
-              ws.onmessage = (event) => {
-                console.log("WS Native: onmessage raw data =", event.data);
-                listeners.get("message")?.forEach((cb) => cb.call(ws, event));
-              };
-            } else if (type === "error") {
-              ws.onerror = (event) => {
-                console.log("WS Native: onerror", event);
-                listeners.get("error")?.forEach((cb) => cb.call(ws, event));
-              };
-            } else if (type === "close") {
-              ws.onclose = (event) => {
-                console.log("WS Native: onclose code =", event.code, "reason =", event.reason);
-                listeners.get("close")?.forEach((cb) => cb.call(ws, event));
-              };
-            }
-          };
-
-          ws.removeEventListener = (type: string, listener: any) => {
-            const list = listeners.get(type);
-            if (list) {
-              list.delete(listener);
-            }
-          };
-
-          return ws;
-        },
+        webSocketFactory: () => new WebSocket(wsUrl),
         connectHeaders: { Authorization: `Bearer ${token}` },
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
