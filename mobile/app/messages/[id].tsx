@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { View, Text, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Linking, Keyboard } from "react-native";
+import { View, Text, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
-import * as Sharing from "expo-sharing";
 import { Avatar } from "../../src/components/Avatar";
 import { useAuth } from "../../src/providers/AuthProvider";
-import { useWebSocket } from "../../src/providers/WebSocketProvider";
 import { useToast } from "../../src/components/Toast";
 import { messageApi, userApi, lessonApi } from "../../src/api/services";
 import type { Message, User } from "../../src/types";
@@ -18,7 +16,6 @@ export default function ChatScreen() {
   const router = useRouter();
   const { user: me } = useAuth();
   const toast = useToast();
-  const { connected, incomingMessages, typingUsers, sendMessage: wsSend, sendTyping } = useWebSocket();
   const [otherUser, setOtherUser] = useState<User | null>(null);
   const [hasActiveLesson, setHasActiveLesson] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -26,103 +23,70 @@ export default function ChatScreen() {
   const textRef = useRef(text);
   textRef.current = text;
   const flatListRef = useRef<FlatList>(null);
-  const typingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastMsgIdRef = useRef<string | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const initialLoadDoneRef = useRef(false);
+  const POLL_INTERVAL_ONLINE = 15000;
+  const POLL_INTERVAL_OFFLINE = 0;
+
+  const fetchMessages = useCallback(async () => {
+    try {
+      const { data } = await messageApi.getConversation(id);
+      const msgs = data as Message[];
+      if (msgs.length === 0) return;
+      const latest = msgs[msgs.length - 1];
+      if (latest.id === lastMsgIdRef.current) return;
+      setMessages((prev) => {
+        const existingIds = new Set(prev.map((m) => m.id));
+        const newOnes = msgs.filter((m) => !existingIds.has(m.id));
+        if (newOnes.length === 0) return prev;
+        return [...prev, ...newOnes];
+      });
+      lastMsgIdRef.current = latest.id;
+    } catch { /* ignore */ }
+  }, [id]);
 
   useEffect(() => {
-    initialLoadDoneRef.current = false;
     lastMsgIdRef.current = null;
+    let cancelled = false;
+
     (async () => {
-      let userRes, msgRes, lessonRes;
-      try { userRes = await userApi.getById(id); } catch (e) { console.warn("getById failed:", e?.response?.status, e?.config?.url); }
-      try { msgRes = await messageApi.getConversation(id); } catch (e) { console.warn("getConversation failed:", e?.response?.status, e?.config?.url); }
-      try { lessonRes = await lessonApi.hasActiveLesson(id); } catch (e) { console.warn("hasActiveLesson failed:", e?.response?.status, e?.config?.url); }
+      const [userRes, msgRes, lessonRes] = await Promise.all([
+        userApi.getById(id).catch(() => null),
+        messageApi.getConversation(id).catch(() => null),
+        lessonApi.hasActiveLesson(id).catch(() => null),
+      ]);
+      if (cancelled) return;
+
       if (userRes) setOtherUser(userRes.data);
+      if (lessonRes) setHasActiveLesson(lessonRes.data?.hasActiveLesson ?? false);
 
       if (msgRes) {
-        let loaded = msgRes.data as Message[];
-        const pending = incomingMessages.filter(
-          (m) => m.senderId?.toLowerCase() === id?.toLowerCase() ||
-                 (m.senderId?.toLowerCase() === me?.id?.toLowerCase() && m.receiverId?.toLowerCase() === id?.toLowerCase())
-        );
-        const existingIds = new Set(loaded.map((m) => m.id));
-        for (const p of pending) {
-          if (!existingIds.has(p.id)) {
-            loaded = [...loaded, p as unknown as Message];
-            existingIds.add(p.id);
-          }
-        }
-        setMessages(loaded);
-        if (loaded.length > 0) lastMsgIdRef.current = loaded[loaded.length - 1].id;
-
-        const unreadIds = loaded.filter((m) => m.senderId === id && !m.read).map((m) => m.id);
+        const msgs = msgRes.data as Message[];
+        setMessages(msgs);
+        if (msgs.length > 0) lastMsgIdRef.current = msgs[msgs.length - 1].id;
+        const unreadIds = msgs.filter((m) => m.senderId === id && !m.read).map((m) => m.id);
         for (const mid of unreadIds) {
           messageApi.markAsRead(mid).catch(() => {});
         }
       }
-      setHasActiveLesson(lessonRes?.data?.hasActiveLesson ?? false);
-      initialLoadDoneRef.current = true;
     })();
+
+    return () => { cancelled = true; };
   }, [id]);
 
-  const lastMsgIdRef = useRef<string | null>(null);
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   useEffect(() => {
-    pollIntervalRef.current = setInterval(async () => {
-      if (!initialLoadDoneRef.current) return;
-      try {
-        const { data } = await messageApi.getConversation(id);
-        const msgs = data as Message[];
-        if (msgs.length === 0) return;
-        const latestRemote = msgs[msgs.length - 1];
-        if (latestRemote.id === lastMsgIdRef.current) return;
-        setMessages((prev) => {
-          if (lastMsgIdRef.current && latestRemote.id === lastMsgIdRef.current) return prev;
-          const existingIds = new Set(prev.map((m) => m.id));
-          const newOnes = msgs.filter((m) => !existingIds.has(m.id));
-          if (newOnes.length === 0) return prev;
-          return [...prev, ...newOnes];
-        });
-        lastMsgIdRef.current = msgs[msgs.length - 1].id;
-      } catch { /* ignore */ }
-    }, 3000);
+    if (!otherUser) return;
+    if (!otherUser.online) return;
+    pollIntervalRef.current = setInterval(fetchMessages, POLL_INTERVAL_ONLINE);
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      if (typingDebounceRef.current) clearTimeout(typingDebounceRef.current);
     };
-  }, [id]);
-
-  useEffect(() => {
-    if (!initialLoadDoneRef.current || incomingMessages.length === 0) return;
-
-    const relevant = incomingMessages.filter(
-      (m) => m.senderId?.toLowerCase() === id?.toLowerCase() ||
-             (m.senderId?.toLowerCase() === me?.id?.toLowerCase() && m.receiverId?.toLowerCase() === id?.toLowerCase())
-    );
-    if (relevant.length === 0) return;
-
-    setMessages((prev) => {
-      const existingIds = new Set(prev.map((m) => m.id));
-      const newMessages = relevant.filter((m) => !existingIds.has(m.id)) as unknown as Message[];
-      if (newMessages.length === 0) return prev;
-
-      newMessages.forEach((m) => {
-        if (m.senderId?.toLowerCase() === id?.toLowerCase() && !m.read) {
-          messageApi.markAsRead(m.id).catch(() => {});
-        }
-      });
-
-      return [...prev, ...newMessages];
-    });
-  }, [incomingMessages, id, me?.id]);
+  }, [otherUser?.online, fetchMessages]);
 
   const sendMessage = useCallback(async () => {
     const msg = textRef.current.trim();
     if (!msg) return;
-
-    // Clear input immediately for instant feel
     setText("");
 
     const tempId = `temp-${Date.now()}`;
@@ -135,8 +99,6 @@ export default function ChatScreen() {
       read: false,
       createdAt: new Date().toISOString(),
     };
-
-    // Append optimistic message immediately
     setMessages((prev) => [...prev, optimisticMessage]);
 
     try {
@@ -144,11 +106,14 @@ export default function ChatScreen() {
       setMessages((prev) =>
         prev.map((m) => (m.id === tempId ? (data as unknown as Message) : m))
       );
+      lastMsgIdRef.current = data.id;
     } catch {
-      // Rollback optimistic message if call fails
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
     }
   }, [id, me?.id]);
+
+  const statusText = otherUser?.online ? "Çevrimiçi" : "Çevrimdışı";
+  const statusColor = otherUser?.online ? colors.online : colors.textMuted;
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -164,18 +129,9 @@ export default function ChatScreen() {
               {hasActiveLesson && otherUser.phone ? (
                 <Text style={{ color: colors.textSecondary, fontSize: 12 }}>+90 {otherUser.phone.replace("+90", "").replace(/(\d{3})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4")}</Text>
               ) : (
-                <Text style={{ color: connected && typingUsers.has(id) ? colors.primary : connected ? colors.online : colors.textMuted, fontSize: 11 }}>
-                  {connected && typingUsers.has(id) ? "Yazıyor..." : connected ? "Çevrimiçi" : "WebSocket bağlanıyor..."}
-                </Text>
+                <Text style={{ color: statusColor, fontSize: 11 }}>{statusText}</Text>
               )}
             </View>
-            <TouchableOpacity onPress={async () => {
-              try {
-                await Sharing.shareAsync(`https://ogret.io/tutor/${otherUser.id}`, { dialogTitle: `${otherUser.fullName} profilini paylaş` });
-              } catch {}
-            }} hitSlop={8} style={{ padding: 4 }}>
-              <Ionicons name="share-outline" size={22} color={colors.textSecondary} />
-            </TouchableOpacity>
           </>
         )}
       </View>
@@ -224,25 +180,12 @@ export default function ChatScreen() {
             <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: spacing.sm }}>Mesaj gönderin</Text>
           </View>
         }
-        ListFooterComponent={
-          connected && typingUsers.has(id) ? (
-            <View style={{ alignItems: "flex-start", marginTop: spacing.xs }}>
-              <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, borderBottomLeftRadius: 4, paddingHorizontal: 16, paddingVertical: 10 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 13 }}>Yazıyor...</Text>
-              </View>
-            </View>
-          ) : null
-        }
       />
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface }}>
         <TextInput
           value={text}
-          onChangeText={(v) => {
-            setText(v);
-            if (typingDebounceRef.current) clearTimeout(typingDebounceRef.current);
-            typingDebounceRef.current = setTimeout(() => sendTyping(id), 500);
-          }}
+          onChangeText={setText}
           placeholder="Mesaj yaz..."
           placeholderTextColor={colors.textMuted}
           multiline
