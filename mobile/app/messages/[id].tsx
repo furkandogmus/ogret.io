@@ -20,14 +20,21 @@ export default function ChatScreen() {
   const [hasActiveLesson, setHasActiveLesson] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
+  const [newMsgBanner, setNewMsgBanner] = useState(false);
   const textRef = useRef(text);
   textRef.current = text;
   const flatListRef = useRef<FlatList>(null);
   const lastMsgIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isNearBottomRef = useRef(true);
 
   const POLL_INTERVAL_ONLINE = 15000;
-  const POLL_INTERVAL_OFFLINE = 0;
+  const STATUS_REFRESH_MS = 30000;
+
+  const scrollToEnd = useCallback((animated = true) => {
+    flatListRef.current?.scrollToEnd({ animated });
+  }, []);
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -43,11 +50,24 @@ export default function ChatScreen() {
         return [...prev, ...newOnes];
       });
       lastMsgIdRef.current = latest.id;
+      if (!isNearBottomRef.current) {
+        setNewMsgBanner(true);
+      }
     } catch { /* ignore */ }
   }, [id]);
 
+  const fetchStatus = useCallback(async () => {
+    try {
+      const { data } = await userApi.getById(id);
+      if (data?.online !== otherUser?.online) {
+        setOtherUser(data);
+      }
+    } catch { /* ignore */ }
+  }, [id, otherUser?.online]);
+
   useEffect(() => {
     lastMsgIdRef.current = null;
+    setNewMsgBanner(false);
     let cancelled = false;
 
     (async () => {
@@ -77,12 +97,15 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!otherUser) return;
-    if (!otherUser.online) return;
-    pollIntervalRef.current = setInterval(fetchMessages, POLL_INTERVAL_ONLINE);
+    if (otherUser.online) {
+      pollIntervalRef.current = setInterval(fetchMessages, POLL_INTERVAL_ONLINE);
+    }
+    statusIntervalRef.current = setInterval(fetchStatus, STATUS_REFRESH_MS);
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
     };
-  }, [otherUser?.online, fetchMessages]);
+  }, [otherUser?.online, fetchMessages, fetchStatus]);
 
   const sendMessage = useCallback(async () => {
     const msg = textRef.current.trim();
@@ -110,7 +133,9 @@ export default function ChatScreen() {
     } catch {
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
     }
-  }, [id, me?.id]);
+
+    setTimeout(() => scrollToEnd(true), 50);
+  }, [id, me?.id, scrollToEnd]);
 
   const statusText = otherUser?.online ? "Çevrimiçi" : "Çevrimdışı";
   const statusColor = otherUser?.online ? colors.online : colors.textMuted;
@@ -145,7 +170,16 @@ export default function ChatScreen() {
         initialNumToRender={20}
         removeClippedSubviews={Platform.OS === "android"}
         contentContainerStyle={{ padding: spacing.md }}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() => {
+          if (isNearBottomRef.current) scrollToEnd(false);
+        }}
+        onScroll={(e) => {
+          const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+          const distFromBottom = contentSize.height - contentOffset.y - layoutMeasurement.height;
+          isNearBottomRef.current = distFromBottom < 60;
+          if (isNearBottomRef.current && newMsgBanner) setNewMsgBanner(false);
+        }}
+        scrollEventThrottle={100}
         renderItem={({ item }) => {
           const isMine = item.senderId === me?.id;
           return (
@@ -181,6 +215,15 @@ export default function ChatScreen() {
           </View>
         }
       />
+
+      {newMsgBanner && (
+        <TouchableOpacity
+          onPress={() => { scrollToEnd(true); setNewMsgBanner(false); }}
+          style={{ position: "absolute", bottom: 70, alignSelf: "center", backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20, shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 4 }}
+        >
+          <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>↓ Yeni mesajlar</Text>
+        </TouchableOpacity>
+      )}
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface }}>
         <TextInput
