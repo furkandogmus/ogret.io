@@ -24,11 +24,6 @@ const ALL_HOURS = Array.from({ length: 10 }, (_, i) => i + 9);
 
 export function TutorProfilePage() {
   const { id } = useParams();
-  useSeo({
-    title: tutor ? `${tutor.fullName} - Özel Ders Öğretmeni` : "Öğretmen Profili",
-    description: tutor?.bio || "Alanında uzman öğretmenimizle tanışın. Online özel ders için hemen iletişime geçin.",
-    canonical: id ? `https://ogret.io/ogretmen/${id}` : undefined,
-  });
   const navigate = useNavigate();
   const { openModal } = useModal();
   const { isAuthenticated, user } = useAuth();
@@ -39,6 +34,12 @@ export function TutorProfilePage() {
   const [selectedListing, setSelectedListing] = useState<ListingResponse | null>(null);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useSeo({
+    title: tutor ? `${tutor.fullName} - Özel Ders Öğretmeni` : "Öğretmen Profili",
+    description: tutor?.bio || "Alanında uzman öğretmenimizle tanışın. Online özel ders için hemen iletişime geçin.",
+    canonical: id ? `https://ogret.io/ogretmen/${id}` : undefined,
+  });
 
   useEffect(() => {
     if (!id) return;
