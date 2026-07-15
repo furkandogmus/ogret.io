@@ -9,9 +9,9 @@ Superprof alternatifi, **sadece online derslere** odaklanan, sıfır komisyonlu 
 
 ## Transactional e-mail (Amazon SES)
 
-The backend sends account-verification and password-reset messages through Amazon SES v2. Terraform creates the SES domain identity and adds the minimal `ses:SendEmail` permission to the backend's EKS IRSA role. After `terraform apply`, publish the CNAME records reported by `terraform output ses_dkim_tokens`, then set `serviceAccount.roleArn` in the production Helm values to `terraform output -raw backend_irsa_role_arn`. SES starts in sandbox mode, so request production access before sending to unverified recipients.
+The backend sends account-verification and password-reset messages through Amazon SES v2. Terraform creates the SES domain identity and grants the backend EKS IRSA role the minimal `ses:SendEmail` permission. Kubernetes deployment configuration now lives in the private GitOps repository; Argo CD synchronizes its `apps/ogret` Kustomize production overlay. After `terraform apply`, publish the CNAME records reported by `terraform output ses_dkim_tokens`, then configure the GitOps service-account role ARN from `terraform output -raw backend_irsa_role_arn`. SES starts in sandbox mode, so request production access before sending to unverified recipients.
 
-For the initial SES sandbox test, `kubernetes/base/configmap.yaml` uses the verified Gmail sender. It can only send to verified SES recipients and is not suitable for production delivery; replace it with a verified domain sender before launch.
+For the initial SES sandbox test, the GitOps ConfigMap uses the verified Gmail sender. It can only send to verified SES recipients and is not suitable for production delivery; replace it with a verified domain sender before launch.
 
 ---
 

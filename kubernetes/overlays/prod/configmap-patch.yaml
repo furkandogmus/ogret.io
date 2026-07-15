@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: dersplatform-config
-data:
-  DB_URL: jdbc:postgresql://ogret-prod.cluster-xxxxxxxxxxxx.eu-north-1.rds.amazonaws.com:5432/dersplatform
-  DB_USER: dersplatform
-  REDIS_HOST: ogret-prod.xxxxxx.ng.0001.euc1.cache.amazonaws.com
-  REDIS_PORT: "6379"
