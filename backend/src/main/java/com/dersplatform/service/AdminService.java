@@ -28,7 +28,6 @@ public class AdminService {
     private final UserRepository userRepository;
     private final LessonRepository lessonRepository;
     private final TutorVerificationRepository tutorVerificationRepository;
-    private final SubscriptionRepository subscriptionRepository;
     private final AuditLogRepository auditLogRepository;
     private final BlogPostRepository blogPostRepository;
     private final DisputeRepository disputeRepository;
@@ -39,7 +38,8 @@ public class AdminService {
         long totalTutors = userRepository.countByRole(Role.TUTOR);
         long totalStudents = userRepository.countByRole(Role.STUDENT);
         long totalLessons = lessonRepository.count();
-        long pendingVerifications = tutorVerificationRepository.findByStatusOrderByCreatedAtDesc(VerificationStatus.PENDING).size();
+        long pendingVerifications = tutorVerificationRepository
+                .findByStatusOrderByCreatedAtDesc(VerificationStatus.PENDING).size();
         long totalBlogPosts = blogPostRepository.count();
         long publishedPosts = blogPostRepository.countByStatus("PUBLISHED");
         long openDisputes = disputeRepository.countByStatus("OPEN");
@@ -52,8 +52,7 @@ public class AdminService {
                 "pendingVerifications", pendingVerifications,
                 "totalBlogPosts", totalBlogPosts,
                 "publishedPosts", publishedPosts,
-                "openDisputes", openDisputes
-        );
+                "openDisputes", openDisputes);
     }
 
     public Page<UserResponse> getUsers(Pageable pageable) {
@@ -85,8 +84,7 @@ public class AdminService {
                         "documentType", v.getDocumentType(),
                         "documentUrl", v.getDocumentUrl(),
                         "status", v.getStatus(),
-                        "createdAt", v.getCreatedAt()
-                ))
+                        "createdAt", v.getCreatedAt()))
                 .toList();
     }
 

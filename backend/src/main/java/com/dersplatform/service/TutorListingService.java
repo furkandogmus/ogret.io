@@ -144,7 +144,6 @@ public class TutorListingService {
     public Page<ListingResponse> searchListings(UUID subjectId, BigDecimal minPrice, BigDecimal maxPrice,
             BigDecimal minRating, Boolean online, String sort, String q,
             Pageable pageable) {
-        var locale = new java.util.Locale("tr", "TR");
 
         Sort dbSort;
         if (sort != null) {

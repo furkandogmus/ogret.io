@@ -5,7 +5,6 @@ import com.dersplatform.model.dto.response.LessonResponse;
 import com.dersplatform.model.enums.LessonStatus;
 import com.dersplatform.service.LessonService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -36,87 +35,93 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class LessonControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
-    @MockitoBean private LessonService lessonService;
+        @Autowired
+        private MockMvc mockMvc;
+        @Autowired
+        private ObjectMapper objectMapper;
+        @MockitoBean
+        private LessonService lessonService;
 
-    private final String userId = UUID.randomUUID().toString();
-    private final String tutorId = UUID.randomUUID().toString();
-    @MockitoBean private StringRedisTemplate stringRedisTemplate;
-    @MockitoBean private RedisTemplate<String, Object> redisTemplate;
-    @MockitoBean private S3Client s3Client;
-    @MockitoBean private S3Presigner s3Presigner;
-    @MockitoBean private RedisConnectionFactory redisConnectionFactory;
+        private final String userId = UUID.randomUUID().toString();
+        private final String tutorId = UUID.randomUUID().toString();
+        @MockitoBean
+        private StringRedisTemplate stringRedisTemplate;
+        @MockitoBean
+        private RedisTemplate<String, Object> redisTemplate;
+        @MockitoBean
+        private S3Client s3Client;
+        @MockitoBean
+        private S3Presigner s3Presigner;
+        @MockitoBean
+        private RedisConnectionFactory redisConnectionFactory;
 
-    @org.junit.jupiter.api.BeforeEach
-    void setUp() {
-        var valueOps = org.mockito.Mockito.mock(org.springframework.data.redis.core.ValueOperations.class);
-        org.mockito.Mockito.when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
-        org.mockito.Mockito.when(valueOps.increment(org.mockito.Mockito.any())).thenReturn(1L);
-    }
+        @org.junit.jupiter.api.BeforeEach
+        @SuppressWarnings("unchecked")
+        void setUp() {
+                var valueOps = org.mockito.Mockito.mock(org.springframework.data.redis.core.ValueOperations.class);
+                org.mockito.Mockito.when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
+                org.mockito.Mockito.when(valueOps.increment(org.mockito.Mockito.any())).thenReturn(1L);
+        }
 
-    @Test
-    void createLesson_ShouldReturn201() throws Exception {
-        var request = new CreateLessonRequest();
-        request.setTutorId(UUID.randomUUID());
-        request.setSubjectId(UUID.randomUUID());
-        request.setLessonDate(LocalDate.now().plusDays(1));
-        request.setStartTime(LocalTime.of(14, 0));
-        request.setEndTime(LocalTime.of(15, 0));
+        @Test
+        void createLesson_ShouldReturn201() throws Exception {
+                var request = new CreateLessonRequest();
+                request.setTutorId(UUID.randomUUID());
+                request.setSubjectId(UUID.randomUUID());
+                request.setLessonDate(LocalDate.now().plusDays(1));
+                request.setStartTime(LocalTime.of(14, 0));
+                request.setEndTime(LocalTime.of(15, 0));
 
-        when(lessonService.createLesson(any(), any())).thenReturn(
-                LessonResponse.builder()
-                        .id(UUID.randomUUID())
-                        .status(LessonStatus.PENDING)
-                        .lessonDate(LocalDate.now().plusDays(1))
-                        .startTime(LocalTime.of(14, 0))
-                        .endTime(LocalTime.of(15, 0))
-                        .durationMinutes(60)
-                        .price(BigDecimal.valueOf(300))
-                        .build()
-        );
+                when(lessonService.createLesson(any(), any())).thenReturn(
+                                LessonResponse.builder()
+                                                .id(UUID.randomUUID())
+                                                .status(LessonStatus.PENDING)
+                                                .lessonDate(LocalDate.now().plusDays(1))
+                                                .startTime(LocalTime.of(14, 0))
+                                                .endTime(LocalTime.of(15, 0))
+                                                .durationMinutes(60)
+                                                .price(BigDecimal.valueOf(300))
+                                                .build());
 
-        mockMvc.perform(post("/api/v1/lessons")
-                        .with(user(userId).roles("STUDENT"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.status").value("PENDING"))
-                .andExpect(jsonPath("$.durationMinutes").value(60));
-    }
+                mockMvc.perform(post("/api/v1/lessons")
+                                .with(user(userId).roles("STUDENT"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.status").value("PENDING"))
+                                .andExpect(jsonPath("$.durationMinutes").value(60));
+        }
 
-    @Test
-    void confirmLesson_ShouldReturn200() throws Exception {
-        UUID lessonId = UUID.randomUUID();
+        @Test
+        void confirmLesson_ShouldReturn200() throws Exception {
+                UUID lessonId = UUID.randomUUID();
 
-        when(lessonService.confirmLesson(any(), any())).thenReturn(
-                LessonResponse.builder()
-                        .id(lessonId)
-                        .status(LessonStatus.CONFIRMED)
-                        .build()
-        );
+                when(lessonService.confirmLesson(any(), any())).thenReturn(
+                                LessonResponse.builder()
+                                                .id(lessonId)
+                                                .status(LessonStatus.CONFIRMED)
+                                                .build());
 
-        mockMvc.perform(put("/api/v1/lessons/{id}/confirm", lessonId)
-                        .with(user(tutorId).roles("TUTOR")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CONFIRMED"));
-    }
+                mockMvc.perform(put("/api/v1/lessons/{id}/confirm", lessonId)
+                                .with(user(tutorId).roles("TUTOR")))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("CONFIRMED"));
+        }
 
-    @Test
-    void cancelLesson_ShouldReturn200() throws Exception {
-        UUID lessonId = UUID.randomUUID();
+        @Test
+        void cancelLesson_ShouldReturn200() throws Exception {
+                UUID lessonId = UUID.randomUUID();
 
-        when(lessonService.cancelLesson(any(), any(), any())).thenReturn(
-                LessonResponse.builder()
-                        .id(lessonId)
-                        .status(LessonStatus.CANCELLED)
-                        .build()
-        );
+                when(lessonService.cancelLesson(any(), any(), any())).thenReturn(
+                                LessonResponse.builder()
+                                                .id(lessonId)
+                                                .status(LessonStatus.CANCELLED)
+                                                .build());
 
-        mockMvc.perform(put("/api/v1/lessons/{id}/cancel", lessonId)
-                        .with(user(userId).roles("STUDENT"))
-                        .param("reason", "Müsait değil"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CANCELLED"));
-    }
+                mockMvc.perform(put("/api/v1/lessons/{id}/cancel", lessonId)
+                                .with(user(userId).roles("STUDENT"))
+                                .param("reason", "Müsait değil"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("CANCELLED"));
+        }
 }

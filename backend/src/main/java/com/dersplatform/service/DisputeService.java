@@ -86,7 +86,6 @@ public class DisputeService {
     }
 
     public List<DisputeMessage> getMessages(UUID disputeId, UUID userId) {
-        Dispute dispute = getDispute(disputeId, userId);
         return disputeMessageRepository.findByDisputeIdOrderByCreatedAtAsc(disputeId);
     }
 

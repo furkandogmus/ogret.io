@@ -54,7 +54,8 @@ public class ScoringService {
     @Transactional
     public void recompute(UUID tutorId, List<TutorSubject> preloadedSubjects) {
         userRepository.findById(tutorId).ifPresent(tutor -> {
-            if (tutor.getRole() != Role.TUTOR) return;
+            if (tutor.getRole() != Role.TUTOR)
+                return;
             double score = computeScore(tutor, preloadedSubjects);
             BigDecimal newScore = BigDecimal.valueOf(score).setScale(2, RoundingMode.HALF_UP);
             if (tutor.getPopularityScore() == null || newScore.compareTo(tutor.getPopularityScore()) != 0) {
@@ -75,18 +76,13 @@ public class ScoringService {
                 .stream()
                 .collect(java.util.stream.Collectors.groupingBy(
                         ts -> ts.getTutor().getId(),
-                        java.util.stream.Collectors.toList()
-                ));
+                        java.util.stream.Collectors.toList()));
 
         for (User tutor : tutors) {
             var subjects = subjectsByTutor.getOrDefault(tutor.getId(), List.of());
             recompute(tutor.getId(), subjects);
         }
         log.info("Completed periodic score recomputation for {} tutors", tutors.size());
-    }
-
-    private double computeScore(User tutor) {
-        return computeScore(tutor, null);
     }
 
     private double computeScore(User tutor, List<TutorSubject> preloadedSubjects) {
@@ -116,7 +112,8 @@ public class ScoringService {
 
     private double computeRatingScore(UUID tutorId) {
         var reviews = reviewRepository.findByTutorIdOrderByCreatedAtDesc(tutorId);
-        if (reviews.isEmpty()) return 0;
+        if (reviews.isEmpty())
+            return 0;
 
         double avg = reviews.stream().mapToInt(r -> r.getRating()).average().orElse(0);
         int count = reviews.size();
@@ -134,7 +131,8 @@ public class ScoringService {
 
     private double computeCompletionScore(UUID tutorId) {
         long resolved = lessonRepository.countResolvedByTutorId(tutorId);
-        if (resolved == 0) return 0;
+        if (resolved == 0)
+            return 0;
 
         long completed = lessonRepository.countCompletedByTutorId(tutorId);
         double rate = (double) completed / resolved;
@@ -150,37 +148,43 @@ public class ScoringService {
         return rate * 12;
     }
 
-    private double computeProfileScore(User tutor) {
-        return computeProfileScore(tutor, null);
-    }
-
     private double computeProfileScore(User tutor, List<TutorSubject> preloadedSubjects) {
         int score = 0;
 
-        if (tutor.getAvatarUrl() != null && !tutor.getAvatarUrl().isBlank()) score += 15;
+        if (tutor.getAvatarUrl() != null && !tutor.getAvatarUrl().isBlank())
+            score += 15;
 
         if (tutor.getBio() != null && !tutor.getBio().isBlank()) {
             int len = tutor.getBio().length();
-            if (len >= 200) score += 20;
-            else if (len >= 100) score += 14;
-            else score += 8;
+            if (len >= 200)
+                score += 20;
+            else if (len >= 100)
+                score += 14;
+            else
+                score += 8;
         }
 
-        if (tutor.getEducation() != null && !tutor.getEducation().isBlank()) score += 12;
+        if (tutor.getEducation() != null && !tutor.getEducation().isBlank())
+            score += 12;
 
-        if (tutor.getHourlyRate() != null && tutor.getHourlyRate().compareTo(BigDecimal.ZERO) > 0) score += 8;
+        if (tutor.getHourlyRate() != null && tutor.getHourlyRate().compareTo(BigDecimal.ZERO) > 0)
+            score += 8;
 
         List<TutorSubject> subjects = preloadedSubjects != null
                 ? preloadedSubjects
                 : tutorSubjectRepository.findByTutorId(tutor.getId());
         if (!subjects.isEmpty()) {
             int count = subjects.size();
-            if (count >= 3) score += 20;
-            else if (count == 2) score += 14;
-            else score += 8;
+            if (count >= 3)
+                score += 20;
+            else if (count == 2)
+                score += 14;
+            else
+                score += 8;
         }
 
-        if (tutor.getExperienceYears() != null && tutor.getExperienceYears() > 0) score += 10;
+        if (tutor.getExperienceYears() != null && tutor.getExperienceYears() > 0)
+            score += 10;
 
         score = Math.min(score, 100);
         if (tutor.getProfileCompletionScore() == null || tutor.getProfileCompletionScore() != score) {
@@ -191,37 +195,49 @@ public class ScoringService {
     }
 
     private double computeExperienceScore(User tutor) {
-        if (tutor.getExperienceYears() == null || tutor.getExperienceYears() <= 0) return 0;
+        if (tutor.getExperienceYears() == null || tutor.getExperienceYears() <= 0)
+            return 0;
         double normalized = Math.min(tutor.getExperienceYears() / 20.0, 1.0);
         return normalized * 8;
     }
 
     private double computeRecencyScore(UUID tutorId, User tutor) {
-        if (tutor.isOnline()) return 8;
+        if (tutor.isOnline())
+            return 8;
 
         LocalDateTime lastActive = tutor.getLastActiveAt();
         if (lastActive != null) {
             long daysSince = ChronoUnit.DAYS.between(lastActive.toLocalDate(), LocalDate.now());
-            if (daysSince <= 1) return 8;
-            if (daysSince <= 7) return 6;
-            if (daysSince <= 30) return 4;
-            if (daysSince <= 90) return 2;
+            if (daysSince <= 1)
+                return 8;
+            if (daysSince <= 7)
+                return 6;
+            if (daysSince <= 30)
+                return 4;
+            if (daysSince <= 90)
+                return 2;
         }
 
         LocalDate lastLesson = lessonRepository.findLastLessonDateByTutorId(tutorId);
-        if (lastLesson == null) return 1;
+        if (lastLesson == null)
+            return 1;
 
         long monthsSince = ChronoUnit.MONTHS.between(lastLesson, LocalDate.now());
-        if (monthsSince <= 1) return 8;
-        if (monthsSince <= 3) return 5;
-        if (monthsSince <= 6) return 3;
-        if (monthsSince <= 12) return 1;
+        if (monthsSince <= 1)
+            return 8;
+        if (monthsSince <= 3)
+            return 5;
+        if (monthsSince <= 6)
+            return 3;
+        if (monthsSince <= 12)
+            return 1;
         return 0;
     }
 
     private double computeNewTutorBoost(User tutor) {
         long daysSinceCreation = ChronoUnit.DAYS.between(tutor.getCreatedAt(), LocalDateTime.now());
-        if (daysSinceCreation > NEW_TUTOR_BOOST_DAYS) return 0;
+        if (daysSinceCreation > NEW_TUTOR_BOOST_DAYS)
+            return 0;
         double boost = (1.0 - daysSinceCreation / NEW_TUTOR_BOOST_DAYS) * 5;
         return Math.max(boost, 0);
     }
@@ -230,30 +246,38 @@ public class ScoringService {
         long approvedCount = tutorReferenceRepository
                 .findByTutorIdAndStatusOrderByCreatedAtDesc(tutorId, VerificationStatus.APPROVED)
                 .size();
-        if (approvedCount == 0) return 0;
-        if (approvedCount >= 3) return 5;
-        if (approvedCount == 2) return 4;
+        if (approvedCount == 0)
+            return 0;
+        if (approvedCount >= 3)
+            return 5;
+        if (approvedCount == 2)
+            return 4;
         return 2;
     }
 
     private double computeFavoriteScore(UUID tutorId) {
         long count = favoriteTutorRepository.countByTutorId(tutorId);
-        if (count == 0) return 0;
+        if (count == 0)
+            return 0;
         return Math.min(Math.log10(count + 1) / Math.log10(101), 1.0) * 5;
     }
 
     private double computeFlexibilityScore(UUID tutorId) {
         var listings = tutorListingRepository.findByTutorId(tutorId);
-        if (listings.isEmpty()) return 0;
+        if (listings.isEmpty())
+            return 0;
 
         boolean online = listings.stream().anyMatch(l -> l.isAllowsOnline());
         boolean tutorHome = listings.stream().anyMatch(l -> l.isAllowsTutorHome());
         boolean studentHome = listings.stream().anyMatch(l -> l.isAllowsStudentHome());
 
         int modes = 0;
-        if (online) modes++;
-        if (tutorHome) modes++;
-        if (studentHome) modes++;
+        if (online)
+            modes++;
+        if (tutorHome)
+            modes++;
+        if (studentHome)
+            modes++;
 
         return (modes / 3.0) * 6;
     }
@@ -261,7 +285,8 @@ public class ScoringService {
     private double computeListingScore(UUID tutorId) {
         var activeListings = tutorListingRepository
                 .findByTutorIdAndStatusOrderByCreatedAtDesc(tutorId, "ACTIVE");
-        if (activeListings.isEmpty()) return 0;
+        if (activeListings.isEmpty())
+            return 0;
 
         boolean anyRichDescription = activeListings.stream()
                 .anyMatch(l -> l.getAboutTutor() != null && l.getAboutTutor().length() >= 150);
@@ -272,15 +297,18 @@ public class ScoringService {
                 .max().orElse(0);
 
         double score = 2.5;
-        if (anyRichDescription) score += 1.5;
-        if (languageCount >= 2) score += 1;
+        if (anyRichDescription)
+            score += 1.5;
+        if (languageCount >= 2)
+            score += 1;
 
         return Math.min(score, 5);
     }
 
     private double computeSubscriptionMultiplier(UUID tutorId) {
         var sub = subscriptionRepository.findByTutorIdAndIsActiveTrue(tutorId);
-        if (sub.isEmpty()) return 1.0;
+        if (sub.isEmpty())
+            return 1.0;
         return switch (sub.get().getPlanType()) {
             case VIP -> 1.2;
             case PREMIUM -> 1.1;

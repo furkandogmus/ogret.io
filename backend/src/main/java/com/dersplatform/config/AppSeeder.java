@@ -1,6 +1,6 @@
 package com.dersplatform.config;
 
-import com.dersplatform.model.entity.User;
+
 import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.UserRepository;
 import com.dersplatform.service.TutorService;
