@@ -77,6 +77,8 @@
     "@eslint/js": "^9.0.0",
     "@playwright/test": "^1.49.1",
     "@tailwindcss/vite": "4.1.12",
+    "@types/react": "18.3.1",
+    "@types/react-dom": "18.3.1",
     "@vitejs/plugin-react": "4.7.0",
     "eslint": "^9.0.0",
     "eslint-plugin-react-hooks": "^5.0.0",
@@ -99,7 +101,10 @@
     }
   },
   "packageManager": "pnpm@11.9.0",
-  "onlyBuiltDependencies": ["@tailwindcss/oxide", "esbuild"],
+  "onlyBuiltDependencies": [
+    "@tailwindcss/oxide",
+    "esbuild"
+  ],
   "overrides": {
     "vite": "6.3.5"
   }
