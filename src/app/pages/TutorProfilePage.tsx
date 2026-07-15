@@ -142,7 +142,7 @@ export function TutorProfilePage() {
 
           {/* Header Card */}
           <div className="bg-white border border-stone-100 rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-6">
-            <Avatar src={tutor.avatarUrl} alt={tutor.fullName} className="w-32 h-32 rounded-2xl border-2 border-stone-100 shadow-sm flex-shrink-0" online={tutor.online} />
+            <Avatar src={tutor.avatarUrl} alt={tutor.fullName} className="w-40 h-40 rounded-[28px] border-2 border-stone-100 shadow-sm flex-shrink-0" online={tutor.online} />
             <div className="flex-1 text-center sm:text-left space-y-3 min-w-0">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <h1 className="text-3xl font-black text-stone-900 tracking-tight leading-none">{tutor.fullName}</h1>
