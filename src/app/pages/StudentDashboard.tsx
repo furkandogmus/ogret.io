@@ -107,7 +107,7 @@ export function StudentDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 flex gap-6">
-      
+
       {/* Sidebar Navigation */}
       <aside className="w-56 flex-shrink-0 hidden md:block">
         <div className="card-elevated p-3 sticky top-24">
@@ -120,17 +120,16 @@ export function StudentDashboard() {
               <p className="text-xs text-muted-foreground">Öğrenci</p>
             </div>
           </div>
-          
+
           <div className="space-y-0.5">
             {SIDEBAR_ITEMS.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 onClick={() => handleSectionChange(id)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                  activeSection === id
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${activeSection === id
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 {label}
@@ -152,7 +151,7 @@ export function StudentDashboard() {
 
       {/* Main Content Area */}
       <div className="flex-1 space-y-6 min-w-0">
-        
+
         {/* Dynamic Headers */}
         {activeSection === "lessons" && (
           <div>

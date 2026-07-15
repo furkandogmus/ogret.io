@@ -104,8 +104,5 @@
   "onlyBuiltDependencies": [
     "@tailwindcss/oxide",
     "esbuild"
-  ],
-  "overrides": {
-    "vite": "6.3.5"
-  }
+  ]
 }
