@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -21,10 +22,10 @@ public class S3Config {
     @Value("${aws.s3.endpoint}")
     private String endpoint;
 
-    @Value("${aws.s3.access-key}")
+    @Value("${aws.s3.access-key:}")
     private String accessKey;
 
-    @Value("${aws.s3.secret-key}")
+    @Value("${aws.s3.secret-key:}")
     private String secretKey;
 
     @Value("${aws.s3.region}")
@@ -39,14 +40,24 @@ public class S3Config {
     @Bean
     @ConditionalOnProperty(name = "aws.s3.endpoint")
     public S3Client s3Client() {
-        S3Client s3Client = S3Client.builder()
-                .endpointOverride(URI.create(endpoint))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKey, secretKey)
-                ))
-                .region(Region.of(region))
-                .forcePathStyle(true) // Required for MinIO / LocalStack path-style URLs
-                .build();
+        var builder = S3Client.builder()
+                .region(Region.of(region));
+
+        if (hasStaticCredentials()) {
+            builder = builder
+                    .endpointOverride(URI.create(endpoint))
+                    .credentialsProvider(StaticCredentialsProvider.create(
+                            AwsBasicCredentials.create(accessKey, secretKey)
+                    ))
+                    .forcePathStyle(true);
+            log.info("S3 configured with static credentials (MinIO/S3-compatible)");
+        } else {
+            builder = builder
+                    .credentialsProvider(DefaultCredentialsProvider.create());
+            log.info("S3 configured with default credential chain (IRSA/IAM role)");
+        }
+
+        S3Client s3Client = builder.build();
 
         initializeBuckets(s3Client);
 
@@ -55,13 +66,26 @@ public class S3Config {
 
     @Bean
     public S3Presigner s3Presigner() {
-        return S3Presigner.builder()
-                .endpointOverride(URI.create(endpoint))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKey, secretKey)
-                ))
-                .region(Region.of(region))
-                .build();
+        var builder = S3Presigner.builder()
+                .region(Region.of(region));
+
+        if (hasStaticCredentials()) {
+            builder = builder
+                    .endpointOverride(URI.create(endpoint))
+                    .credentialsProvider(StaticCredentialsProvider.create(
+                            AwsBasicCredentials.create(accessKey, secretKey)
+                    ));
+        } else {
+            builder = builder
+                    .credentialsProvider(DefaultCredentialsProvider.create());
+        }
+
+        return builder.build();
+    }
+
+    private boolean hasStaticCredentials() {
+        return accessKey != null && !accessKey.isBlank()
+                && secretKey != null && !secretKey.isBlank();
     }
 
     private void initializeBuckets(S3Client s3Client) {

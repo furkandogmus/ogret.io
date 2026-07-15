@@ -1,0 +1,38 @@
+# Production values for EKS (AWS managed infra)
+global:
+  namespace: dersplatform
+
+backend:
+  replicas: 3
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 1Gi
+
+frontend:
+  replicas: 3
+
+database:
+  internal: false
+
+redis:
+  internal: false
+
+s3:
+  internal: false
+
+ingress:
+  type: alb
+  alb:
+    certificateArn: arn:aws:acm:eu-north-1:269174115166:certificate/PLACEHOLDER
+  hosts:
+    - ogret.io
+    - www.ogret.io
+
+serviceType: ClusterIP
+
+secrets:
+  externalSecret: true

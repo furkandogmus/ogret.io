@@ -1,0 +1,123 @@
+# Global settings
+global:
+  namespace: dersplatform
+
+# Backend configuration
+backend:
+  image:
+    repository: 269174115166.dkr.ecr.eu-north-1.amazonaws.com/ogret.io/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 2
+  port: 8080
+  resources:
+    requests:
+      cpu: 300m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 768Mi
+  env:
+    SPRING_PROFILES_ACTIVE: prod
+    CORS_ORIGINS: https://ogret.io,https://www.ogret.io
+  probes:
+    startup:
+      path: /actuator/health/liveness
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      failureThreshold: 40
+    readiness:
+      path: /actuator/health/readiness
+      initialDelaySeconds: 0
+      periodSeconds: 5
+      failureThreshold: 3
+    liveness:
+      path: /actuator/health/liveness
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      failureThreshold: 3
+
+# Frontend configuration
+frontend:
+  image:
+    repository: 269174115166.dkr.ecr.eu-north-1.amazonaws.com/ogret.io/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 2
+  port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  probes:
+    readiness:
+      path: /
+      initialDelaySeconds: 3
+      periodSeconds: 5
+    liveness:
+      path: /
+      initialDelaySeconds: 10
+      periodSeconds: 10
+
+# Database (self-hosted PostgreSQL or RDS)
+database:
+  # Set to true for self-hosted PostgreSQL in-cluster
+  internal: true
+  image: postgres:15-alpine
+  storage: 500Mi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Redis (self-hosted or ElastiCache)
+redis:
+  internal: true
+  image: redis:7-alpine
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+# S3/MinIO
+s3:
+  # Set to true for self-hosted MinIO in-cluster
+  internal: true
+  image: minio/minio:latest
+  storage: 2Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Ingress
+ingress:
+  # "nginx" for NGINX Ingress Controller, "alb" for AWS ALB
+  type: nginx
+  # Only used when type is "alb"
+  alb:
+    certificateArn: ""
+    scheme: internet-facing
+  hosts:
+    - ogret.io
+    - www.ogret.io
+
+# Service type (ClusterIP for production, NodePort for local dev)
+serviceType: ClusterIP
+
+# Secrets - use ExternalSecret when not using internal infra
+secrets:
+  # Use ExternalSecret operator (requires installation)
+  externalSecret: false
