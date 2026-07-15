@@ -106,11 +106,16 @@ export function TutorCard({
       {/* Card Body */}
       <div className="flex-1 p-4 flex flex-col justify-between">
         <div>
-          {/* Review & Rating */}
           <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-            <span className="text-amber-500 text-base">★</span>
-            <span>{rating > 0 ? rating.toFixed(1) : "5.0"}</span>
-            <span className="text-xs text-muted-foreground font-normal">({reviewCount > 0 ? reviewCount : "0"} yorum)</span>
+            {reviewCount > 0 ? (
+              <>
+                <span className="text-amber-500 text-base">★</span>
+                <span>{rating.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground font-normal">({reviewCount} yorum)</span>
+              </>
+            ) : (
+              <span className="text-xs text-muted-foreground font-normal">Yeni Üye</span>
+            )}
           </div>
 
           {/* Subjects and Tags */}

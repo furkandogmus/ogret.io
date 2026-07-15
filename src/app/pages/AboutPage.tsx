@@ -3,12 +3,7 @@ import { BookOpen, GraduationCap, Users, Star, Shield, Zap } from "lucide-react"
 import { useSeo } from "../hooks/useSeo";
 import { JsonLd } from "../components/shared/JsonLd";
 
-const stats = [
-  { icon: GraduationCap, value: "500+", label: "Uzman Öğretmen" },
-  { icon: Users, value: "10.000+", label: "Mutlu Öğrenci" },
-  { icon: Star, value: "4.8/5", label: "Ortalama Puan" },
-  { icon: Shield, value: "%100", label: "Güvenli Ödeme" },
-];
+import { APP_CONFIG } from "../config/constants";
 
 const values = [
   {
@@ -55,7 +50,7 @@ export function AboutPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-        {stats.map((s) => (
+        {APP_CONFIG.STATS.map((s) => (
           <div key={s.label} className="bg-white border border-stone-100 rounded-2xl p-5 text-center shadow-sm">
             <s.icon className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
             <p className="text-2xl font-black text-stone-900">{s.value}</p>

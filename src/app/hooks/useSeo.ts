@@ -15,6 +15,7 @@ interface SeoProps {
 
 const BASE_TITLE = "öğret.io";
 const BASE_DESCRIPTION = "Türkiye'nin en iyi online özel ders platformu. Alanında uzman öğretmenlerle online olarak buluşun.";
+const BASE_URL = import.meta.env.VITE_APP_BASE_URL || (typeof window !== "undefined" ? window.location.origin : "https://ogret.io");
 
 function setMeta(name: string, content: string) {
   let el = document.querySelector(`meta[name="${name}"], meta[property="${name}"]`);
@@ -43,7 +44,7 @@ export function useSeo(props: SeoProps) {
     setMeta("description", props.description || BASE_DESCRIPTION);
     setMeta("og:title", props.ogTitle || fullTitle);
     setMeta("og:description", props.ogDescription || props.description || BASE_DESCRIPTION);
-    setMeta("og:image", props.ogImage || "https://ogret.io/og-image.svg");
+    setMeta("og:image", (props.ogImage || "https://ogret.io/og-image.svg").replace("https://ogret.io", BASE_URL));
     setMeta("og:image:width", "1200");
     setMeta("og:image:height", "630");
     setMeta("og:type", props.article ? "article" : "website");
@@ -69,7 +70,7 @@ export function useSeo(props: SeoProps) {
         link.setAttribute("rel", "canonical");
         document.head.appendChild(link);
       }
-      link.setAttribute("href", props.canonical);
+      link.setAttribute("href", props.canonical.replace("https://ogret.io", BASE_URL));
     }
 
     if (props.rss) {

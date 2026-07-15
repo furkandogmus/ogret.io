@@ -1,5 +1,6 @@
 import { useSeo } from "../hooks/useSeo";
 import { JsonLd } from "../components/shared/JsonLd";
+import { APP_CONFIG } from "../config/constants";
 
 export function ContactPage() {
   useSeo({
@@ -20,7 +21,7 @@ export function ContactPage() {
       <div className="bg-white border border-stone-100 rounded-2xl p-6 shadow-sm space-y-6">
         <div>
           <h2 className="font-bold text-stone-900 mb-1">E-posta</h2>
-          <a href="mailto:info@ogret.io" className="text-emerald-600 hover:underline text-sm">info@ogret.io</a>
+          <a href={`mailto:${APP_CONFIG.SUPPORT_EMAIL}`} className="text-emerald-600 hover:underline text-sm">{APP_CONFIG.SUPPORT_EMAIL}</a>
         </div>
         <div>
           <h2 className="font-bold text-stone-900 mb-1">Adres</h2>
@@ -35,7 +36,7 @@ export function ContactPage() {
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "ContactPoint",
-        email: "info@ogret.io",
+        email: APP_CONFIG.SUPPORT_EMAIL,
         contactType: "customer service",
         availableLanguage: ["Turkish"],
         areaServed: "TR",

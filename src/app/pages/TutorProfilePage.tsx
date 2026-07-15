@@ -158,7 +158,7 @@ export function TutorProfilePage() {
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs font-bold text-stone-600">
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  <span>{tutor.ratingAvg ? tutor.ratingAvg.toFixed(1) : "5.0"} ({reviews.length} yorum)</span>
+                  <span>{reviews.length > 0 ? `${(tutor.ratingAvg || 5.0).toFixed(1)} (${reviews.length} yorum)` : "Yeni Üye"}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Award className="w-4 h-4 text-rose-500" />
