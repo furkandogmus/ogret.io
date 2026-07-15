@@ -74,7 +74,7 @@ spec:
               value: "http://minio:9000"
 
             - name: AWS_S3_PUBLIC_URL
-              value: "http://192.168.194.145"
+              value: "http://192.168.194.180"
 
           startupProbe:
             httpGet:
