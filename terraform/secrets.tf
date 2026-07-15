@@ -33,6 +33,10 @@ resource "aws_secretsmanager_secret" "aws" {
 }
 
 resource "aws_secretsmanager_secret_version" "aws" {
-  secret_id     = aws_secretsmanager_secret.aws.id
-  secret_string = jsonencode({ region = var.region })
+  secret_id = aws_secretsmanager_secret.aws.id
+  secret_string = jsonencode({
+    region         = var.region
+    public_bucket  = aws_s3_bucket.public.id
+    private_bucket = aws_s3_bucket.private.id
+  })
 }
