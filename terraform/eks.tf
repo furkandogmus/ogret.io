@@ -11,9 +11,10 @@ module "eks" {
   subnet_ids = aws_subnet.private[*].id
 
   cluster_addons = {
-    vpc-cni    = { most_recent = true }
-    coredns    = { most_recent = true }
-    kube-proxy = { most_recent = true }
+    vpc-cni                = { most_recent = true }
+    coredns                = { most_recent = true }
+    kube-proxy             = { most_recent = true }
+    eks-pod-identity-agent = { most_recent = true }
   }
 
   eks_managed_node_groups = {

@@ -52,6 +52,36 @@ variable "ses_domain" {
   default     = "ogret.io"
 }
 
+variable "gitops_repository_url" {
+  description = "SSH URL of the private GitOps repository Argo CD must synchronize"
+  type        = string
+  default     = "git@github.com:furkandogmus/ogret.io-gitops.git"
+}
+
+variable "gitops_repository_ssh_private_key" {
+  description = "Read-only GitHub deploy key for the GitOps repository. Supply with TF_VAR_gitops_repository_ssh_private_key."
+  type        = string
+  sensitive   = true
+}
+
+variable "argocd_chart_version" {
+  description = "Pinned Argo CD Helm chart version"
+  type        = string
+  default     = "7.8.26"
+}
+
+variable "external_secrets_chart_version" {
+  description = "Pinned External Secrets Helm chart version"
+  type        = string
+  default     = "0.16.2"
+}
+
+variable "aws_load_balancer_controller_chart_version" {
+  description = "Pinned AWS Load Balancer Controller Helm chart version"
+  type        = string
+  default     = "1.14.0"
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)
