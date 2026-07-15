@@ -3,8 +3,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Check, Zap, Crown, Star } from "lucide-react";
 import { useAuth } from "../providers/AuthProvider";
-import { subscriptionApi } from "../api/services";
-import type { SubscriptionResponse } from "../api/services";
+import { subscriptionApi, type SubscriptionResponse } from "../api/services";
 import { useSeo } from "../hooks/useSeo";
 
 interface Plan {

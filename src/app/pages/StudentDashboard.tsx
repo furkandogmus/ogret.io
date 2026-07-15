@@ -5,8 +5,7 @@ import {
   Calendar, Clock, Video, Star, CheckCircle, Check, ArrowRight
 } from "lucide-react";
 import { useAuth } from "../providers/AuthProvider";
-import { lessonApi, favoriteApi, reviewApi } from "../api/services";
-import type { LessonResponse, UserResponse } from "../api/services";
+import { lessonApi, favoriteApi, reviewApi, type LessonResponse, type UserResponse } from "../api/services";
 import { Avatar } from "../components/shared/Avatar";
 
 const SIDEBAR_ITEMS = [

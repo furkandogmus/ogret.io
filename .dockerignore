@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.gitignore
+.github
+.agents
+tests
+playwright-report
+test-results
+backend/build
+backend/.gradle
+.idea
+*.log

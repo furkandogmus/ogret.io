@@ -4,8 +4,7 @@ import { toast } from "sonner";
 import {
   Search, SlidersHorizontal, X, ChevronLeft, ChevronRight,
 } from "lucide-react";
-import { subjectApi, listingApi } from "../api/services";
-import type { SubjectResponse, ListingResponse, Page } from "../api/services";
+import { subjectApi, listingApi, type SubjectResponse, type ListingResponse, type Page } from "../api/services";
 import { TutorCard } from "../components/shared/TutorCard";
 import { useSeo } from "../hooks/useSeo";
 

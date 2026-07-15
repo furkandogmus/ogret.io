@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { X, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import { useAuth } from "../../providers/AuthProvider";
-import { lessonApi, subjectApi } from "../../api/services";
-import type { UserResponse, SubjectResponse } from "../../api/services";
+import { lessonApi, subjectApi, type UserResponse, type SubjectResponse } from "../../api/services";
 
 interface LessonRequestModalProps {
   tutor: UserResponse;

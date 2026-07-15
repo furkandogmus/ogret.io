@@ -35,7 +35,7 @@ spec:
       containers:
         - name: frontend
           image: 269174115166.dkr.ecr.eu-north-1.amazonaws.com/ogret.io/frontend:latest
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
 
           ports:
             - name: http

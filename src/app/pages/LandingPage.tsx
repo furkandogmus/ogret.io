@@ -6,8 +6,7 @@ import {
   Search, ArrowRight, Star, BookOpen, Calculator, Globe, Code2, Music, Zap,
   Dna, Beaker, Map, Hourglass, Camera, Palette, Mic
 } from "lucide-react";
-import { tutorApi, subjectApi } from "../api/services";
-import type { TutorSummaryResponse, SubjectResponse } from "../api/services";
+import { tutorApi, subjectApi, type TutorSummaryResponse, type SubjectResponse } from "../api/services";
 import { TutorCard } from "../components/shared/TutorCard";
 import { HeroIllustration } from "../components/shared/HeroIllustration";
 

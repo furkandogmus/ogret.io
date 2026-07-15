@@ -4,8 +4,7 @@ import {
   ChevronLeft, CheckCircle, Shield, Star, GraduationCap, Award, Check,
   Clock, MapPin, MessageSquare, BookOpen, Calendar, ChevronRight
 } from "lucide-react";
-import { tutorApi, reviewApi, referenceApi, listingApi } from "../api/services";
-import type { UserResponse, ReviewResponse, ReferenceResponse, ListingResponse } from "../api/services";
+import { tutorApi, reviewApi, referenceApi, listingApi, type UserResponse, type ReviewResponse, type ReferenceResponse, type ListingResponse } from "../api/services";
 import { StarRating } from "../components/shared/StarRating";
 import { Avatar } from "../components/shared/Avatar";
 import { JsonLd } from "../components/shared/JsonLd";

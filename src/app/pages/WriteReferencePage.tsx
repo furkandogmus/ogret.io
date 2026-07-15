@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { BookOpen, User, Mail, Award, MessageSquare, CheckCircle, ChevronLeft } from "lucide-react";
-import { tutorApi, referenceApi } from "../api/services";
-import type { UserResponse } from "../api/services";
+import { tutorApi, referenceApi, type UserResponse } from "../api/services";
 import { Avatar } from "../components/shared/Avatar";
 
 export function WriteReferencePage() {

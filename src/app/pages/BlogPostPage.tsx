@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { ArrowLeft, Calendar, Clock, Eye, Tag, Share2 } from "lucide-react";
 import { toast } from "sonner";
-import { blogApi } from "../api/services";
-import type { BlogPostResponse, BlogCategoryResponse, BlogPostResponse as TBlogPostResponse } from "../api/services";
+import { blogApi, type BlogPostResponse, type BlogCategoryResponse, type BlogPostResponse as TBlogPostResponse } from "../api/services";
 
 export function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();

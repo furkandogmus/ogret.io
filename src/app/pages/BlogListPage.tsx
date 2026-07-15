@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Calendar, Clock, ArrowRight, Tag, TrendingUp } from "lucide-react";
-import { blogApi } from "../api/services";
-import type { BlogPostResponse, BlogCategoryResponse } from "../api/services";
+import { blogApi, type BlogPostResponse, type BlogCategoryResponse } from "../api/services";
 
 export function BlogListPage() {
   const [searchParams, setSearchParams] = useSearchParams();

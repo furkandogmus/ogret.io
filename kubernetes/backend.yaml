@@ -35,7 +35,7 @@ spec:
       containers:
         - name: backend
           image: 269174115166.dkr.ecr.eu-north-1.amazonaws.com/ogret.io/backend:latest
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
 
           ports:
             - name: http
@@ -74,7 +74,7 @@ spec:
               value: "http://minio:9000"
 
             - name: AWS_S3_PUBLIC_URL
-              value: "http://localhost:31605"
+              value: "http://192.168.194.145"
 
           startupProbe:
             httpGet:
@@ -82,7 +82,7 @@ spec:
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 5
-            failureThreshold: 30
+            failureThreshold: 40
 
           readinessProbe:
             httpGet:
@@ -102,8 +102,8 @@ spec:
 
           resources:
             requests:
-              cpu: 100m
+              cpu: 300m
               memory: 256Mi
             limits:
-              cpu: 750m
+              cpu: 1000m
               memory: 768Mi

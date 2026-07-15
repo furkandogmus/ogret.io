@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { BookOpen, User, MapPin, Globe, DollarSign, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
-import { subjectApi, listingApi } from "../api/services";
-import type { SubjectResponse } from "../api/services";
+import { subjectApi, listingApi, type SubjectResponse } from "../api/services";
 
 const LANGUAGES_LIST = [
   "Türkçe", "İngilizce", "Almanca", "Fransızca", "İspanyolca", "İtalyanca", "Rusça", "Arapça", "Farsça", "Çince"

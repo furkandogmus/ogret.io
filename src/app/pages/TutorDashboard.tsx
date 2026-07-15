@@ -2,17 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import {
   BookOpen, Users, DollarSign, Star, Home, Calendar, BarChart2, MessageSquare,
-  Settings, X, Check, Zap, LogOut, Link, Award, Copy, CheckSquare
+  Settings, X, Check, Zap, LogOut, Link, Award, Copy, CheckSquare, Shield
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { toast } from "sonner";
 import { useAuth } from "../providers/AuthProvider";
-import { lessonApi, referenceApi, listingApi } from "../api/services";
-import type { LessonResponse, ListingResponse } from "../api/services";
+import { lessonApi, referenceApi, listingApi, type LessonResponse, type ListingResponse } from "../api/services";
 import { Avatar } from "../components/shared/Avatar";
-import { Shield } from "lucide-react";
 
 const SIDEBAR_ITEMS = [
   { id: "dashboard", label: "Genel Bakış", icon: Home },

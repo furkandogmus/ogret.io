@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, ArrowLeft, MessageCircle, Send, UserPlus } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { useAuth } from "../providers/AuthProvider";
-import { messageApi, userApi } from "../api/services";
-import type { MessageResponse, UserResponse } from "../api/services";
+import { messageApi, userApi, type MessageResponse, type UserResponse } from "../api/services";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { Avatar } from "../components/shared/Avatar";
 
