@@ -12,10 +12,9 @@ import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.UserRepository;
 import com.dersplatform.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,13 +26,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
-    private final JavaMailSender mailSender;
+    private final EmailService emailService;
     private final StringRedisTemplate stringRedisTemplate;
 
     @Value("${app.base-url:http://localhost:5173}")
@@ -72,17 +72,16 @@ public class AuthService {
             String verifyToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(),
                     user.getRole().name());
             String verifyLink = baseUrl + "/email-dogrula?token=" + verifyToken;
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(user.getEmail());
-            message.setSubject("E-posta Doğrulama - öğret.io");
-            message.setText(
+            emailService.send(
+                    user.getEmail(),
+                    "E-posta Doğrulama - öğret.io",
                     "Merhaba " + user.getFullName() + ",\n\n"
                             + "E-posta adresinizi doğrulamak için aşağıdaki bağlantıya tıklayın:\n"
                             + verifyLink + "\n\n"
                             + "öğret.io");
-            mailSender.send(message);
         } catch (Exception e) {
             // Mail altyapısı yapılandırılmamış olabilir, kayıt devam etsin
+            log.warn("Verification email could not be sent to {}", user.getEmail(), e);
         }
 
         return buildAuthResponse(user);
@@ -178,18 +177,17 @@ public class AuthService {
         String resetLink = baseUrl + "/sifre-sifirla?token=" + resetToken;
 
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(user.getEmail());
-            message.setSubject("Şifre Sıfırlama - öğret.io");
-            message.setText(
+            emailService.send(
+                    user.getEmail(),
+                    "Şifre Sıfırlama - öğret.io",
                     "Merhaba " + user.getFullName() + ",\n\n"
                             + "Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n"
                             + resetLink + "\n\n"
                             + "Bu bağlantı 15 dakika süreyle geçerlidir.\n"
                             + "Eğer şifre sıfırlama talebinde bulunmadıysanız bu e-postayı dikkate almayın.\n\n"
                             + "öğret.io");
-            mailSender.send(message);
         } catch (Exception e) {
+            log.error("Password reset email could not be sent to {}", user.getEmail(), e);
             throw ApiException.internalServerError("Şifre sıfırlama e-postası gönderilemedi");
         }
     }

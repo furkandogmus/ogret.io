@@ -44,19 +44,8 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Europe/Istanbul
 
-  mail:
-    host: ${MAIL_HOST:}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-
 app:
+  base-url: ${APP_BASE_URL:http://localhost:5173}
   jwt:
     secret: ${JWT_SECRET:dersplatform-jwt-secret-key-must-be-at-least-256-bits-long}
     access-token-expiration: 900000    # 15 minutes
@@ -77,6 +66,9 @@ springdoc:
     path: /api/v1/swagger-ui.html
 
 aws:
+  ses:
+    region: ${AWS_REGION:eu-north-1}
+    from-email: ${MAIL_FROM_EMAIL:}
   s3:
     endpoint: ${AWS_S3_ENDPOINT:http://minio:9000}
     public-url: ${AWS_S3_PUBLIC_URL:http://localhost:9000}
