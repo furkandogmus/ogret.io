@@ -1,8 +1,0 @@
-# Root kustomization - defaults to dev overlay
-# Usage:
-#   kubectl kustomize kubernetes/overlays/dev  -- dev (self-hosted infra)
-#   kubectl kustomize kubernetes/overlays/prod -- prod (AWS managed infra)
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - overlays/dev
