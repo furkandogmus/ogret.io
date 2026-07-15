@@ -7,6 +7,10 @@
 
 Superprof alternatifi, **sadece online derslere** odaklanan, sıfır komisyonlu (SaaS abonelik) Türkiye pazarı özel ders platformu.
 
+## Transactional e-mail (Amazon SES)
+
+The backend sends account-verification and password-reset messages through Amazon SES v2. Terraform creates the SES domain identity and adds the minimal `ses:SendEmail` permission to the backend's EKS IRSA role. After `terraform apply`, publish the CNAME records reported by `terraform output ses_dkim_tokens`, then set `serviceAccount.roleArn` in the production Helm values to `terraform output -raw backend_irsa_role_arn`. SES starts in sandbox mode, so request production access before sending to unverified recipients.
+
 ---
 
 ## Özellikler

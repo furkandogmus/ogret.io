@@ -46,6 +46,12 @@ variable "node_group_desired_size" {
   default     = 2
 }
 
+variable "ses_domain" {
+  description = "Verified SES sending domain. Publish the DKIM DNS records shown after apply."
+  type        = string
+  default     = "ogret.io"
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)

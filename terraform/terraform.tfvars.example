@@ -8,3 +8,6 @@ node_instance_type = "t3.small"
 node_group_min_size = 2
 node_group_max_size = 6
 node_group_desired_size = 2
+
+# SES sends from this domain. After apply, add the output DKIM CNAME records to your DNS provider.
+ses_domain = "ogret.io"

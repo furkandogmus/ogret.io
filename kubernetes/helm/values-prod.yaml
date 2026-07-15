@@ -12,6 +12,11 @@ backend:
       cpu: 2000m
       memory: 1Gi
 
+serviceAccount:
+  create: true
+  # Set from `terraform output -raw backend_irsa_role_arn` during deployment.
+  roleArn: ""
+
 frontend:
   replicas: 3
 

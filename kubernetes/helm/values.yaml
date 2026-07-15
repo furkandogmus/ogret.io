@@ -37,6 +37,16 @@ backend:
       periodSeconds: 10
       failureThreshold: 3
 
+aws:
+  region: eu-north-1
+  ses:
+    fromEmail: no-reply@ogret.io
+
+serviceAccount:
+  # Set roleArn to Terraform's backend_irsa_role_arn for EKS deployments.
+  create: false
+  roleArn: ""
+
 # Frontend configuration
 frontend:
   image:

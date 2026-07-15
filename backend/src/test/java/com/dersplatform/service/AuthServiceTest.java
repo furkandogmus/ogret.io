@@ -13,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -31,7 +30,7 @@ class AuthServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private JwtTokenProvider jwtTokenProvider;
     @Mock private AuthenticationManager authenticationManager;
-    @Mock private JavaMailSender mailSender;
+    @Mock private EmailService emailService;
     @Mock private StringRedisTemplate stringRedisTemplate;
 
     private AuthService authService;
@@ -41,7 +40,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userRepository, new BCryptPasswordEncoder(), jwtTokenProvider, authenticationManager, mailSender, stringRedisTemplate);
+        authService = new AuthService(userRepository, new BCryptPasswordEncoder(), jwtTokenProvider, authenticationManager, emailService, stringRedisTemplate);
 
         registerRequest = new RegisterRequest();
         registerRequest.setEmail("test@example.com");

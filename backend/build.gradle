@@ -32,7 +32,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
 	// Database
 	runtimeOnly 'org.postgresql:postgresql'
@@ -58,6 +57,9 @@ dependencies {
 
 	// S3 Compatible Storage (MinIO / R2)
 	implementation 'software.amazon.awssdk:s3:2.25.15'
+
+	// Transactional email (Amazon SES v2, authenticated through the AWS default credential chain / IRSA)
+	implementation 'software.amazon.awssdk:sesv2:2.25.15'
 
 	// Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

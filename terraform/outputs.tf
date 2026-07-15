@@ -45,6 +45,16 @@ output "backend_irsa_role_arn" {
   value       = aws_iam_role.backend_irsa.arn
 }
 
+output "ses_email_identity_arn" {
+  description = "SES identity the backend is permitted to send from"
+  value       = aws_sesv2_email_identity.sender.arn
+}
+
+output "ses_dkim_tokens" {
+  description = "Publish these as CNAME records: <token>._domainkey.<ses_domain> -> <token>.dkim.amazonses.com"
+  value       = aws_sesv2_email_identity.sender.dkim_signing_attributes[0].tokens
+}
+
 output "node_security_group_id" {
   description = "EKS node security group ID"
   value       = module.eks.node_security_group_id

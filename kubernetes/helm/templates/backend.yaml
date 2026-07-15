@@ -32,7 +32,7 @@ spec:
       labels:
         app: backend
     spec:
-      {{- if and (not .Values.s3.internal) (not .Values.secrets.externalSecret) }}
+      {{- if .Values.serviceAccount.create }}
       serviceAccountName: backend
       {{- end }}
       containers:
@@ -46,7 +46,11 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: {{ .Values.backend.env.SPRING_PROFILES_ACTIVE }}
             - name: CORS_ORIGINS
-              value: {{ .Values.backend.env.CORS_ORIGINS }}
+              value: {{ .Values.backend.env.CORS_ORIGINS | quote }}
+            - name: AWS_REGION
+              value: {{ .Values.aws.region | quote }}
+            - name: MAIL_FROM_EMAIL
+              value: {{ .Values.aws.ses.fromEmail | quote }}
             {{- if .Values.database.internal }}
             - name: DB_URL
               value: jdbc:postgresql://postgres:5432/dersplatform
