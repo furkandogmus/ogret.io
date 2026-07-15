@@ -10,4 +10,6 @@ locals {
   db_name     = "dersplatform"
   db_username = "dersplatform"
   db_port     = 5432
+
+  secrets_manager_arn_prefix = "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}"
 }

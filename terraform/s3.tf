@@ -1,9 +1,9 @@
 resource "aws_s3_bucket" "public" {
-  bucket = "dersplatform-public"
+  bucket = "${var.cluster_name}-public"
 }
 
 resource "aws_s3_bucket" "private" {
-  bucket = "dersplatform-private"
+  bucket = "${var.cluster_name}-private"
 }
 
 resource "aws_s3_bucket_public_access_block" "public" {

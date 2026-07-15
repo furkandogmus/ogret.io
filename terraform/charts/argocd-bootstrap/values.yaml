@@ -1,0 +1,10 @@
+repository:
+  url: ""
+  sshPrivateKey: ""
+aws:
+  region: eu-north-1
+application:
+  name: ogret
+  path: apps/ogret
+  targetRevision: main
+  destinationNamespace: dersplatform

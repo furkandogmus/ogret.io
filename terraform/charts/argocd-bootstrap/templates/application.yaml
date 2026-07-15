@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.application.name }}
+spec:
+  project: default
+  source:
+    repoURL: {{ required "repository.url is required" .Values.repository.url | quote }}
+    targetRevision: {{ .Values.application.targetRevision | quote }}
+    path: {{ .Values.application.path | quote }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.application.destinationNamespace | quote }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -11,3 +11,7 @@ node_group_desired_size = 2
 
 # SES sends from this domain. After apply, add the output DKIM CNAME records to your DNS provider.
 ses_domain = "ogret.io"
+
+# Give Argo CD read-only access to the private GitOps repo. Do not commit the
+# real key; export it as TF_VAR_gitops_repository_ssh_private_key instead.
+gitops_repository_url = "git@github.com:furkandogmus/ogret.io-gitops.git"

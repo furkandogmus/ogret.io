@@ -46,7 +46,7 @@ resource "random_password" "db" {
 resource "aws_db_instance" "main" {
   identifier             = local.name_prefix
   engine                 = "postgres"
-  engine_version         = "15.8"
+  engine_version         = "15.13"
   instance_class         = var.db_instance_class
   db_name                = local.db_name
   username               = local.db_username
@@ -60,7 +60,7 @@ resource "aws_db_instance" "main" {
   storage_encrypted     = true
   storage_type          = "gp3"
 
-  backup_retention_period = 7
+  backup_retention_period = 0
   backup_window           = "03:00-04:00"
   maintenance_window      = "sun:04:00-sun:05:00"
 
@@ -68,6 +68,7 @@ resource "aws_db_instance" "main" {
   final_snapshot_identifier = "${local.name_prefix}-final-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
   auto_minor_version_upgrade = true
+  apply_immediately          = true
 
   tags = { Name = local.name_prefix }
 }

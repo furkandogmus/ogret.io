@@ -41,8 +41,18 @@ output "s3_private_bucket" {
 }
 
 output "backend_irsa_role_arn" {
-  description = "IAM role ARN for backend IRSA"
+  description = "IAM role ARN for the backend EKS Pod Identity association"
   value       = aws_iam_role.backend_irsa.arn
+}
+
+output "argocd_server_command" {
+  description = "Port-forward command for the Argo CD server after apply"
+  value       = "kubectl -n argocd port-forward svc/argocd-server 8081:80"
+}
+
+output "gitops_application" {
+  description = "Argo CD application created by Terraform"
+  value       = "ogret"
 }
 
 output "ses_email_identity_arn" {
