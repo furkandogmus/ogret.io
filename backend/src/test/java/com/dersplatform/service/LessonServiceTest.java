@@ -12,6 +12,7 @@ import com.dersplatform.repository.SubjectRepository;
 import com.dersplatform.repository.TutorAvailabilityRepository;
 import com.dersplatform.repository.TutorListingRepository;
 import com.dersplatform.repository.UserRepository;
+import com.dersplatform.repository.MessageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +30,6 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import java.math.BigDecimal;
 
 @ExtendWith(MockitoExtension.class)
 class LessonServiceTest {
@@ -40,6 +40,7 @@ class LessonServiceTest {
     @Mock private TutorListingRepository tutorListingRepository;
     @Mock private NotificationService notificationService;
     @Mock private TutorAvailabilityRepository tutorAvailabilityRepository;
+    @Mock private MessageRepository messageRepository;
     @Mock private ScoringService scoringService;
 
     private LessonService lessonService;
@@ -52,7 +53,7 @@ class LessonServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        lessonService = new LessonService(lessonRepository, userRepository, subjectRepository, tutorListingRepository, tutorAvailabilityRepository, notificationService, scoringService);
+        lessonService = new LessonService(lessonRepository, userRepository, subjectRepository, tutorListingRepository, tutorAvailabilityRepository, messageRepository, notificationService, scoringService);
 
         student = User.builder()
                 .id(UUID.randomUUID())

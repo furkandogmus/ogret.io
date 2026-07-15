@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.MockitoAnnotations;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,7 @@ class MessageServiceTest {
     @Mock private MessageRepository messageRepository;
     @Mock private UserRepository userRepository;
     @Mock private NotificationService notificationService;
+    @Mock private SimpMessagingTemplate messagingTemplate;
 
     private MessageService messageService;
     private User sender;
@@ -37,7 +39,7 @@ class MessageServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        messageService = new MessageService(messageRepository, userRepository, notificationService);
+        messageService = new MessageService(messageRepository, userRepository, notificationService, messagingTemplate);
 
         sender = User.builder().id(UUID.randomUUID()).fullName("Alice").build();
         receiver = User.builder().id(UUID.randomUUID()).fullName("Bob").build();

@@ -109,6 +109,8 @@ export function AdminDashboard() {
     );
   }
 
+  if (!stats) return null;
+
   const cards = [
     { label: "Toplam Kullanıcı", value: stats.totalUsers, icon: Users, color: "bg-emerald-500" },
     { label: "Öğretmen", value: stats.totalTutors, icon: Shield, color: "bg-green-500" },

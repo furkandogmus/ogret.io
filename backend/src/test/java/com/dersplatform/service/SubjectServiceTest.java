@@ -45,9 +45,4 @@ class SubjectServiceTest {
         assertEquals("Fizik", result.get(1).getName());
         verify(subjectRepository, times(1)).findByIsActiveTrueOrderByName();
     }
-
-    @Test
-    void evictCache_ShouldDoNothing() {
-        subjectService.evictCache();
-    }
 }
