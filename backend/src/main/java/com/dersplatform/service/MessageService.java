@@ -110,7 +110,7 @@ public class MessageService {
 
     public List<MessageResponse> getConversationPage(UUID userId1, UUID userId2, int page, int size) {
         Page<Message> msgPage = messageRepository.findConversationPage(userId1, userId2, PageRequest.of(page, size));
-        List<MessageResponse> result = msgPage.stream().map(MessageResponse::fromEntity).toList();
+        List<MessageResponse> result = new java.util.ArrayList<>(msgPage.stream().map(MessageResponse::fromEntity).toList());
         Collections.reverse(result);
         return result;
     }
