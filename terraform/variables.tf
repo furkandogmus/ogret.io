@@ -14,6 +14,7 @@ variable "db_password" {
   description = "RDS master password"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "db_instance_class" {
@@ -62,6 +63,7 @@ variable "gitops_repository_ssh_private_key" {
   description = "Read-only GitHub deploy key for the GitOps repository. Supply with TF_VAR_gitops_repository_ssh_private_key."
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "argocd_chart_version" {

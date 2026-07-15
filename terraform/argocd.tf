@@ -42,7 +42,10 @@ resource "helm_release" "external_secrets" {
   atomic           = true
   timeout          = 900
 
-  depends_on = [aws_eks_pod_identity_association.external_secrets]
+  depends_on = [
+    aws_eks_pod_identity_association.external_secrets,
+    helm_release.aws_load_balancer_controller
+  ]
 }
 
 resource "helm_release" "aws_load_balancer_controller" {
@@ -76,6 +79,31 @@ resource "helm_release" "aws_load_balancer_controller" {
   depends_on = [aws_eks_pod_identity_association.aws_load_balancer_controller]
 }
 
+resource "tls_private_key" "argocd" {
+  algorithm = "ED25519"
+}
+
+resource "terraform_data" "github_deploy_key" {
+  triggers_replace = [
+    tls_private_key.argocd.public_key_openssh
+  ]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      KEYS=$(GITHUB_TOKEN="" gh repo deploy-key list --repo ${var.gitops_repository_url})
+      KEY_ID=$(echo "$KEYS" | grep "${var.cluster_name} Argo CD" | awk '{print $1}')
+      if [ ! -z "$KEY_ID" ]; then
+        echo "Deleting old deploy key ID: $KEY_ID"
+        GITHUB_TOKEN="" gh repo deploy-key delete "$KEY_ID" --repo ${var.gitops_repository_url}
+      fi
+
+      echo "${tls_private_key.argocd.public_key_openssh}" > argocd_deploy_key.pub
+      GITHUB_TOKEN="" gh repo deploy-key add argocd_deploy_key.pub --repo ${var.gitops_repository_url} --title "${var.cluster_name} Argo CD"
+      rm argocd_deploy_key.pub
+    EOT
+  }
+}
+
 resource "helm_release" "argocd_bootstrap" {
   name      = "ogret-gitops"
   chart     = "${path.module}/charts/argocd-bootstrap"
@@ -96,12 +124,13 @@ resource "helm_release" "argocd_bootstrap" {
 
   set_sensitive = [{
     name  = "repository.sshPrivateKey"
-    value = var.gitops_repository_ssh_private_key
+    value = tls_private_key.argocd.private_key_openssh
   }]
 
   depends_on = [
     helm_release.argocd,
     helm_release.external_secrets,
-    helm_release.aws_load_balancer_controller
+    helm_release.aws_load_balancer_controller,
+    terraform_data.github_deploy_key
   ]
 }

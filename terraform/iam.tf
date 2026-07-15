@@ -1,5 +1,5 @@
 resource "aws_iam_policy" "s3_access" {
-  name        = "ogret-s3-access"
+  name        = "${var.cluster_name}-s3-access"
   description = "S3 access for ogret.io backend"
 
   policy = jsonencode({

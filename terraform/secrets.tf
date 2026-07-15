@@ -13,7 +13,7 @@ resource "aws_secretsmanager_secret_version" "database" {
   secret_string = jsonencode({
     password = var.db_password != "" ? var.db_password : random_password.db.result
     username = local.db_username
-    url      = "jdbc:postgresql://${aws_db_instance.main.address}:${aws_db_instance.main.port}/${local.db_name}"
+    url      = "jdbc:postgresql://${aws_db_instance.main.address != null ? aws_db_instance.main.address : "creating"}:${aws_db_instance.main.port != null ? aws_db_instance.main.port : 5432}/${local.db_name}"
   })
 }
 
