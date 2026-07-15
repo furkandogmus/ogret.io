@@ -13,7 +13,9 @@ import com.dersplatform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +36,8 @@ public class TutorListingService {
     private final SubjectRepository subjectRepository;
 
     private static final Pattern PHONE_PATTERN = Pattern.compile(".*[0-9]{7,}.*");
-    private static final Pattern EMAIL_PATTERN = Pattern.compile(".*[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}.*");
+    private static final Pattern EMAIL_PATTERN = Pattern
+            .compile(".*[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}.*");
 
     @Transactional
     public ListingResponse createListing(UUID tutorId, CreateListingRequest request) {
@@ -66,7 +69,8 @@ public class TutorListingService {
                 .allowsOnline(request.isAllowsOnline())
                 .maxTravelDistanceKm(request.getMaxTravelDistanceKm())
                 .experienceYears(request.getExperienceYears())
-                .languages(request.getLanguages() == null || request.getLanguages().isEmpty() ? List.of("Türkçe") : request.getLanguages())
+                .languages(request.getLanguages() == null || request.getLanguages().isEmpty() ? List.of("Türkçe")
+                        : request.getLanguages())
                 .status("ACTIVE")
                 .build();
 
@@ -139,32 +143,55 @@ public class TutorListingService {
     }
 
     public Page<ListingResponse> searchListings(UUID subjectId, BigDecimal minPrice, BigDecimal maxPrice,
-                                                BigDecimal minRating, Boolean online, String sort, String q,
-                                                Pageable pageable) {
+            BigDecimal minRating, Boolean online, String sort, String q,
+            Pageable pageable) {
         var locale = new java.util.Locale("tr", "TR");
 
+        Sort dbSort;
+        if (sort != null) {
+            if ("price_asc".equals(sort)) {
+                dbSort = Sort.by(Sort.Direction.ASC, "hourlyRate");
+            } else if ("price_desc".equals(sort)) {
+                dbSort = Sort.by(Sort.Direction.DESC, "hourlyRate");
+            } else if ("rating".equals(sort)) {
+                dbSort = Sort.by(Sort.Direction.DESC, "tutor.ratingAvg");
+            } else {
+                dbSort = Sort.by(Sort.Direction.DESC, "tutor.popularityScore");
+            }
+        } else {
+            dbSort = Sort.by(Sort.Direction.DESC, "tutor.popularityScore");
+        }
+
+        Pageable cleanPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                dbSort);
+
         if (minRating != null || (q != null && !q.isBlank())) {
-            List<TutorListing> all = tutorListingRepository.searchActiveListings(subjectId, minPrice, maxPrice, online, q);
+            List<TutorListing> all = tutorListingRepository.searchActiveListings(subjectId, minPrice, maxPrice, online,
+                    q);
 
             var filtered = all.stream()
                     .filter(l -> {
-                        if (minRating == null) return true;
+                        if (minRating == null)
+                            return true;
                         BigDecimal rating = l.getTutor().getRatingAvg();
                         return rating != null && rating.compareTo(minRating) >= 0;
                     })
                     .sorted(getComparator(sort))
                     .toList();
 
-            int start = (int) pageable.getOffset();
-            int end = Math.min(start + pageable.getPageSize(), filtered.size());
+            int start = (int) cleanPageable.getOffset();
+            int end = Math.min(start + cleanPageable.getPageSize(), filtered.size());
             List<ListingResponse> pageContent = start >= filtered.size()
                     ? List.of()
                     : filtered.subList(start, end).stream().map(ListingResponse::fromEntity).toList();
 
-            return new PageImpl<>(pageContent, pageable, filtered.size());
+            return new PageImpl<>(pageContent, cleanPageable, filtered.size());
         }
 
-        Page<TutorListing> paged = tutorListingRepository.searchActiveListingsPaged(subjectId, minPrice, maxPrice, online, q, pageable);
+        Page<TutorListing> paged = tutorListingRepository.searchActiveListingsPaged(subjectId, minPrice, maxPrice,
+                online, q, cleanPageable);
         return paged.map(ListingResponse::fromEntity);
     }
 
@@ -179,8 +206,10 @@ public class TutorListingService {
                 BigDecimal r2 = l2.getTutor().getRatingAvg() != null ? l2.getTutor().getRatingAvg() : BigDecimal.ZERO;
                 return r2.compareTo(r1);
             } else {
-                BigDecimal p1 = l1.getTutor().getPopularityScore() != null ? l1.getTutor().getPopularityScore() : BigDecimal.ZERO;
-                BigDecimal p2 = l2.getTutor().getPopularityScore() != null ? l2.getTutor().getPopularityScore() : BigDecimal.ZERO;
+                BigDecimal p1 = l1.getTutor().getPopularityScore() != null ? l1.getTutor().getPopularityScore()
+                        : BigDecimal.ZERO;
+                BigDecimal p2 = l2.getTutor().getPopularityScore() != null ? l2.getTutor().getPopularityScore()
+                        : BigDecimal.ZERO;
                 return p2.compareTo(p1);
             }
         };
@@ -194,11 +223,10 @@ public class TutorListingService {
     public List<Map<String, Object>> searchSubjectsByName(String query) {
         return subjectRepository.searchByName(query).stream()
                 .map(s -> Map.<String, Object>of(
-                    "id", s.getId().toString(),
-                    "name", s.getName(),
-                    "slug", s.getSlug(),
-                    "category", s.getCategory().name()
-                ))
+                        "id", s.getId().toString(),
+                        "name", s.getName(),
+                        "slug", s.getSlug(),
+                        "category", s.getCategory().name()))
                 .toList();
     }
 
@@ -208,7 +236,7 @@ public class TutorListingService {
         }
 
         if (PHONE_PATTERN.matcher(lessonDesc).matches() || PHONE_PATTERN.matcher(aboutTutor).matches() ||
-            EMAIL_PATTERN.matcher(lessonDesc).matches() || EMAIL_PATTERN.matcher(aboutTutor).matches()) {
+                EMAIL_PATTERN.matcher(lessonDesc).matches() || EMAIL_PATTERN.matcher(aboutTutor).matches()) {
             throw ApiException.badRequest("İletişim bilgisi veya web sitesi adresi eklenemez");
         }
     }
