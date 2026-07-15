@@ -36,6 +36,11 @@ public interface TutorListingRepository extends JpaRepository<TutorListing, UUID
         AND (:minPrice IS NULL OR l.hourlyRate >= :minPrice)
         AND (:maxPrice IS NULL OR l.hourlyRate <= :maxPrice)
         AND (:online IS NULL OR :online = FALSE OR l.allowsOnline = TRUE)
+        AND (:query IS NULL OR :query = '' OR
+             LOWER(l.title) LIKE LOWER(CONCAT('%', :query, '%')) OR
+             LOWER(l.lessonDescription) LIKE LOWER(CONCAT('%', :query, '%')) OR
+             LOWER(s.name) LIKE LOWER(CONCAT('%', :query, '%')) OR
+             LOWER(t.fullName) LIKE LOWER(CONCAT('%', :query, '%')))
         ORDER BY t.popularityScore DESC
         """)
     List<TutorListing> searchActiveListings(
@@ -53,6 +58,11 @@ public interface TutorListingRepository extends JpaRepository<TutorListing, UUID
         AND (:minPrice IS NULL OR l.hourlyRate >= :minPrice)
         AND (:maxPrice IS NULL OR l.hourlyRate <= :maxPrice)
         AND (:online IS NULL OR :online = FALSE OR l.allowsOnline = TRUE)
+        AND (:query IS NULL OR :query = '' OR
+             LOWER(l.title) LIKE LOWER(CONCAT('%', :query, '%')) OR
+             LOWER(l.lessonDescription) LIKE LOWER(CONCAT('%', :query, '%')) OR
+             LOWER(s.name) LIKE LOWER(CONCAT('%', :query, '%')) OR
+             LOWER(t.fullName) LIKE LOWER(CONCAT('%', :query, '%')))
         """)
     Page<TutorListing> searchActiveListingsPaged(
         @Param("subjectId") UUID subjectId,
