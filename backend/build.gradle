@@ -60,6 +60,7 @@ dependencies {
 
 	// Transactional email (Amazon SES v2, authenticated through the AWS default credential chain / IRSA)
 	implementation 'software.amazon.awssdk:sesv2:2.25.15'
+	implementation 'software.amazon.awssdk:sts:2.25.15'
 
 	// Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

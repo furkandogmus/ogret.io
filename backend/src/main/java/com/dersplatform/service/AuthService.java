@@ -12,6 +12,7 @@ import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.UserRepository;
 import com.dersplatform.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -79,6 +81,7 @@ public class AuthService {
                             + "öğret.io");
         } catch (Exception e) {
             // Mail altyapısı yapılandırılmamış olabilir, kayıt devam etsin
+            log.warn("Verification email could not be sent to {}", user.getEmail(), e);
         }
 
         return buildAuthResponse(user);
@@ -184,6 +187,7 @@ public class AuthService {
                             + "Eğer şifre sıfırlama talebinde bulunmadıysanız bu e-postayı dikkate almayın.\n\n"
                             + "öğret.io");
         } catch (Exception e) {
+            log.error("Password reset email could not be sent to {}", user.getEmail(), e);
             throw ApiException.internalServerError("Şifre sıfırlama e-postası gönderilemedi");
         }
     }
