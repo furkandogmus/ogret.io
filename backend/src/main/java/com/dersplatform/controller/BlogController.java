@@ -65,6 +65,7 @@ public class BlogController {
 
     @PostMapping("/admin/blog/posts")
     @PreAuthorize("hasRole('ADMIN')")
+    @SuppressWarnings("unchecked")
     public ResponseEntity<BlogPost> createPost(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody Map<String, Object> body) {
@@ -79,13 +80,13 @@ public class BlogController {
                 (String) body.get("metaTitle"),
                 (String) body.get("metaDescription"),
                 body.get("scheduledAt") != null ? LocalDateTime.parse((String) body.get("scheduledAt")) : null,
-                body.get("isFeatured") != null && (Boolean) body.get("isFeatured")
-        );
+                body.get("isFeatured") != null && (Boolean) body.get("isFeatured"));
         return ResponseEntity.ok(post);
     }
 
     @PutMapping("/admin/blog/posts/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @SuppressWarnings("unchecked")
     public ResponseEntity<BlogPost> updatePost(
             @PathVariable UUID id,
             @RequestBody Map<String, Object> body) {
@@ -99,8 +100,7 @@ public class BlogController {
                 (String) body.get("metaTitle"),
                 (String) body.get("metaDescription"),
                 body.get("scheduledAt") != null ? LocalDateTime.parse((String) body.get("scheduledAt")) : null,
-                body.get("isFeatured") != null && (Boolean) body.get("isFeatured")
-        );
+                body.get("isFeatured") != null && (Boolean) body.get("isFeatured"));
         return ResponseEntity.ok(post);
     }
 

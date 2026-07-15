@@ -40,7 +40,6 @@ public class AuthService {
     private String baseUrl;
 
     private static final long ACCESS_TOKEN_TTL = 900000;
-    private static final int MAX_LOGIN_ATTEMPTS = 5;
     private static final long LOCKOUT_DURATION_MINUTES = 15;
 
     public AuthResponse register(RegisterRequest request) {
@@ -70,17 +69,17 @@ public class AuthService {
         user = userRepository.save(user);
 
         try {
-            String verifyToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+            String verifyToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(),
+                    user.getRole().name());
             String verifyLink = baseUrl + "/email-dogrula?token=" + verifyToken;
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(user.getEmail());
             message.setSubject("E-posta Doğrulama - öğret.io");
             message.setText(
                     "Merhaba " + user.getFullName() + ",\n\n"
-                    + "E-posta adresinizi doğrulamak için aşağıdaki bağlantıya tıklayın:\n"
-                    + verifyLink + "\n\n"
-                    + "öğret.io"
-            );
+                            + "E-posta adresinizi doğrulamak için aşağıdaki bağlantıya tıklayın:\n"
+                            + verifyLink + "\n\n"
+                            + "öğret.io");
             mailSender.send(message);
         } catch (Exception e) {
             // Mail altyapısı yapılandırılmamış olabilir, kayıt devam etsin
@@ -96,8 +95,7 @@ public class AuthService {
         if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(lockoutKey))) {
             Long ttl = stringRedisTemplate.getExpire(lockoutKey, TimeUnit.SECONDS);
             throw ApiException.tooManyRequests(
-                "Hesap geçici olarak kilitlendi. " + (ttl != null ? ttl : 0) + " saniye sonra tekrar deneyin."
-            );
+                    "Hesap geçici olarak kilitlendi. " + (ttl != null ? ttl : 0) + " saniye sonra tekrar deneyin.");
         }
 
         User user = userRepository.findByEmail(request.getEmail())
@@ -110,9 +108,7 @@ public class AuthService {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             user.getId().toString(),
-                            request.getPassword()
-                    )
-            );
+                            request.getPassword()));
         } catch (Exception e) {
             recordFailedAttempt(lockoutKey);
             throw ApiException.unauthorized("E-posta veya şifre hatalı");
@@ -187,12 +183,11 @@ public class AuthService {
             message.setSubject("Şifre Sıfırlama - öğret.io");
             message.setText(
                     "Merhaba " + user.getFullName() + ",\n\n"
-                    + "Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n"
-                    + resetLink + "\n\n"
-                    + "Bu bağlantı 15 dakika süreyle geçerlidir.\n"
-                    + "Eğer şifre sıfırlama talebinde bulunmadıysanız bu e-postayı dikkate almayın.\n\n"
-                    + "öğret.io"
-            );
+                            + "Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n"
+                            + resetLink + "\n\n"
+                            + "Bu bağlantı 15 dakika süreyle geçerlidir.\n"
+                            + "Eğer şifre sıfırlama talebinde bulunmadıysanız bu e-postayı dikkate almayın.\n\n"
+                            + "öğret.io");
             mailSender.send(message);
         } catch (Exception e) {
             throw ApiException.internalServerError("Şifre sıfırlama e-postası gönderilemedi");
@@ -227,7 +222,8 @@ public class AuthService {
 
     public boolean isTokenBlacklisted(String token) {
         String jti = jwtTokenProvider.getTokenId(token);
-        if (jti == null) return false;
+        if (jti == null)
+            return false;
         return Boolean.TRUE.equals(stringRedisTemplate.hasKey("blacklist:" + jti));
     }
 
