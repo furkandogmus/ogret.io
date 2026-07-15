@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { Avatar } from "../../src/components/Avatar";
 import { EmptyState } from "../../src/components/EmptyState";
 import { useAuth } from "../../src/providers/AuthProvider";
+import { useWebSocket } from "../../src/providers/WebSocketProvider";
 import { useToast } from "../../src/components/Toast";
 import { messageApi } from "../../src/api/services";
 import type { Message } from "../../src/types";
@@ -22,6 +23,7 @@ interface Conversation {
 export default function MessagesScreen() {
   const router = useRouter();
   const { user: me } = useAuth();
+  const { connected, incomingMessages } = useWebSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,11 +70,12 @@ export default function MessagesScreen() {
     setRefreshing(false);
   }, [me?.id]);
 
+  useEffect(() => { buildConversations(); }, [buildConversations]);
+
   useEffect(() => {
+    if (incomingMessages.length === 0) return;
     buildConversations();
-    const interval = setInterval(() => buildConversations(), 15000);
-    return () => clearInterval(interval);
-  }, [buildConversations]);
+  }, [incomingMessages.length, buildConversations]);
 
   const renderItem = useCallback(({ item }: { item: Conversation }) => (
     <TouchableOpacity
@@ -103,9 +106,15 @@ export default function MessagesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={{ paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.md }}>
-        <Text style={{ color: colors.text, fontSize: 28, fontWeight: "700" }}>ögret.io</Text>
-        <Text style={{ color: colors.textSecondary, fontSize: 14, marginTop: 2 }}>Mesajların</Text>
+      <View style={{ paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.md, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <View>
+          <Text style={{ color: colors.text, fontSize: 28, fontWeight: "700" }}>ögret.io</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 14, marginTop: 2 }}>Mesajların</Text>
+        </View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: connected ? colors.success : colors.error }} />
+          <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{connected ? "Bağlı" : "Bağlantı Yok"}</Text>
+        </View>
       </View>
 
       <FlatList

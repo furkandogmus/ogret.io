@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { Avatar } from "../../src/components/Avatar";
 import { useAuth } from "../../src/providers/AuthProvider";
+import { useWebSocket } from "../../src/providers/WebSocketProvider";
 import { useToast } from "../../src/components/Toast";
 import { messageApi, userApi } from "../../src/api/services";
 import type { Message, User } from "../../src/types";
@@ -21,6 +22,7 @@ export default function ChatScreen() {
   const router = useRouter();
   const { user: me } = useAuth();
   const toast = useToast();
+  const { connected, incomingMessages, typingUsers, sendMessage: wsSend, sendTyping, clearIncoming } = useWebSocket();
   const [otherUser, setOtherUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
@@ -97,17 +99,24 @@ export default function ChatScreen() {
   }, [loadInitial]);
 
   useEffect(() => {
+    clearIncoming();
     return () => {
+      clearIncoming();
       if (pollRef.current) clearInterval(pollRef.current);
       if (statusRef.current) clearInterval(statusRef.current);
     };
-  }, []);
+  }, [clearIncoming]);
 
   const online = otherUser?.online === true;
   useEffect(() => {
+    if (connected) return; // No polling if WS is connected
+
     if (pollRef.current) clearInterval(pollRef.current);
     pollRef.current = setInterval(() => { loadPage(0, false); }, online ? POLL_INTERVAL : OFFLINE_POLL_INTERVAL);
-  }, [online, loadPage]);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [connected, online, loadPage]);
 
   useEffect(() => {
     if (statusRef.current) clearInterval(statusRef.current);
@@ -117,7 +126,34 @@ export default function ChatScreen() {
         if (data?.online !== otherUser?.online) setOtherUser(data);
       } catch { /* ignore */ }
     }, STATUS_REFRESH_MS);
+    return () => {
+      if (statusRef.current) clearInterval(statusRef.current);
+    };
   }, [id, otherUser?.online]);
+
+  useEffect(() => {
+    if (incomingMessages.length === 0) return;
+    
+    const relevant = incomingMessages.filter(
+      (m) => m.senderId?.toLowerCase() === id?.toLowerCase() || 
+             (m.senderId?.toLowerCase() === me?.id?.toLowerCase() && m.receiverId?.toLowerCase() === id?.toLowerCase())
+    );
+    if (relevant.length === 0) return;
+
+    setMessages((prev) => {
+      const existingIds = new Set(prev.map((m) => m.id));
+      const newMessages = relevant.filter((m) => !existingIds.has(m.id)) as unknown as Message[];
+      if (newMessages.length === 0) return prev;
+
+      newMessages.forEach((m) => {
+        if (m.senderId?.toLowerCase() === id?.toLowerCase() && !m.read) {
+          messageApi.markAsRead(m.id).catch(() => {});
+        }
+      });
+
+      return [...prev, ...newMessages];
+    });
+  }, [incomingMessages, id, me?.id]);
 
   const loadOlder = useCallback(async () => {
     if (loadingMore || !hasMoreRef.current) return;
@@ -136,18 +172,23 @@ export default function ChatScreen() {
     const tempId = `temp-${Date.now()}`;
     setMessages((prev) => [...prev, { id: tempId, senderId: me?.id ?? "", receiverId: id, content: msg, messageType: "TEXT" as any, read: false, createdAt: new Date().toISOString() }]);
 
-    try {
-      const { data } = await messageApi.send({ receiverId: id, content: msg });
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? (data as unknown as Message) : m)));
-    } catch {
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+    if (connected) {
+      wsSend(id, msg);
+    } else {
+      try {
+        const { data } = await messageApi.send({ receiverId: id, content: msg });
+        setMessages((prev) => prev.map((m) => (m.id === tempId ? (data as unknown as Message) : m)));
+      } catch {
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      }
     }
 
     setTimeout(() => scrollToEnd(true), 50);
-  }, [id, me?.id, scrollToEnd]);
+  }, [id, me?.id, connected, wsSend, scrollToEnd]);
 
-  const statusText = online ? "Çevrimiçi" : "Çevrimdışı";
-  const statusColor = online ? colors.online : colors.textMuted;
+  const isTyping = typingUsers.has(id);
+  const statusText = isTyping ? "Yazıyor..." : (online ? "Çevrimiçi" : "Çevrimdışı");
+  const statusColor = isTyping ? colors.primary : (online ? colors.online : colors.textMuted);
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -225,11 +266,11 @@ export default function ChatScreen() {
       )}
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface }}>
-        <TextInput value={text} onChangeText={setText} placeholder="Mesaj yaz..." placeholderTextColor={colors.textMuted} multiline
+        <TextInput value={text} onChangeText={(val) => { setText(val); if (connected) sendTyping(id); }} placeholder="Mesaj yaz..." placeholderTextColor={colors.textMuted} multiline
           style={{ flex: 1, backgroundColor: colors.background, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 10, color: colors.text, fontSize: 14, maxHeight: 100 }} />
         <TouchableOpacity onPress={sendMessage} disabled={!text.trim()}
-          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: text.trim() ? colors.primary : colors.surfaceLight, alignItems: "center", justifyContent: "center" }}>
-          <Ionicons name="send" size={18} color={text.trim() ? "#fff" : colors.textMuted} />
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: text.trim() ? colors.primary : colors.background, alignItems: "center", justifyContent: "center" }}>
+          <Ionicons name="send" size={16} color={text.trim() ? "#fff" : colors.textMuted} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
