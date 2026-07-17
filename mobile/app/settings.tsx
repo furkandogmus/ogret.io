@@ -45,8 +45,8 @@ export default function SettingsScreen() {
       toast.show("Tüm alanları doldurun", "error");
       return;
     }
-    if (newPassword.length < 12) {
-      toast.show("Şifre en az 12 karakter olmalı", "error");
+    if (newPassword.length < 6) {
+      toast.show("Şifre en az 6 karakter olmalı", "error");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -180,7 +180,7 @@ export default function SettingsScreen() {
                     secureTextEntry
                     value={newPassword}
                     onChangeText={setNewPassword}
-                    placeholder="En az 12 karakter"
+                    placeholder="En az 6 karakter"
                     placeholderTextColor={colors.textMuted}
                     style={{ backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, height: 48, color: colors.text, fontSize: 15 }}
                   />

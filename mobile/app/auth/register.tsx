@@ -24,8 +24,8 @@ export default function RegisterScreen() {
       Alert.alert("Hata", "Tüm alanları doldurun");
       return;
     }
-    if (password.length < 12) {
-      Alert.alert("Hata", "Şifre en az 12 karakter olmalıdır");
+    if (password.length < 6) {
+      Alert.alert("Hata", "Şifre en az 6 karakter olmalıdır");
       return;
     }
     setLoading(true);

@@ -19,7 +19,7 @@ export const registerSchema = z.object({
     .refine((val) => phoneRegex.test(val.replace(/\s/g, "")) || phoneDisplayRegex.test(val), {
       message: "Geçerli bir telefon numarası girin (05XX XXX XX XX)",
     }),
-  password: z.string().min(1, "Şifre gerekli").min(12, "Şifre en az 12 karakter olmalı").max(100, "Şifre en fazla 100 karakter olabilir"),
+  password: z.string().min(1, "Şifre gerekli").min(6, "Şifre en az 6 karakter olmalı").max(100, "Şifre en fazla 100 karakter olabilir"),
   role: z.enum(["STUDENT", "TUTOR"]),
 });
 export type RegisterForm = z.infer<typeof registerSchema>;

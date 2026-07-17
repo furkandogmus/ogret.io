@@ -50,12 +50,12 @@ test.describe('Password Reset Flow (Forgot & Reset Password Pages)', () => {
 
     await expect(page.locator('h1')).toContainText('Yeni Şifre Belirleyin');
 
-    // Type short password (less than 12 chars)
+    // Type short password (less than 6 chars)
     await page.locator('input[placeholder="Yeni şifre"]').fill('123');
     await page.locator('input[placeholder="Yeni şifre (tekrar)"]').fill('123');
     await page.locator('button[type="submit"]').click();
 
-    await expect(page.locator('text=Şifre en az 12 karakter olmalıdır')).toBeVisible();
+    await expect(page.locator('text=Şifre en az 6 karakter olmalıdır')).toBeVisible();
   });
 
   test('should validate passwords match on reset page', async ({ page }) => {

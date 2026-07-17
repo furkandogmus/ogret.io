@@ -14,6 +14,6 @@ public class ResetPasswordRequest {
     private String token;
 
     @NotBlank
-    @Size(min = 12, max = 100, message = "Şifre 12 ile 100 karakter arasında olmalıdır")
+    @Size(min = 6, max = 100, message = "Şifre 6 ile 100 karakter arasında olmalıdır")
     private String password;
 }

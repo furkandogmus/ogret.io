@@ -156,7 +156,7 @@ Kabul kriterleri:
 - DTO allowlist kullanır; `ADMIN` veya bilinmeyen rol `400/403` döner.
 - Admin oluşturma/rol değiştirme yalnız ayrı, audit'li, yeniden doğrulamalı admin akışında yapılır.
 - E-posta ve telefon normalize edilerek benzersizlik uygulanır.
-- Zayıf/ele geçirilmiş parola politikası belirlenir; minimum uzunluk en az 10–12 karakter olarak ürün kararıyla sabitlenir.
+- Parola politikası ürün kararıyla 6–100 karakter olarak sabitlenir; ele geçirilmiş parola kontrolleri ayrıca değerlendirilir.
 
 **Kabul:** API integration testi public register ile admin oluşturulamadığını; mevcut adminin kendine admin üretemediğini ve yetkili süreç dışında rol değişmediğini kanıtlar.
 

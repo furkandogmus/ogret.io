@@ -63,7 +63,7 @@ class AuthControllerTest {
                 var request = new RegisterRequest();
                 request.setEmail("test@example.com");
                 request.setPhone("+905551234567");
-                request.setPassword("password1234");
+                request.setPassword("123456");
                 request.setFullName("Test User");
                 request.setRole(com.dersplatform.model.enums.Role.STUDENT);
 

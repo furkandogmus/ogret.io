@@ -16,7 +16,7 @@ public class RegisterRequest {
     @NotBlank @Pattern(regexp = "^\\+?[0-9]{10,15}$")
     private String phone;
 
-    @NotBlank @Size(min = 12, max = 100)
+    @NotBlank @Size(min = 6, max = 100)
     private String password;
 
     @NotBlank @Size(max = 100)
