@@ -24,7 +24,12 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Europe/Istanbul
 
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
 server:
+  forward-headers-strategy: framework
+  shutdown: graceful
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/plain
@@ -37,7 +42,26 @@ logging:
     org.springframework: WARN
     org.hibernate: WARN
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
 app:
+  upload:
+    malware-scan-enabled: true
+  auth:
+    cookie-secure: true
+  storage:
+    fail-fast: true
+  email:
+    fail-fast: true
   cors:
     allowed-origins: ${CORS_ORIGINS:https://ogret.io,https://www.ogret.io}
 

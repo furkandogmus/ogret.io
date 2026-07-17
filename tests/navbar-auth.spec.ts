@@ -95,10 +95,9 @@ test.describe('Navbar Role-Based Rendering', () => {
     // Click Çıkış Yap from sidebar
     await page.locator('button:has-text("Çıkış Yap")').first().click();
 
-    // Should redirect to / and clear localStorage
+    // The cookie session is cleared; localStorage is only an E2E fixture input.
     await expect(page).toHaveURL('/');
-    const user = await page.evaluate(() => localStorage.getItem('user'));
-    expect(user).toBeNull();
+    await expect(page.getByRole('button', { name: 'Giriş Yap' }).first()).toBeVisible();
   });
 });
 

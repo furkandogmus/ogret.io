@@ -22,8 +22,8 @@ export default function ResetPasswordScreen() {
       Alert.alert("Hata", "Tüm alanları doldurun");
       return;
     }
-    if (newPassword.length < 6) {
-      Alert.alert("Hata", "Şifre en az 6 karakter olmalıdır");
+    if (newPassword.length < 12) {
+      Alert.alert("Hata", "Şifre en az 12 karakter olmalıdır");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -71,7 +71,7 @@ export default function ResetPasswordScreen() {
 
           <Input
             label="Yeni Şifre"
-            placeholder="En az 6 karakter"
+            placeholder="En az 12 karakter"
             value={newPassword}
             onChangeText={setNewPassword}
             secureTextEntry

@@ -1,15 +1,22 @@
 package com.dersplatform.service;
 
 import com.dersplatform.model.entity.User;
+import com.dersplatform.model.entity.AppNotification;
+import com.dersplatform.model.dto.response.NotificationResponse;
+import com.dersplatform.repository.NotificationRepository;
+import com.dersplatform.repository.UserRepository;
+import com.dersplatform.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 
 /**
  * Central notification service that pushes real-time notifications
@@ -21,6 +28,8 @@ import java.util.UUID;
 public class NotificationService {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
 
     /**
      * Send a notification to a specific user.
@@ -34,10 +43,27 @@ public class NotificationService {
      * @param senderAvatar optional sender avatar URL
      */
     @Async
+    @Transactional
     public void sendNotification(UUID recipientId, String type, String title, String body,
                                   String link, String senderName, String senderAvatar) {
+        User recipient = userRepository.findById(recipientId)
+                .orElseThrow(() -> ApiException.notFound("Bildirim alıcısı bulunamadı"));
+        AppNotification notification = notificationRepository.save(AppNotification.builder()
+                .recipient(recipient)
+                .type(type)
+                .title(title)
+                .body(body)
+                .link(link)
+                .senderName(senderName)
+                .senderAvatar(senderAvatar)
+                .isRead(false)
+                .build());
+        if (notification.getCreatedAt() == null) {
+            notification.setCreatedAt(LocalDateTime.now());
+        }
+
         Map<String, Object> payload = Map.of(
-                "id", "notif-" + UUID.randomUUID(),
+                "id", notification.getId().toString(),
                 "type", type,
                 "title", title,
                 "body", body,
@@ -45,13 +71,39 @@ public class NotificationService {
                 "senderName", senderName != null ? senderName : "",
                 "senderAvatar", senderAvatar != null ? senderAvatar : "",
                 "read", false,
-                "createdAt", LocalDateTime.now().toString()
+                "createdAt", notification.getCreatedAt().toString()
         );
 
         messagingTemplate.convertAndSendToUser(
                 recipientId.toString(), "/queue/notifications", payload);
 
         log.debug("Notification sent to user {}: [{}] {}", recipientId, type, title);
+    }
+
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getNotifications(UUID recipientId) {
+        return notificationRepository.findTop100ByRecipientIdOrderByCreatedAtDesc(recipientId)
+                .stream()
+                .map(NotificationResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public long getUnreadCount(UUID recipientId) {
+        return notificationRepository.countByRecipientIdAndIsReadFalse(recipientId);
+    }
+
+    @Transactional
+    public void markRead(UUID recipientId, UUID notificationId) {
+        AppNotification notification = notificationRepository.findByIdAndRecipientId(notificationId, recipientId)
+                .orElseThrow(() -> ApiException.notFound("Bildirim bulunamadı"));
+        notification.setRead(true);
+        notificationRepository.save(notification);
+    }
+
+    @Transactional
+    public void markAllRead(UUID recipientId) {
+        notificationRepository.markAllRead(recipientId);
     }
 
     // ── Convenience Methods ──

@@ -41,7 +41,7 @@ test.describe('Student Dashboard Extended Features', () => {
     await page.goto('/ogrenci-panel');
 
     // Scroll to past lessons
-    await expect(page.locator('text=Geçmiş Dersler')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Geçmiş Dersler' })).toBeVisible();
 
     // COMPLETED lesson should have "Değerlendir" button
     await expect(page.locator('button:has-text("Değerlendir")').first()).toBeVisible();
@@ -105,22 +105,16 @@ test.describe('Student Dashboard Extended Features', () => {
     await expect(page).toHaveURL(/\/arama/);
   });
 
-  test('should show subscription section with student plan details', async ({ page }) => {
+  test('should not show subscription section in the free release', async ({ page }) => {
     await page.goto('/ogrenci-panel');
-
-    await page.locator('button:has-text("Abonelik")').click();
-
-    await expect(page.locator('text=öğret.io Standart Öğrenci')).toBeVisible();
-    await expect(page.locator('text=Süresiz Ücretsiz Plan')).toBeVisible();
-    await expect(page.locator('text=Abonelik Paketlerini İncele')).toBeVisible();
+    await expect(page.locator('button:has-text("Abonelik")')).not.toBeVisible();
+    await expect(page.locator('text=Abonelik Paketlerini İncele')).not.toBeVisible();
   });
 
-  test('should navigate to subscription page from student panel', async ({ page }) => {
+  test('should keep core lesson navigation available without a subscription', async ({ page }) => {
     await page.goto('/ogrenci-panel');
-    await page.locator('button:has-text("Abonelik")').click();
-
-    await page.locator('button:has-text("Abonelik Paketlerini İncele")').click();
-    await expect(page).toHaveURL('/abonelik');
+    await expect(page.locator('button:has-text("Derslerim")')).toBeVisible();
+    await expect(page.locator('button:has-text("Öğretmenlerim")')).toBeVisible();
   });
 
   test('should show empty state when no lessons exist', async ({ page }) => {

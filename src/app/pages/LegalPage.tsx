@@ -5,8 +5,8 @@ const LEGAL_CONTENT: Record<string, { title: string; content: string[] }> = {
   "gizlilik-politikasi": {
     title: "Gizlilik Politikası",
     content: [
-      "Bu gizlilik politikası, DersPlatform üzerinden toplanan kişisel verilerin işlenmesine ilişkin esasları belirler.",
-      "Toplanan Veriler: Ad, soyad, e-posta adresi, telefon numarası, eğitim bilgileri, ödeme bilgileri (işlem ortağı aracılığıyla), platform kullanım verileri.",
+      "Bu gizlilik politikası, öğret.io üzerinden toplanan kişisel verilerin işlenmesine ilişkin esasları belirler.",
+      "Toplanan Veriler: Ad, soyad, e-posta adresi, telefon numarası, eğitim ve profil bilgileri ile platform kullanım verileri. İlk sürümde ödeme veya kart verisi toplanmaz.",
       "Verilerin Kullanım Amaçları: Hesap oluşturma ve yönetimi, ders talep ve rezervasyon işlemleri, kullanıcı deneyiminin iyileştirilmesi, iletişim ve bildirim gönderimi.",
       "Verilerin Saklanması: Kişisel verileriniz, hesabınız aktif olduğu sürece saklanır. Hesap silinmesi durumunda 30 gün içinde verileriniz anonim hale getirilir veya silinir.",
       "Veri Paylaşımı: Verileriniz, açık rızanız olmadan üçüncü taraflarla paylaşılmaz. Yasal yükümlülükler kapsamında yetkili kurumlarla paylaşılabilir.",
@@ -16,10 +16,10 @@ const LEGAL_CONTENT: Record<string, { title: string; content: string[] }> = {
   "kullanim-kosullari": {
     title: "Kullanım Koşulları",
     content: [
-      "DersPlatform kullanıcıları aşağıdaki kullanım koşullarını kabul etmiş sayılır.",
+      "öğret.io kullanıcıları aşağıdaki kullanım koşullarını kabul etmiş sayılır.",
       "Hesap Güvenliği: Kullanıcılar, hesap bilgilerinin gizliliğinden sorumludur. Hesap güvenliğinin ihlali durumunda derhal platforma bildirim yapılmalıdır.",
       "Hizmet Kullanımı: Platform, öğrenci ve öğretmenleri bir araya getiren bir pazaryeridir. Ders içerikleri ve kalitesinden tarafların kendisi sorumludur.",
-      "Ödeme: Platform üzerinden yapılan ders ücretleri, ödeme iş ortakları aracılığıyla işlenir. İptal ve iade politikaları ayrıca belirtilmiştir.",
+      "Ödeme: Platform ödeme almaz veya ödeme aracılığı yapmaz. Ders ücreti, ödeme, iptal ve varsa iade koşulları öğrenci ile öğretmen arasında belirlenir.",
       "Yasaklı Faaliyetler: Platformda yasa dışı, taciz edici, nefret söylemi içeren veya başkalarının haklarını ihlal eden içerik paylaşmak yasaktır.",
       "Hesap Feshi: Kullanım koşullarını ihlal eden hesaplar, önceden bildirim yapılmaksızın askıya alınabilir veya sonlandırılabilir."
     ]
@@ -27,10 +27,10 @@ const LEGAL_CONTENT: Record<string, { title: string; content: string[] }> = {
   "kvkk-aydinlatma": {
     title: "KVKK Aydınlatma Metni",
     content: [
-      "6698 sayılı Kişisel Verilerin Korunması Kanunu ('KVKK') uyarınca, veri sorumlusu sıfatıyla DersPlatform olarak kişisel verilerinizin işlenmesine ilişkin sizleri bilgilendirmek isteriz.",
-      "Veri Sorumlusu: DersPlatform, [Şirket Bilgileri] adresinde faaliyet göstermektedir.",
+      "6698 sayılı Kişisel Verilerin Korunması Kanunu ('KVKK') uyarınca, öğret.io hizmetinin veri sorumlusu tarafından kişisel verilerinizin işlenmesine ilişkin bilgilendirme yapılır.",
+      "Veri sorumlusunun doğrulanmış adı/unvanı ve tebligat adresi production yayını öncesinde bu metinde ilan edilecektir. Başvurular şimdilik info@ogret.io adresinden alınır.",
       "Kişisel Verilerin İşlenme Amacı: Toplanan kişisel verileriniz, platform hizmetlerinin sunulması, kullanıcı deneyiminin kişiselleştirilmesi, iletişim faaliyetlerinin yürütülmesi ve yasal yükümlülüklerin yerine getirilmesi amaçlarıyla işlenmektedir.",
-      "Kişisel Verilerin Aktarılması: Kişisel verileriniz, yukarıda belirtilen amaçlar doğrultusunda, yurt içinde bulunan üçüncü kişilere (ödeme kuruluşları, hosting sağlayıcıları) aktarılabilir.",
+      "Kişisel Verilerin Aktarılması: Kişisel verileriniz, hizmetin sunulması için gerekli olduğu ölçüde barındırma, e-posta ve altyapı sağlayıcılarına; hukuki yükümlülük halinde yetkili kurumlara aktarılabilir. İlk sürümde ödeme kuruluşuna aktarım yapılmaz.",
       "Veri Toplama Yöntemi: Kişisel verileriniz, internet sitesi ve mobil uygulama aracılığıyla elektronik ortamda toplanmaktadır.",
       "KVKK Kapsamındaki Haklarınız: Veri işleme faaliyetleri hakkında bilgi talep etme, verilerin düzeltilmesini talep etme, verilerin silinmesini talep etme, itiraz etme ve zararın giderilmesini talep etme haklarına sahipsiniz."
     ]

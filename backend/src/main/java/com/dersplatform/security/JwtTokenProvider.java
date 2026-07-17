@@ -16,9 +16,11 @@ public class JwtTokenProvider {
     private final SecretKey accessSecretKey;
     private final SecretKey refreshSecretKey;
     private final SecretKey passwordResetSecretKey;
+    private final SecretKey emailVerificationSecretKey;
     private final long accessTokenExpiration;
     private final long refreshTokenExpiration;
     private static final long PASSWORD_RESET_EXPIRATION = 900_000;
+    private static final long EMAIL_VERIFICATION_EXPIRATION = 86_400_000;
 
     public JwtTokenProvider(
             @Value("${app.jwt.secret}") String secret,
@@ -27,16 +29,22 @@ public class JwtTokenProvider {
         this.accessSecretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.refreshSecretKey = Keys.hmacShaKeyFor((secret + "-refresh").getBytes(StandardCharsets.UTF_8));
         this.passwordResetSecretKey = Keys.hmacShaKeyFor((secret + "-password-reset").getBytes(StandardCharsets.UTF_8));
+        this.emailVerificationSecretKey = Keys.hmacShaKeyFor((secret + "-email-verification").getBytes(StandardCharsets.UTF_8));
         this.accessTokenExpiration = accessExpiration;
         this.refreshTokenExpiration = refreshExpiration;
     }
 
     public String generateAccessToken(UUID userId, String email, String role) {
+        return generateAccessToken(userId, email, role, 0);
+    }
+
+    public String generateAccessToken(UUID userId, String email, String role, int tokenVersion) {
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .subject(userId.toString())
                 .claim("email", email)
                 .claim("role", role)
+                .claim("token_version", tokenVersion)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
                 .signWith(accessSecretKey)
@@ -44,9 +52,14 @@ public class JwtTokenProvider {
     }
 
     public String generateRefreshToken(UUID userId) {
+        return generateRefreshToken(userId, 0);
+    }
+
+    public String generateRefreshToken(UUID userId, int tokenVersion) {
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .subject(userId.toString())
+                .claim("token_version", tokenVersion)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
                 .signWith(refreshSecretKey)
@@ -55,11 +68,23 @@ public class JwtTokenProvider {
 
     public String generatePasswordResetToken(UUID userId) {
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(userId.toString())
                 .claim("purpose", "password_reset")
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + PASSWORD_RESET_EXPIRATION))
                 .signWith(passwordResetSecretKey)
+                .compact();
+    }
+
+    public String generateEmailVerificationToken(UUID userId) {
+        return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .subject(userId.toString())
+                .claim("purpose", "email_verification")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + EMAIL_VERIFICATION_EXPIRATION))
+                .signWith(emailVerificationSecretKey)
                 .compact();
     }
 
@@ -70,7 +95,15 @@ public class JwtTokenProvider {
             try {
                 return parseClaims(token, refreshSecretKey).getId();
             } catch (Exception ex) {
-                return null;
+                try {
+                    return parseClaims(token, passwordResetSecretKey).getId();
+                } catch (Exception resetException) {
+                    try {
+                        return parseClaims(token, emailVerificationSecretKey).getId();
+                    } catch (Exception verificationException) {
+                        return null;
+                    }
+                }
             }
         }
     }
@@ -89,6 +122,25 @@ public class JwtTokenProvider {
             throw new JwtException("Geçersiz token amacı");
         }
         return UUID.fromString(claims.getSubject());
+    }
+
+    public UUID getUserIdFromEmailVerificationToken(String token) {
+        Claims claims = parseClaims(token, emailVerificationSecretKey);
+        if (!"email_verification".equals(claims.get("purpose"))) {
+            throw new JwtException("Geçersiz token amacı");
+        }
+        return UUID.fromString(claims.getSubject());
+    }
+
+    public int getTokenVersion(String token) {
+        Claims claims;
+        try {
+            claims = parseClaims(token);
+        } catch (JwtException accessException) {
+            claims = parseClaims(token, refreshSecretKey);
+        }
+        Integer version = claims.get("token_version", Integer.class);
+        return version == null ? 0 : version;
     }
 
     public boolean validateToken(String token) {

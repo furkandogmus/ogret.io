@@ -26,7 +26,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     @Query(value = """
         SELECT * FROM users u
-        WHERE (:query IS NULL OR :query = '' OR
+        WHERE u.deleted_at IS NULL
+        AND (:query IS NULL OR :query = '' OR
                u.search_vector IS NOT NULL AND
                u.search_vector @@ plainto_tsquery('turkish', :query || ''))
         ORDER BY

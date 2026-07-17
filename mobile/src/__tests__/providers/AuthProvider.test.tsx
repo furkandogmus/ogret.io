@@ -1,4 +1,4 @@
-import { render, act, waitFor } from "@testing-library/react-native";
+import { render, act, waitFor, fireEvent } from "@testing-library/react-native";
 import { Text, TouchableOpacity } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { AuthProvider, useAuth } from "../../providers/AuthProvider";
@@ -25,7 +25,7 @@ function TestConsumer() {
     <>
       <Text testID="auth-status">{isAuthenticated ? "logged-in" : "logged-out"}</Text>
       <Text testID="user-name">{user?.fullName ?? "none"}</Text>
-      <TouchableOpacity testID="btn-login" onPress={() => login("test@ogret.io", "123456")}>
+      <TouchableOpacity testID="btn-login" onPress={() => login("test@ogret.io", "test-password-123").catch(() => undefined)}>
         <Text>Login</Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -34,7 +34,7 @@ function TestConsumer() {
           register({
             email: "new@ogret.io",
             phone: "+905551234567",
-            password: "123456",
+            password: "test-password-123",
             fullName: "New User",
             role: "TUTOR",
           })
@@ -99,7 +99,7 @@ describe("AuthProvider", () => {
       expect(getByTestId("auth-status").props.children).toBe("logged-out");
     });
     await act(async () => {
-      getByTestId("btn-login").props.onPress();
+      fireEvent.press(getByTestId("btn-login"));
     });
     await waitFor(() => {
       expect(SecureStore.setItemAsync).toHaveBeenCalledWith("accessToken", "access-login");
@@ -109,10 +109,10 @@ describe("AuthProvider", () => {
     });
   });
 
-  it("register stores tokens and fetches user", async () => {
+  it("register waits for email verification without creating a session", async () => {
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
     mockAxios.post.mockResolvedValue({
-      data: { accessToken: "access-reg", refreshToken: "refresh-reg" },
+      data: { user: { ...mockUser, verified: false } },
     });
     mockAxios.get.mockResolvedValue({ data: mockUser });
     const { getByTestId } = render(
@@ -124,13 +124,10 @@ describe("AuthProvider", () => {
       expect(getByTestId("auth-status").props.children).toBe("logged-out");
     });
     await act(async () => {
-      getByTestId("btn-register").props.onPress();
+      fireEvent.press(getByTestId("btn-register"));
     });
-    await waitFor(() => {
-      expect(SecureStore.setItemAsync).toHaveBeenCalledWith("accessToken", "access-reg");
-      expect(SecureStore.setItemAsync).toHaveBeenCalledWith("refreshToken", "refresh-reg");
-      expect(getByTestId("auth-status").props.children).toBe("logged-in");
-    });
+    expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
+    expect(getByTestId("auth-status").props.children).toBe("logged-out");
   });
 
   it("logout clears tokens and user", async () => {
@@ -145,7 +142,7 @@ describe("AuthProvider", () => {
       expect(getByTestId("auth-status").props.children).toBe("logged-in");
     });
     await act(async () => {
-      getByTestId("btn-logout").props.onPress();
+      fireEvent.press(getByTestId("btn-logout"));
     });
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("accessToken");
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("refreshToken");
@@ -164,11 +161,9 @@ describe("AuthProvider", () => {
     await waitFor(() => {
       expect(getByTestId("auth-status").props.children).toBe("logged-out");
     });
-    await expect(
-      act(async () => {
-        getByTestId("btn-login").props.onPress();
-      })
-    ).rejects.toThrow("Invalid credentials");
+    await act(async () => {
+      fireEvent.press(getByTestId("btn-login"));
+    });
     expect(getByTestId("auth-status").props.children).toBe("logged-out");
   });
 

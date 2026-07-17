@@ -44,7 +44,7 @@ public class ChatController {
         UUID senderId = UUID.fromString(principal.getName());
         String content = payload.get("content");
 
-        if (content == null || content.isBlank()) return;
+        if (content == null || content.isBlank() || content.length() > 2000) return;
 
         User sender = userRepository.findById(senderId).orElse(null);
         User receiver = userRepository.findById(receiverId).orElse(null);

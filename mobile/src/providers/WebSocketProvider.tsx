@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback, ty
 import { Client } from "@stomp/stompjs";
 import * as SecureStore from "expo-secure-store";
 import { useAuth } from "./AuthProvider";
-import { TOKEN_KEY, getApiBaseUrl } from "../api/client";
+import { TOKEN_KEY, REFRESH_KEY, getApiBaseUrl } from "../api/client";
 import type { WsMessage, WsNotification } from "../types";
 
 // Polyfill TextEncoder and TextDecoder for Hermes/React Native compatibility with @stomp/stompjs
@@ -96,11 +96,11 @@ function decodeJwt(token: string): any {
       const x = chars.indexOf(base64[i + 1]);
       const y = chars.indexOf(base64[i + 2]);
       const z = chars.indexOf(base64[i + 3]);
-      
+
       const val1 = (w << 2) | (x >> 4);
       const val2 = ((x & 15) << 4) | (y >> 2);
       const val3 = ((y & 3) << 6) | z;
-      
+
       if (w !== -1 && x !== -1) result += String.fromCharCode(val1);
       if (y !== -1 && y !== 64) result += String.fromCharCode(val2);
       if (z !== -1 && z !== 64) result += String.fromCharCode(val3);

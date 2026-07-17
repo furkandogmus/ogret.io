@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { BookOpen, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +16,7 @@ export function LoginPage() {
   });
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
@@ -53,6 +54,11 @@ export function LoginPage() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            {searchParams.get("registered") === "1" && (
+              <div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
+                Hesabınız oluşturuldu. E-postanıza gönderilen bağlantıyla hesabınızı doğruladıktan sonra giriş yapabilirsiniz.
+              </div>
+            )}
             {error && (
               <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />

@@ -18,10 +18,10 @@ test.describe('Profile Edit Page', () => {
     // Should show greeting banner
     await expect(page.locator('text=Hoş geldin, Selim!')).toBeVisible();
 
-    // Should show all 3 tabs for tutor
+    // Billing is intentionally absent in the free first release.
     await expect(page.locator('button:has-text("Profilim")')).toBeVisible();
     await expect(page.locator('button:has-text("Ders & Müsaitlik")')).toBeVisible();
-    await expect(page.locator('button:has-text("Faturalarım")')).toBeVisible();
+    await expect(page.locator('button:has-text("Faturalarım")')).not.toBeVisible();
   });
 
   test('should not show Ders tab for student users', async ({ page }) => {
@@ -33,9 +33,9 @@ test.describe('Profile Edit Page', () => {
 
     await page.goto('/profil/duzenle');
 
-    // Student should see Profilim and Faturalarım but not Ders
+    // Student only sees profile settings.
     await expect(page.locator('button:has-text("Profilim")')).toBeVisible();
-    await expect(page.locator('button:has-text("Faturalarım")')).toBeVisible();
+    await expect(page.locator('button:has-text("Faturalarım")')).not.toBeVisible();
     await expect(page.locator('button:has-text("Ders & Müsaitlik")')).not.toBeVisible();
   });
 
@@ -68,10 +68,8 @@ test.describe('Profile Edit Page', () => {
     await expect(page.locator('text=Öğretmenlik İlan Bilgileri')).toBeVisible();
     await expect(page.locator('text=Biyografi')).toBeVisible();
 
-    // Click Faturalarım tab
-    await page.locator('button:has-text("Faturalarım")').click();
-    await expect(page.locator('text=Ödeme Geçmişi & Faturalar')).toBeVisible();
-    await expect(page.locator('text=Fatura No')).toBeVisible();
+    await page.locator('button:has-text("Profilim")').click();
+    await expect(page.locator('text=Genel Bilgiler')).toBeVisible();
   });
 
   test('should show password change form and validate fields', async ({ page }) => {
@@ -110,7 +108,7 @@ test.describe('Profile Edit Page', () => {
     await expect(page.locator('text=Şifreniz başarıyla güncellendi ✓')).toBeVisible();
   });
 
-  test('should display billing invoices table', async ({ page }) => {
+  test('should not display billing or invoice UI in free release', async ({ page }) => {
     await page.addInitScript(({ user }) => {
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('accessToken', 'mock-tutor-access-token');
@@ -119,12 +117,8 @@ test.describe('Profile Edit Page', () => {
 
     await page.goto('/profil/duzenle');
 
-    await page.locator('button:has-text("Faturalarım")').click();
-
-    // Verify invoice rows
-    await expect(page.locator('text=INV-2026-003')).toBeVisible();
-    await expect(page.locator('text=INV-2026-002')).toBeVisible();
-    await expect(page.locator('text=Uzman Öğretmen Aboneliği (1 Aylık)').first()).toBeVisible();
+    await expect(page.locator('button:has-text("Faturalarım")')).not.toBeVisible();
+    await expect(page.locator('text=Ödeme Geçmişi & Faturalar')).not.toBeVisible();
   });
 
   test('should display tutor subject and availability section', async ({ page }) => {

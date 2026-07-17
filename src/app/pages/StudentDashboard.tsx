@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
-  BookOpen, Heart, MessageSquare, User, LogOut, Shield, Zap,
-  Calendar, Clock, Video, Star, CheckCircle, Check, ArrowRight
+  BookOpen, Heart, MessageSquare, User, LogOut, Shield,
+  Calendar, Clock, Video, Star, CheckCircle
 } from "lucide-react";
 import { useAuth } from "../providers/AuthProvider";
 import { lessonApi, favoriteApi, reviewApi, type LessonResponse, type UserResponse } from "../api/services";
@@ -11,7 +11,6 @@ import { Avatar } from "../components/shared/Avatar";
 const SIDEBAR_ITEMS = [
   { id: "lessons", label: "Derslerim", icon: BookOpen },
   { id: "favorites", label: "Öğretmenlerim", icon: Heart },
-  { id: "subscription", label: "Abonelik", icon: Zap },
 ];
 
 export function StudentDashboard() {
@@ -32,7 +31,7 @@ export function StudentDashboard() {
   const [reviewError, setReviewError] = useState("");
 
   useEffect(() => {
-    if (sectionParam === "lessons" || sectionParam === "favorites" || sectionParam === "subscription") {
+    if (sectionParam === "lessons" || sectionParam === "favorites") {
       setActiveSection(sectionParam);
     } else {
       setActiveSection("lessons");
@@ -163,12 +162,6 @@ export function StudentDashboard() {
           <div>
             <h1 className="text-xl font-bold text-foreground">Öğretmenlerim</h1>
             <p className="text-muted-foreground text-sm">Sık çalıştığınız veya favoriye eklediğiniz öğretmenler</p>
-          </div>
-        )}
-        {activeSection === "subscription" && (
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Abonelik</h1>
-            <p className="text-muted-foreground text-sm">Öğrenci abonelik paketiniz ve sistem ayrıcalıkları</p>
           </div>
         )}
 
@@ -393,47 +386,6 @@ export function StudentDashboard() {
               </div>
             )}
 
-            {/* VIEW 3: ABONELIK */}
-            {activeSection === "subscription" && (
-              <div className="bg-white border border-stone-100 rounded-3xl p-6 shadow-sm max-w-xl mx-auto space-y-6">
-                <div className="flex items-center gap-4 pb-4 border-b border-stone-100">
-                  <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">
-                    <Zap className="w-6 h-6 text-emerald-600 fill-emerald-600/20" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-stone-950 text-base">öğret.io Standart Öğrenci</h3>
-                    <p className="text-xs text-stone-400 font-medium mt-0.5">Süresiz Ücretsiz Plan</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider block">Plan Ayrıcalıkları</span>
-                  <div className="space-y-3">
-                    {[
-                      "Uzman öğretmenlerle doğrudan sınırsız iletişim",
-                      "İlk deneme dersini ücretsiz talep edebilme hakkı",
-                      "Komisyonsuz ders ödeme transferleri",
-                      "7/24 Canlı destek ve veli yardım paneli"
-                    ].map((feature, idx) => (
-                      <div key={idx} className="flex items-start gap-2.5 text-xs text-stone-600 font-semibold">
-                        <div className="bg-emerald-50 text-emerald-600 p-0.5 rounded-full mt-0.5 flex-shrink-0">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        </div>
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => navigate("/abonelik")}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/10 active:scale-[0.98] flex items-center justify-center gap-1.5"
-                >
-                  <span>Abonelik Paketlerini İncele</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
           </>
         )}
       </div>

@@ -52,7 +52,7 @@ export default function VerificationScreen() {
     }
     setLoading(true);
     try {
-      const { data } = await fileApi.upload(imageUri, false);
+      const { data } = await fileApi.upload(imageUri, "IDENTITY_DOCUMENT");
       await verificationApi.submit({ documentType: "IDENTITY", documentUrl: data.url });
       toast.show("Doğrulama başvurunuz alındı", "success");
       router.back();

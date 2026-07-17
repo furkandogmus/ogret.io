@@ -67,7 +67,7 @@ export default function TabLayout() {
   const unread = useUnreadCount();
   const segments = useSegments();
   const currentPath = "/" + (segments.slice(1).join("/") || "");
-  const currentIndex = TAB_ROUTES.indexOf(currentPath);
+  const currentIndex = TAB_ROUTES.indexOf(currentPath as (typeof TAB_ROUTES)[number]);
   const isTab = currentIndex >= 0;
 
   return (

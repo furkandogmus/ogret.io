@@ -10,6 +10,6 @@ public class ChangePasswordRequest {
     private String currentPassword;
 
     @NotBlank
-    @Size(min = 6)
+    @Size(min = 12, max = 100)
     private String newPassword;
 }

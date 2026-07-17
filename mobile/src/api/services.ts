@@ -5,7 +5,7 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post<{ accessToken: string; refreshToken: string }>("/auth/login", { email, password }),
   register: (data: { email: string; phone: string; password: string; fullName: string; role: "STUDENT" | "TUTOR" }) =>
-    api.post<{ accessToken: string; refreshToken: string }>("/auth/register", data),
+    api.post<{ user: User }>("/auth/register", data),
   verifyEmail: (token: string) => api.post("/auth/verify-email", { token }),
   forgotPassword: (email: string) => api.post("/auth/forgot-password", { email }),
   resetPassword: (token: string, newPassword: string) => api.post("/auth/reset-password", { token, newPassword }),
@@ -93,15 +93,15 @@ export const referenceApi = {
 };
 
 export const fileApi = {
-  upload: async (uri: string, isPublic: boolean = true) => {
+  upload: async (uri: string, purpose: "AVATAR" | "IDENTITY_DOCUMENT" = "AVATAR") => {
     const formData = new FormData();
     const filename = uri.split("/").pop() || "photo.jpg";
     const ext = filename.split(".").pop()?.toLowerCase() || "jpg";
     const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
     formData.append("file", { uri, name: filename, type: mimeType } as any);
-    formData.append("isPublic", String(isPublic));
     return api.post<{ url: string }>("/files/upload", formData, {
       headers: { "Content-Type": "multipart/form-data" },
+      params: { purpose },
     });
   },
 };

@@ -33,7 +33,7 @@ export function VerificationPage() {
     setSubmitting(true);
     setError("");
     try {
-      const uploadRes = await fileApi.upload(selectedFile, false);
+      const uploadRes = await fileApi.upload(selectedFile, "IDENTITY_DOCUMENT");
       const documentUrl = uploadRes.data.url;
       await verificationApi.submit({ documentType, documentUrl });
       setSubmitted(true);

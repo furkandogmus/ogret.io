@@ -86,10 +86,9 @@ class TutorControllerTest {
     void getTutorDetail_ShouldReturn200() throws Exception {
         UUID tutorId = UUID.randomUUID();
 
-        var response = com.dersplatform.model.dto.response.UserResponse.builder()
+        var response = com.dersplatform.model.dto.response.PublicUserResponse.builder()
                 .id(tutorId)
                 .fullName("Rabia Çetingül")
-                .email("zeynep@example.com")
                 .build();
 
         when(tutorService.getTutorDetail(tutorId)).thenReturn(response);

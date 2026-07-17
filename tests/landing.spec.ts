@@ -10,16 +10,16 @@ test.describe('Landing Page E2E Tests', () => {
 
   test('should display the main hero section and header', async ({ page }) => {
     // Check page title / tagline
-    await expect(page.locator('h1')).toContainText("Türkiye'nin En İyi");
+    await expect(page.locator('h1')).toContainText('Sana Uygun');
     await expect(page.locator('h1')).toContainText("Özel Ders");
 
     // Check search inputs
     const searchInput = page.locator('input[placeholder="Hangi konuyu öğrenmek istiyorsunuz?"]');
     await expect(searchInput).toBeVisible();
     
-    // Check stats are rendered
-    await expect(page.locator('text=Uzman Öğretmen').first()).toBeVisible();
-    await expect(page.locator('text=Mutlu Öğrenci').first()).toBeVisible();
+    // Check first-release promises are rendered without unverifiable platform statistics.
+    await expect(page.getByText('Doğrudan iletişim').first()).toBeVisible();
+    await expect(page.getByText('Ücretsiz platform').first()).toBeVisible();
   });
 
   test('should navigate to search page when clicking a popular subject or search button', async ({ page }) => {

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users")
+@SQLRestriction("deleted_at IS NULL")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class User {
 
@@ -40,6 +42,10 @@ public class User {
 
     @Column(nullable = false)
     private boolean isVerified;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Integer tokenVersion = 0;
 
     private boolean isProfileComplete;
 
@@ -81,4 +87,6 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    private LocalDateTime deletedAt;
 }

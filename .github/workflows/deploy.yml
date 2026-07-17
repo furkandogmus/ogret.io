@@ -1,8 +1,10 @@
 name: Publish images and update GitOps
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
     branches: [main]
+    types: [completed]
   workflow_dispatch:
     inputs:
       component:
@@ -27,46 +29,26 @@ env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   ECR_REGISTRY: 269174115166.dkr.ecr.eu-north-1.amazonaws.com
   GITOPS_REPOSITORY: furkandogmus/ogret.io-gitops
-  IMAGE_TAG: ${{ github.sha }}
+  IMAGE_TAG: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
   deploy:
     name: Build images and deploy manifests
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Detect deployable changes
-        id: changes
-        uses: dorny/paths-filter@v3
         with:
-          filters: |
-            backend:
-              - 'backend/**'
-            frontend:
-              - 'src/**'
-              - 'public/**'
-              - 'Dockerfile'
-              - '.dockerignore'
-              - 'nginx.conf'
-              - 'index.html'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'vite.config.*'
-              - 'postcss.config.*'
-              - 'tailwind.config.*'
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Decide deployment targets
         id: targets
         env:
           EVENT_NAME: ${{ github.event_name }}
           REQUESTED_COMPONENT: ${{ inputs.component || 'all' }}
-          BACKEND_CHANGED: ${{ steps.changes.outputs.backend }}
-          FRONTEND_CHANGED: ${{ steps.changes.outputs.frontend }}
         run: |
-          backend="$BACKEND_CHANGED"
-          frontend="$FRONTEND_CHANGED"
+          backend=true
+          frontend=true
 
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             backend=false

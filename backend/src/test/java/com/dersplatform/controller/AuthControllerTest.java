@@ -21,6 +21,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -62,8 +63,9 @@ class AuthControllerTest {
                 var request = new RegisterRequest();
                 request.setEmail("test@example.com");
                 request.setPhone("+905551234567");
-                request.setPassword("password123");
+                request.setPassword("password1234");
                 request.setFullName("Test User");
+                request.setRole(com.dersplatform.model.enums.Role.STUDENT);
 
                 var userResponse = com.dersplatform.model.dto.response.UserResponse.builder()
                                 .id(UUID.randomUUID())
@@ -81,6 +83,7 @@ class AuthControllerTest {
                                                 .build());
 
                 mockMvc.perform(post("/api/v1/auth/register")
+                                .header("X-Client-Platform", "mobile")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isCreated())
@@ -107,7 +110,29 @@ class AuthControllerTest {
         void login_ShouldReturn200() throws Exception {
                 var request = new LoginRequest();
                 request.setEmail("test@example.com");
-                request.setPassword("password123");
+                request.setPassword("password1234");
+
+                when(authService.login(any())).thenReturn(
+                                AuthResponse.builder()
+                                                .accessToken("token")
+                                                .refreshToken("refresh")
+                                                .tokenType("Bearer")
+                                                .expiresIn(900000)
+                                                .build());
+
+                mockMvc.perform(post("/api/v1/auth/login")
+                                .header("X-Client-Platform", "mobile")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.accessToken").value("token"));
+        }
+
+        @Test
+        void loginBrowser_ShouldUseHttpOnlyCookiesAndHideTokens() throws Exception {
+                var request = new LoginRequest();
+                request.setEmail("test@example.com");
+                request.setPassword("password1234");
 
                 when(authService.login(any())).thenReturn(
                                 AuthResponse.builder()
@@ -121,6 +146,16 @@ class AuthControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.accessToken").value("token"));
+                                .andExpect(jsonPath("$.accessToken").doesNotExist())
+                                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                                .andExpect(result -> {
+                                        var cookies = result.getResponse().getHeaders("Set-Cookie");
+                                        assertThat(cookies).anyMatch(cookie -> cookie.contains("ogret_access=token"));
+                                        assertThat(cookies).anyMatch(cookie -> cookie.contains("ogret_refresh=refresh"));
+                                        assertThat(cookies.stream()
+                                                        .filter(cookie -> cookie.startsWith("ogret_access=")
+                                                                        || cookie.startsWith("ogret_refresh=")))
+                                                        .allMatch(cookie -> cookie.contains("HttpOnly"));
+                                });
         }
 }

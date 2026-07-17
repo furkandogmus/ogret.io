@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from "react";
 import { Client } from "@stomp/stompjs";
+import { useAuth } from "./AuthProvider";
+import api from "../api/client";
 
 export interface AppNotification {
   id: string;
@@ -38,7 +40,17 @@ export function useNotifications() {
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const clientRef = useRef<Client | null>(null);
-  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setNotifications([]);
+      return;
+    }
+    api.get<AppNotification[]>("/notifications")
+      .then(({ data }) => setNotifications(data))
+      .catch(() => setNotifications([]));
+  }, [isAuthenticated]);
 
   const addNotification = useCallback((n: Omit<AppNotification, "id" | "read" | "createdAt">) => {
     setNotifications((prev) => [
@@ -53,45 +65,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     const client = new Client({
       brokerURL: `/ws/chat`,
-      connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {
-        // Subscribe to direct chat messages (existing)
-        client.subscribe("/user/queue/messages", (msg) => {
-          try {
-            const body = JSON.parse(msg.body);
-            setNotifications((prev) => [
-              {
-                id: `msg-${body.id || Date.now()}`,
-                type: "message",
-                title: "Yeni Mesaj",
-                body: body.content?.substring(0, 100) || "",
-                senderName: body.senderName,
-                senderAvatar: body.senderAvatar,
-                link: `/mesajlar?userId=${body.senderId}`,
-                read: false,
-                createdAt: new Date().toISOString(),
-              },
-              ...prev,
-            ]);
-          } catch { /* ignore */ }
-        });
-
-        // Subscribe to the notifications channel (NEW)
+        // Chat messages are represented by the server-persisted notification below.
         client.subscribe("/user/queue/notifications", (msg) => {
           try {
             const body = JSON.parse(msg.body);
             setNotifications((prev) => {
               // Deduplicate: skip if we already have this notification id
               if (prev.some((n) => n.id === body.id)) return prev;
-              // Also deduplicate message notifications that came via /queue/messages
-              if (body.type === "message" && prev.some((n) => n.type === "message" && n.link === body.link && Date.now() - new Date(n.createdAt).getTime() < 3000)) {
-                return prev;
-              }
               return [
                 {
                   id: body.id || `notif-${Date.now()}`,
@@ -118,7 +104,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     return () => {
       client.deactivate();
     };
-  }, [token]);
+  }, [isAuthenticated]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -126,10 +112,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+    api.put(`/notifications/${id}/read`).catch(() => undefined);
   }, []);
 
   const markAllAsRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    api.put("/notifications/read-all").catch(() => undefined);
   }, []);
 
   const clearNotifications = useCallback(() => {

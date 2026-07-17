@@ -23,7 +23,7 @@ function StarRatingComponent({ rating, size = 16, interactive = false, onRate }:
           <TouchableOpacity
             key={star}
             disabled={!interactive}
-            onPress={() => onRate?.(star)}
+            onPress={interactive ? () => onRate?.(star) : undefined}
           >
             <Ionicons
               name={filled ? "star" : half ? "star-half" : "star-outline"}

@@ -57,7 +57,7 @@ describe("TutorCard", () => {
   it("calls onPress when pressed", () => {
     const onPress = jest.fn();
     const { getByText } = render(<TutorCard tutor={mockTutor} onPress={onPress} />);
-    fireEvent.press(getByText("Zeynep Kaya").parent!.parent!);
+    fireEvent.press(getByText("Rabia Çetingül").parent!.parent!);
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 

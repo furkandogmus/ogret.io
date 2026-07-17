@@ -15,7 +15,7 @@ export function RootLayout() {
         "@type": "WebSite",
         name: "öğret.io",
         url: "https://ogret.io/",
-        description: "Türkiye'nin en iyi online özel ders platformu. Alanında uzman öğretmenlerle online olarak buluşun.",
+        description: "Öğrencilerle özel ders öğretmenlerini doğrudan buluşturan ücretsiz platform.",
         inLanguage: "tr",
         potentialAction: {
           "@type": "SearchAction",

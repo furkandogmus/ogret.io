@@ -1,7 +1,7 @@
 package com.dersplatform.controller;
 
 import com.dersplatform.model.dto.response.TutorSummaryResponse;
-import com.dersplatform.model.dto.response.UserResponse;
+import com.dersplatform.model.dto.response.PublicUserResponse;
 import com.dersplatform.service.TutorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -43,7 +43,7 @@ public class TutorController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getTutorDetail(@PathVariable UUID id) {
+    public ResponseEntity<PublicUserResponse> getTutorDetail(@PathVariable UUID id) {
         return ResponseEntity.ok(tutorService.getTutorDetail(id));
     }
 

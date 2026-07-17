@@ -20,7 +20,10 @@ export function getApiBaseUrl() {
 
 const api = axios.create({
   baseURL: getApiBaseUrl(),
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json",
+    "X-Client-Platform": "mobile",
+  },
   timeout: 15000,
 });
 
@@ -43,7 +46,8 @@ api.interceptors.response.use(
         try {
           const { data } = await axios.post(
             `${api.defaults.baseURL}/auth/refresh`,
-            { refreshToken }
+            { refreshToken },
+            { headers: { "X-Client-Platform": "mobile" } }
           );
           await SecureStore.setItemAsync(TOKEN_KEY, data.accessToken);
           await SecureStore.setItemAsync(REFRESH_KEY, data.refreshToken);

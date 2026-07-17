@@ -37,6 +37,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 
   jackson:
     serialization:
@@ -46,6 +47,11 @@ spring:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:5173}
+  upload:
+    malware-scan-enabled: ${MALWARE_SCAN_ENABLED:false}
+    clamav-host: ${CLAMAV_HOST:localhost}
+    clamav-port: ${CLAMAV_PORT:3310}
+    clamav-timeout-ms: ${CLAMAV_TIMEOUT_MS:10000}
   jwt:
     secret: ${JWT_SECRET:dersplatform-jwt-secret-key-must-be-at-least-256-bits-long}
     access-token-expiration: 900000    # 15 minutes

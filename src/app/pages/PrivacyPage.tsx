@@ -10,13 +10,16 @@ export function PrivacyPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 prose prose-stone">
       <h1>Gizlilik Politikası</h1>
-      <p className="text-sm text-stone-500">Son güncelleme: Mart 2026</p>
+      <p className="text-sm text-stone-500">Son güncelleme: 17 Temmuz 2026 · Sürüm 1.0</p>
 
       <h2>Toplanan Bilgiler</h2>
       <p>öğret.io olarak, hizmetlerimizi sunabilmek için ad, soyad, e-posta adresi, telefon numarası gibi temel bilgilerinizi toplarız.</p>
 
       <h2>Bilgilerin Kullanımı</h2>
       <p>Topladığımız bilgiler, size en iyi hizmeti sunabilmek, hesabınızı yönetmek ve platformumuzu geliştirmek için kullanılır.</p>
+
+      <h2>Ödeme Verileri</h2>
+      <p>İlk sürümde öğret.io üzerinden ödeme alınmadığı için kart veya banka hesabı bilgisi toplamıyoruz. Tarafların kendi aralarında paylaştığı ödeme bilgilerinin platform mesajlarında gönderilmemesini öneririz.</p>
 
       <h2>Veri Güvenliği</h2>
       <p>Kişisel verileriniz, KVKK kapsamında gerekli teknik ve idari tedbirler alınarak korunmaktadır.</p>

@@ -138,6 +138,12 @@ export const userApi = {
 
   changePassword: (currentPassword: string, newPassword: string) =>
     api.put("/users/me/password", { currentPassword, newPassword }),
+
+  exportData: () =>
+    api.get("/users/me/data-export"),
+
+  deleteAccount: () =>
+    api.delete("/users/me"),
 };
 
 export interface Page<T> {
@@ -159,10 +165,6 @@ export const authApi = {
 
   verifyEmail: (token: string) =>
     api.post("/auth/verify-email", { token }),
-
-  // TODO: Telefon doğrulama - Twilio entegrasyonu gerekiyor, şimdilik pasif
-  // verifyPhone: (code: string) =>
-  //   api.post("/auth/verify-phone", { code }),
 
   forgotPassword: (email: string) =>
     api.post("/auth/forgot-password", { email }),
@@ -414,7 +416,7 @@ export const listingApi = {
 // ─── File Upload ───
 
 export const fileApi = {
-  upload: (file: File, isPublic: boolean = true) => {
+  upload: (file: File, purpose: "AVATAR" | "IDENTITY_DOCUMENT") => {
     const formData = new FormData();
     formData.append("file", file);
     return api.post<{ url: string }>("/files/upload", formData, {
@@ -422,7 +424,7 @@ export const fileApi = {
         "Content-Type": "multipart/form-data",
       },
       params: {
-        public: isPublic,
+        purpose,
       },
     });
   },
@@ -480,4 +482,3 @@ export const blogApi = {
   recordView: (id: string) =>
     api.post(`/blog/posts/${id}/view`),
 };
-

@@ -247,6 +247,18 @@ export const mockVerifications = [
 // ─── Routing Mock Setup Helper ───
 
 export async function setupDefaultMocks(page: Page) {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('cookie-consent-v2')) {
+      localStorage.setItem('cookie-consent-v2', JSON.stringify({
+        version: 2,
+        necessary: true,
+        analytics: false,
+        marketing: false,
+        updatedAt: new Date().toISOString(),
+      }));
+    }
+  });
+
   // Mock list of subjects
   await page.route(/\/api\/v1\/subjects/, async (route) => {
     await route.fulfill({
@@ -378,5 +390,43 @@ export async function setupDefaultMocks(page: Page) {
       contentType: 'application/json',
       body: JSON.stringify({ url: 'http://localhost:9000/dersplatform-public/mock-avatar.png' }),
     });
+  });
+
+  // The application no longer reads auth state from localStorage. Legacy E2E
+  // fixtures still use it only as input for these mocked cookie-session endpoints.
+  const readFixtureUser = async () => page.evaluate(() => {
+    const value = localStorage.getItem('user');
+    return value ? JSON.parse(value) : null;
+  }).catch(() => null);
+
+  await page.route(/\/api\/v1\/auth\/refresh(\?|$)/, async (route) => {
+    const user = await readFixtureUser();
+    await route.fulfill({
+      status: user ? 200 : 401,
+      contentType: 'application/json',
+      body: JSON.stringify(user ? { user } : { message: 'Kimlik doğrulama gerekli' }),
+    });
+  });
+
+  await page.route(/\/api\/v1\/auth\/logout(\?|$)/, async (route) => {
+    await page.evaluate(() => {
+      localStorage.removeItem('user');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+    });
+    await route.fulfill({ status: 204, body: '' });
+  });
+
+  await page.route(/\/api\/v1\/users\/me(\?|$)/, async (route) => {
+    const user = await readFixtureUser();
+    await route.fulfill({
+      status: user ? 200 : 401,
+      contentType: 'application/json',
+      body: JSON.stringify(user || { message: 'Kimlik doğrulama gerekli' }),
+    });
+  });
+
+  await page.route(/\/api\/v1\/notifications(\?|$)/, async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
   });
 }

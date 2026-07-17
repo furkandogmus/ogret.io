@@ -31,6 +31,21 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://ogret.io/nasil-calisir</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://ogret.io/fiyatlandirma</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://ogret.io/ogrenciler</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://ogret.io/blog/online-ozel-dersin-avantajlari</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -72,6 +87,11 @@
   </url>
   <url>
     <loc>https://ogret.io/kullanim-kosullari</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://ogret.io/yasal</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>

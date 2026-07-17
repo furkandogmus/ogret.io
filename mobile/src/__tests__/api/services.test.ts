@@ -1,4 +1,4 @@
-import { authApi, userApi, tutorApi, lessonApi, reviewApi, favoriteApi, subscriptionApi, verificationApi } from "../../api/services";
+import { authApi, userApi, tutorApi, lessonApi, reviewApi, favoriteApi, subscriptionApi, verificationApi, messageApi, adminApi } from "../../api/services";
 
 jest.mock("axios");
 
@@ -65,27 +65,27 @@ beforeEach(() => {
 describe("authApi", () => {
   it("login calls POST /auth/login with credentials", async () => {
     mockAxios.post.mockResolvedValue(mockTokens);
-    const { data } = await authApi.login("test@ogret.io", "123456");
+    const { data } = await authApi.login("test@ogret.io", "test-password-123");
     expect(mockAxios.post).toHaveBeenCalledWith("/auth/login", {
       email: "test@ogret.io",
-      password: "123456",
+      password: "test-password-123",
     });
     expect(data.accessToken).toBe("access-123");
     expect(data.refreshToken).toBe("refresh-123");
   });
 
   it("register calls POST /auth/register with user data", async () => {
-    mockAxios.post.mockResolvedValue(mockTokens);
+    mockAxios.post.mockResolvedValue({ data: { user: mockUser.data } });
     const payload = {
       email: "new@ogret.io",
       phone: "+905551234567",
-      password: "123456",
+      password: "test-password-123",
       fullName: "New User",
       role: "STUDENT" as const,
     };
     const { data } = await authApi.register(payload);
     expect(mockAxios.post).toHaveBeenCalledWith("/auth/register", payload);
-    expect(data.accessToken).toBe("access-123");
+    expect(data.user.id).toBe("user-1");
   });
 });
 
@@ -168,8 +168,8 @@ describe("lessonApi", () => {
       data: { ...mockLesson.data, status: "CANCELLED" },
     });
     const { data } = await lessonApi.cancel("lesson-1", "Müsait değil");
-    expect(mockAxios.put).toHaveBeenCalledWith("/lessons/lesson-1/cancel", null, {
-      params: { reason: "Müsait değil" },
+    expect(mockAxios.put).toHaveBeenCalledWith("/lessons/lesson-1/cancel", {
+      reason: "Müsait değil",
     });
     expect(data.status).toBe("CANCELLED");
   });
@@ -254,10 +254,9 @@ describe("verificationApi", () => {
 describe("messageApi", () => {
   it("getConversation calls with userId", async () => {
     mockAxios.get.mockResolvedValue({ data: [] });
-    const { default: msgApi } = await import("../../api/services");
-    await msgApi.messageApi.getConversation("user-2");
+    await messageApi.getConversation("user-2");
     expect(mockAxios.get).toHaveBeenCalledWith("/messages", {
-      params: { with: "user-2" },
+      params: { with: "user-2", page: 0, size: 30 },
     });
   });
 });
@@ -267,8 +266,7 @@ describe("adminApi", () => {
     mockAxios.get.mockResolvedValue({
       data: { totalUsers: 100, totalTutors: 20, totalLessons: 150 },
     });
-    const { default: svc } = await import("../../api/services");
-    const { data } = await svc.adminApi.getDashboard();
+    const { data } = await adminApi.getDashboard();
     expect(mockAxios.get).toHaveBeenCalledWith("/admin/dashboard");
     expect(data.totalUsers).toBe(100);
   });

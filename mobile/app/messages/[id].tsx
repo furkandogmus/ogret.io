@@ -170,7 +170,17 @@ export default function ChatScreen() {
     setText("");
 
     const tempId = `temp-${Date.now()}`;
-    setMessages((prev) => [...prev, { id: tempId, senderId: me?.id ?? "", receiverId: id, content: msg, messageType: "TEXT" as any, read: false, createdAt: new Date().toISOString() }]);
+    setMessages((prev) => [...prev, {
+      id: tempId,
+      senderId: me?.id ?? "",
+      senderName: me?.fullName ?? "",
+      receiverId: id,
+      receiverName: "",
+      content: msg,
+      messageType: "TEXT",
+      read: false,
+      createdAt: new Date().toISOString(),
+    }]);
 
     if (connected) {
       wsSend(id, msg);

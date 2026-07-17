@@ -14,7 +14,7 @@ interface SeoProps {
 }
 
 const BASE_TITLE = "öğret.io";
-const BASE_DESCRIPTION = "Türkiye'nin en iyi online özel ders platformu. Alanında uzman öğretmenlerle online olarak buluşun.";
+const BASE_DESCRIPTION = "Öğrencilerle özel ders öğretmenlerini doğrudan buluşturan ücretsiz platform.";
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL || (typeof window !== "undefined" ? window.location.origin : "https://ogret.io");
 
 function setMeta(name: string, content: string) {

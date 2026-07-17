@@ -38,7 +38,7 @@ public class AppSeeder implements CommandLineRunner {
         for (UUID id : seedIds) {
             userRepository.findById(id).ifPresent(user -> {
                 if (user.getPasswordHash() == null || user.getPasswordHash().isEmpty()) {
-                    user.setPasswordHash(passwordEncoder.encode("123456"));
+                    user.setPasswordHash(passwordEncoder.encode("dev-password-123"));
                     userRepository.save(user);
                     log.info("Seed password set for: {}", user.getEmail());
                 }

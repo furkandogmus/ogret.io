@@ -8,6 +8,9 @@ import com.dersplatform.model.dto.request.ResetPasswordRequest;
 import com.dersplatform.model.dto.request.VerifyEmailRequest;
 import com.dersplatform.model.dto.response.AuthResponse;
 import com.dersplatform.service.AuthService;
+import com.dersplatform.security.AuthCookieService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,20 +25,40 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthCookieService authCookieService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+    public ResponseEntity<AuthResponse> register(
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        AuthResponse auth = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(prepareClientResponse(auth, httpRequest, httpResponse));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        AuthResponse auth = authService.login(request);
+        return ResponseEntity.ok(prepareClientResponse(auth, httpRequest, httpResponse));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refresh(request));
+    public ResponseEntity<AuthResponse> refresh(
+            @RequestBody(required = false) RefreshTokenRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        String refreshToken = request != null ? request.getRefreshToken() : null;
+        if (refreshToken == null || refreshToken.isBlank()) {
+            refreshToken = authCookieService.readCookie(httpRequest, AuthCookieService.REFRESH_COOKIE);
+        }
+        RefreshTokenRequest resolvedRequest = new RefreshTokenRequest();
+        resolvedRequest.setRefreshToken(refreshToken);
+        AuthResponse auth = authService.refresh(resolvedRequest);
+        return ResponseEntity.ok(prepareClientResponse(auth, httpRequest, httpResponse));
     }
 
     @PostMapping("/verify-email")
@@ -44,17 +67,17 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "E-posta başarıyla doğrulandı"));
     }
 
-    // TODO: Telefon doğrulama - Twilio entegrasyonu gerekiyor, şimdilik pasif
-    // @PostMapping("/verify-phone")
-    // public ResponseEntity<Map<String, String>> verifyPhone(@Valid @RequestBody VerifyPhoneRequest request) {
-    //     authService.verifyPhone(request);
-    //     return ResponseEntity.ok(Map.of("message", "Telefon başarıyla doğrulandı"));
-    // }
-
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request.getEmail());
         return ResponseEntity.ok(Map.of("message", "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi"));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.resendVerification(request.getEmail());
+        return ResponseEntity.ok(Map.of(
+                "message", "Hesap doğrulanmamışsa yeni doğrulama bağlantısı gönderildi"));
     }
 
     @PostMapping("/reset-password")
@@ -64,9 +87,30 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout(@RequestBody(required = false) Map<String, String> body) {
+    public ResponseEntity<Map<String, String>> logout(
+            @RequestBody(required = false) Map<String, String> body,
+            HttpServletRequest request,
+            HttpServletResponse response) {
         String refreshToken = body != null ? body.get("refreshToken") : null;
+        if (refreshToken == null || refreshToken.isBlank()) {
+            refreshToken = authCookieService.readCookie(request, AuthCookieService.REFRESH_COOKIE);
+        }
         authService.logout(refreshToken);
+        authCookieService.clearAuthCookies(response);
         return ResponseEntity.ok(Map.of("message", "Başarıyla çıkış yapıldı"));
+    }
+
+    private AuthResponse prepareClientResponse(
+            AuthResponse auth,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        if (authCookieService.isMobileClient(request)) {
+            return auth;
+        }
+        if (auth.getAccessToken() == null || auth.getRefreshToken() == null) {
+            return auth;
+        }
+        authCookieService.writeAuthCookies(response, auth);
+        return auth.withoutTokens();
     }
 }

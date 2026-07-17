@@ -47,11 +47,7 @@ export function RegisterPage() {
     setError("");
     try {
       await register({ ...values, phone: values.phone.replace(/\s/g, "") });
-      if (values.role === "TUTOR") {
-        navigate("/profil/duzenle?onboarding=true");
-      } else {
-        navigate("/");
-      }
+      navigate("/giris?registered=1");
     } catch (err: any) {
       setError(err.response?.data?.message || "Kayıt olurken bir hata oluştu");
     }

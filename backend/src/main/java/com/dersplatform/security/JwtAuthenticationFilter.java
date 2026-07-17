@@ -23,6 +23,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
+    private final com.dersplatform.repository.UserRepository userRepository;
+    private final AuthCookieService authCookieService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -32,6 +34,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null && jwtTokenProvider.validateToken(token)) {
             UUID userId = jwtTokenProvider.getUserIdFromToken(token);
+            var user = userRepository.findById(userId).orElse(null);
+            int currentVersion = user == null || user.getTokenVersion() == null ? 0 : user.getTokenVersion();
+            if (user == null || jwtTokenProvider.getTokenVersion(token) != currentVersion) {
+                chain.doFilter(request, response);
+                return;
+            }
             UserDetails userDetails = userDetailsService.loadUserByUsername(userId.toString());
 
             UsernamePasswordAuthenticationToken authentication =
@@ -49,6 +57,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-        return null;
+        return authCookieService.readCookie(request, AuthCookieService.ACCESS_COOKIE);
     }
 }

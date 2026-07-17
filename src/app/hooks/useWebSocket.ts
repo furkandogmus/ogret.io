@@ -1,21 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Client } from "@stomp/stompjs";
 import type { MessageResponse } from "../api/services";
+import { useAuth } from "../providers/AuthProvider";
 
 export function useWebSocket() {
   const clientRef = useRef<Client | null>(null);
   const [connected, setConnected] = useState(false);
   const [incoming, setIncoming] = useState<MessageResponse[]>([]);
-  const token = localStorage.getItem("accessToken");
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = import.meta.env.VITE_WS_URL || `${wsProtocol}://${window.location.host}/ws/chat`;
     const client = new Client({
       brokerURL: wsUrl,
-      connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {
         setConnected(true);
@@ -35,7 +35,7 @@ export function useWebSocket() {
     return () => {
       client.deactivate();
     };
-  }, [token]);
+  }, [isAuthenticated]);
 
   const sendMessage = useCallback(
     (receiverId: string, content: string) => {

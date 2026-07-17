@@ -23,14 +23,7 @@ export function ContactPage() {
           <h2 className="font-bold text-stone-900 mb-1">E-posta</h2>
           <a href={`mailto:${APP_CONFIG.SUPPORT_EMAIL}`} className="text-emerald-600 hover:underline text-sm">{APP_CONFIG.SUPPORT_EMAIL}</a>
         </div>
-        <div>
-          <h2 className="font-bold text-stone-900 mb-1">Adres</h2>
-          <p className="text-sm text-stone-500">İstanbul, Türkiye</p>
-        </div>
-        <div>
-          <h2 className="font-bold text-stone-900 mb-1">Çalışma Saatleri</h2>
-          <p className="text-sm text-stone-500">Hafta içi 09:00 - 18:00</p>
-        </div>
+        <p className="text-sm text-stone-500">Destek taleplerinizi e-posta üzerinden iletebilirsiniz.</p>
       </div>
 
       <JsonLd data={{

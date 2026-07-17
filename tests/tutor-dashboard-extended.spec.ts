@@ -17,19 +17,19 @@ test.describe('Tutor Dashboard Extended Features', () => {
     });
   });
 
-  test('should show earnings chart and total earnings', async ({ page }) => {
+  test('should show recorded lesson totals without claiming payment tracking', async ({ page }) => {
     await page.goto('/ogretmen-panel');
 
-    await expect(page.locator('text=Aylık Gelir')).toBeVisible();
+    await expect(page.locator('text=Aylık Ders Tutarı')).toBeVisible();
+    await expect(page.locator('text=ödeme takibi değildir')).toBeVisible();
     await expect(page.locator('text=₺400').first()).toBeVisible();
   });
 
-  test('should show "Profilimi Öne Çıkar" banner linking to subscriptions', async ({ page }) => {
+  test('should show the free release and direct payment notice', async ({ page }) => {
     await page.goto('/ogretmen-panel');
 
-    await expect(page.locator('text=Profilimi Öne Çıkar')).toBeVisible();
-    await page.locator('button:has-text("Planları İncele")').click();
-    await expect(page).toHaveURL('/abonelik');
+    await expect(page.locator('text=İlk sürüm ücretsiz')).toBeVisible();
+    await expect(page.locator('text=Ders ücretini ve ödeme yöntemini öğrencinizle doğrudan kararlaştırın.')).toBeVisible();
   });
 
   test('should display and interact with "Öğrencilerim" section', async ({ page }) => {
@@ -113,6 +113,13 @@ test.describe('Tutor Dashboard Extended Features', () => {
   });
 
   test('should add meeting link for confirmed lessons', async ({ page }) => {
+    await page.route(/\/api\/v1\/lessons(\?|$)/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockLessons.map((lesson) => lesson.id === 'les-2' ? { ...lesson, meetingLink: undefined } : lesson)),
+      });
+    });
     // Mock meeting link update
     await page.route(/\/api\/v1\/lessons\/les-2\/meeting-link/, async (route) => {
       const data = route.request().postDataJSON();
@@ -148,7 +155,7 @@ test.describe('Tutor Dashboard Extended Features', () => {
 
     // 3-step guide
     await expect(page.locator('text=Profilim')).toBeVisible();
-    await expect(page.locator('text=İlan Oluştur')).toBeVisible();
+    await expect(page.locator('text=İlan Oluştur').first()).toBeVisible();
     await expect(page.locator('text=Doğrulama Yap')).toBeVisible();
 
     // CTA

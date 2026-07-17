@@ -2,13 +2,12 @@ package com.dersplatform.service;
 
 import com.dersplatform.exception.ApiException;
 import com.dersplatform.model.dto.response.TutorSummaryResponse;
-import com.dersplatform.model.dto.response.UserResponse;
+import com.dersplatform.model.dto.response.PublicUserResponse;
 import com.dersplatform.model.entity.Lesson;
 import com.dersplatform.model.entity.TutorAvailability;
 import com.dersplatform.model.entity.User;
 import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.LessonRepository;
-import com.dersplatform.repository.SubscriptionRepository;
 import com.dersplatform.repository.TutorAvailabilityRepository;
 import com.dersplatform.repository.TutorListingRepository;
 import com.dersplatform.repository.TutorSubjectRepository;
@@ -36,7 +35,6 @@ public class TutorService {
     private final TutorSubjectRepository tutorSubjectRepository;
     private final TutorAvailabilityRepository tutorAvailabilityRepository;
     private final LessonRepository lessonRepository;
-    private final SubscriptionRepository subscriptionRepository;
     private final TutorListingRepository tutorListingRepository;
     private final ScoringService scoringService;
 
@@ -60,9 +58,6 @@ public class TutorService {
             tutors = userRepository.findByRoleAndIdIn(Role.TUTOR, activeListingTutorIds, pageable);
         }
 
-        Map<UUID, String> premiumPlans = subscriptionRepository.findAllActiveWithTutor().stream()
-                .collect(Collectors.toMap(s -> s.getTutor().getId(), s -> s.getPlanType().name()));
-
         List<UUID> tutorIds = tutors.getContent().stream().map(User::getId).toList();
         Map<UUID, List<String>> subjectsByTutor = tutorSubjectRepository.findByTutorIdIn(tutorIds)
                 .stream()
@@ -74,8 +69,7 @@ public class TutorService {
         return tutors.map(tutor -> {
             List<String> subjects = subjectsByTutor.getOrDefault(tutor.getId(), List.of())
                     .stream().distinct().toList();
-            String plan = premiumPlans.getOrDefault(tutor.getId(), null);
-            return TutorSummaryResponse.fromEntity(tutor, subjects, plan);
+            return TutorSummaryResponse.fromEntity(tutor, subjects, null);
         });
     }
 
@@ -86,9 +80,6 @@ public class TutorService {
         }
 
         Set<UUID> activeSet = Set.copyOf(activeListingTutorIds);
-
-        Map<UUID, String> premiumPlans = subscriptionRepository.findAllActiveWithTutor().stream()
-                .collect(Collectors.toMap(s -> s.getTutor().getId(), s -> s.getPlanType().name()));
 
         List<User> tutors = tutorSubjectRepository.findBySubjectId(subjectId)
                 .stream()
@@ -108,8 +99,7 @@ public class TutorService {
         return tutors.stream()
                 .map(tutor -> {
                     List<String> subjects = subjectsByTutor.getOrDefault(tutor.getId(), List.of());
-                    String plan = premiumPlans.getOrDefault(tutor.getId(), null);
-                    return TutorSummaryResponse.fromEntity(tutor, subjects, plan);
+                    return TutorSummaryResponse.fromEntity(tutor, subjects, null);
                 })
                 .toList();
     }
@@ -177,7 +167,7 @@ public class TutorService {
         return result;
     }
 
-    public UserResponse getTutorDetail(UUID tutorId) {
+    public PublicUserResponse getTutorDetail(UUID tutorId) {
         User tutor = userRepository.findById(tutorId)
                 .orElseThrow(() -> ApiException.notFound("Öğretmen bulunamadı"));
 
@@ -185,7 +175,7 @@ public class TutorService {
             throw ApiException.badRequest("Bu kullanıcı bir öğretmen değil");
         }
 
-        return UserResponse.fromEntity(tutor);
+        return PublicUserResponse.fromEntity(tutor);
     }
 
     public void computePopularityScore(UUID tutorId) {

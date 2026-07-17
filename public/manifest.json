@@ -1,7 +1,7 @@
 {
   "name": "öğret.io - Online Özel Ders Platformu",
   "short_name": "öğret.io",
-  "description": "Türkiye'nin en iyi online özel ders platformu.",
+  "description": "Öğrencilerle özel ders öğretmenlerini doğrudan buluşturan ücretsiz platform.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

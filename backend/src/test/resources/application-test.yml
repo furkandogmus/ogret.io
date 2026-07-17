@@ -29,3 +29,8 @@ app:
     secret: test-jwt-secret-key-that-is-at-least-256-bits-long-for-testing-purposes
     access-token-expiration: 900000
     refresh-token-expiration: 604800000
+
+management:
+  health:
+    redis:
+      enabled: false

@@ -24,10 +24,16 @@ export default function RegisterScreen() {
       Alert.alert("Hata", "Tüm alanları doldurun");
       return;
     }
+    if (password.length < 12) {
+      Alert.alert("Hata", "Şifre en az 12 karakter olmalıdır");
+      return;
+    }
     setLoading(true);
     try {
       await register({ email, phone, password, fullName, role });
-      router.replace("/(tabs)");
+      Alert.alert("E-postanızı doğrulayın", "Hesabınız oluşturuldu. Giriş yapmadan önce e-postanıza gönderilen bağlantıyı açın.", [
+        { text: "Girişe git", onPress: () => router.replace("/auth/login") },
+      ]);
     } catch (err: any) {
       Alert.alert("Hata", err?.response?.data?.message || "Kayıt yapılamadı");
     } finally {

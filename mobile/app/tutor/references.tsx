@@ -78,7 +78,7 @@ export default function ReferencesScreen() {
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.sm }}>
-            <Ionicons name="award" size={22} color={colors.primary} />
+            <Ionicons name="ribbon-outline" size={22} color={colors.primary} />
             <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}>Referanslar & Tavsiyeler</Text>
           </View>
           <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18, marginBottom: spacing.md }}>

@@ -1,6 +1,8 @@
 package com.dersplatform.config;
 
 import com.dersplatform.security.JwtAuthenticationFilter;
+import com.dersplatform.security.AuthCookieService;
+import com.dersplatform.security.CsrfCookieFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -31,6 +35,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final CsrfCookieFilter csrfCookieFilter;
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
@@ -48,12 +53,15 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsSource()))
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .requireCsrfProtectionMatcher(this::requiresCsrfProtection))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
+                .requestMatchers("/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/docs/**", "/api/v1/swagger-ui/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/api/v1/subjects/**").permitAll()
@@ -62,14 +70,15 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(csrfCookieFilter, BasicAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean
@@ -79,7 +88,10 @@ public class SecurityConfig {
 
     private CorsConfigurationSource corsSource() {
         var config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
+        config.setAllowedOrigins(java.util.Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
@@ -87,5 +99,25 @@ public class SecurityConfig {
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    private boolean requiresCsrfProtection(jakarta.servlet.http.HttpServletRequest request) {
+        String method = request.getMethod();
+        if (List.of("GET", "HEAD", "TRACE", "OPTIONS").contains(method)) {
+            return false;
+        }
+        if (request.getRequestURI().startsWith("/api/v1/auth/")) {
+            return false;
+        }
+        String authorization = request.getHeader("Authorization");
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            return false;
+        }
+        if (request.getCookies() == null) {
+            return false;
+        }
+        return java.util.Arrays.stream(request.getCookies()).anyMatch(cookie ->
+                AuthCookieService.ACCESS_COOKIE.equals(cookie.getName())
+                        || AuthCookieService.REFRESH_COOKIE.equals(cookie.getName()));
     }
 }

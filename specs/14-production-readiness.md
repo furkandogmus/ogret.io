@@ -1,13 +1,13 @@
 # Spec 14 — Production Readiness Master Planı
 
-**Belge durumu:** Taslak / uygulanmaya hazır
+**Belge durumu:** Uygulama aşamasında — repo içi P0 sertleştirmeleri `feature/production-blockers` dalında
 
 **Son repo incelemesi:** 17 Temmuz 2026
 
 **Kapsam:** Web, API, veritabanı, gerçek zamanlı mesajlaşma, dosya depolama, e-posta/SMS, mobil uygulama, güvenlik, KVKK, ödeme, CI/CD ve operasyon
 
 **Hedef:** öğret.io'nun kontrollü, ölçülebilir ve geri alınabilir biçimde production'a çıkması
-**Mevcut release kararı:** **NO-GO** — aşağıdaki P0 kapıları tamamlanmadan gerçek kullanıcı veya ödeme trafiği açılmamalı
+**Mevcut release kararı:** **NO-GO** — repo dışı production kapıları [go-live kontrol listesinde](../docs/production-go-live-checklist.md) kanıtlanmadan gerçek kullanıcı trafiği açılmamalı. İlk sürümde ödeme trafiği kapsam dışıdır.
 
 > Bu belge bir özellik istek listesi değil, release sözleşmesidir. Bir madde ancak belirtilen kabul kriteri çalışır sistem, test sonucu, dashboard, runbook veya imzalı iş kararıyla kanıtlandığında tamamlanmış sayılır.
 
@@ -26,7 +26,7 @@
 - Mesajlaşma ve temel operasyonel bildirimler
 - Öğretmen doğrulama başvurusu ve admin inceleme akışı
 - Yasal metinler, onay kayıtları, hesap kapatma ve veri talebi
-- Abonelik **ya gerçek ödeme entegrasyonuyla** açılmalı ya da ödeme tamamlanana kadar UI/API'de devre dışı bırakılmalı
+- Platform ilk sürümde ücretsizdir. Abonelik ve platform içi ödeme UI/API'de kapalıdır; ders ücreti taraflarca doğrudan kararlaştırılır.
 
 Mobil uygulama ayrı bir release trenidir. Web production'a çıkmadan mobil mağaza yayını zorunlu değildir; ancak mobil beta/production açılacaksa Bölüm 16'daki tüm kapılar ayrıca sağlanmalıdır.
 

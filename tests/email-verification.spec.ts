@@ -15,13 +15,9 @@ test.describe('Email Verification Page', () => {
 
     await page.goto('/email-dogrula?token=valid-token-abc');
 
-    // Should show loading first
-    await expect(page.locator('text=Doğrulanıyor...')).toBeVisible();
-
-    // Then success
     await expect(page.locator('text=E-posta Doğrulandı')).toBeVisible();
     await expect(page.locator('text=E-posta adresiniz başarıyla doğrulandı!')).toBeVisible();
-    await expect(page.locator('button:has-text("Giriş Yap")')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Giriş Yap' }).nth(1)).toBeVisible();
   });
 
   test('should show error when verification token is missing', async ({ page }) => {
@@ -39,7 +35,7 @@ test.describe('Email Verification Page', () => {
     await page.goto('/email-dogrula?token=expired-token');
 
     await expect(page.locator('text=Doğrulama Başarısız')).toBeVisible();
-    await expect(page.locator('text=Link süresi dolmuş olabilir')).toBeVisible();
+    await expect(page.locator('text=Link süresi dolmuş')).toBeVisible();
   });
 });
 

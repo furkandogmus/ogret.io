@@ -101,12 +101,12 @@ describe("LessonCard", () => {
     expect(getByText("İptal Et")).toBeTruthy();
   });
 
-  it("shows complete button for CONFIRMED when onComplete provided", () => {
+  it("shows start button for CONFIRMED when onComplete provided", () => {
     const confirmed: Lesson = { ...baseLesson, status: "CONFIRMED" };
     const { getByText } = render(
       <LessonCard lesson={confirmed} userRole="TUTOR" onComplete={() => {}} />
     );
-    expect(getByText("Tamamla")).toBeTruthy();
+    expect(getByText("Başlat")).toBeTruthy();
   });
 
   it("does not show cancel button for CONFIRMED", () => {
@@ -133,13 +133,13 @@ describe("LessonCard", () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  it("calls onComplete when complete pressed", () => {
+  it("calls onComplete handler when start pressed", () => {
     const onComplete = jest.fn();
     const confirmed: Lesson = { ...baseLesson, status: "CONFIRMED" };
     const { getByText } = render(
       <LessonCard lesson={confirmed} userRole="TUTOR" onComplete={onComplete} />
     );
-    fireEvent.press(getByText("Tamamla"));
+    fireEvent.press(getByText("Başlat"));
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 

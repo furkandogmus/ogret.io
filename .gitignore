@@ -3,3 +3,4 @@ backend/.gradle/
 backend/build/
 .env
 dist/
+.wrongstack/

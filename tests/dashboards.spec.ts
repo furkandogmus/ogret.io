@@ -126,7 +126,7 @@ test.describe('Student & Tutor Dashboards E2E Tests', () => {
       });
 
       // Click the check/approve button
-      const confirmButton = page.locator('button:has(svg.lucide-check)').first();
+      const confirmButton = page.getByRole('button', { name: /ders talebini onayla/ });
       await confirmButton.click();
 
       // Wait for page refresh
@@ -134,9 +134,26 @@ test.describe('Student & Tutor Dashboards E2E Tests', () => {
     });
 
     test('should handle reject/cancel request action', async ({ page }) => {
+      let lessonCancelled = false;
+
+      // Keep the list response stateful so WebKit cannot race a post-navigation
+      // route replacement during the cookie-session bootstrap.
+      await page.route(/\/api\/v1\/lessons(\?|$)/, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            { ...mockLessons[0], status: lessonCancelled ? 'CANCELLED' : 'PENDING' },
+            mockLessons[1],
+            mockLessons[2],
+          ]),
+        });
+      });
+
       // Mock lesson cancel PUT call
       await page.route(/\/api\/v1\/lessons\/les-1\/cancel/, async (route) => {
         expect(route.request().method()).toBe('PUT');
+        lessonCancelled = true;
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -146,21 +163,7 @@ test.describe('Student & Tutor Dashboards E2E Tests', () => {
 
       await page.goto('/ogretmen-panel');
 
-      // REDEFINE mock lessons to show cancelled before clicking
-      await page.route(/\/api\/v1\/lessons(\?|$)/, async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify([
-            { ...mockLessons[0], status: 'CANCELLED' },
-            mockLessons[1],
-            mockLessons[2],
-          ]),
-        });
-      });
-
-      // Reject/X button click
-      const rejectButton = page.locator('button:has(svg.lucide-x)').first();
+      const rejectButton = page.getByRole('button', { name: /ders talebini reddet/ });
       await rejectButton.click();
 
       await expect(page.locator('text=Bekleyen Ders Talepleri')).not.toBeVisible();

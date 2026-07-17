@@ -1,130 +1,35 @@
-import { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Button } from "../src/components/Button";
-import { useToast } from "../src/components/Toast";
-import { subscriptionApi } from "../src/api/services";
 import { colors, spacing, radius } from "../src/constants/theme";
-
-interface Plan {
-  type: string; name: string; price: number;
-  icon: keyof typeof Ionicons.glyphMap;
-  features: string[]; popular?: boolean;
-}
-
-const defaultPlans: Plan[] = [
-  { type: "BASIC", name: "Basic", price: 49, icon: "rocket-outline", features: ["Standart profil", "10 ders talebi/ay", "Temel istatistikler"] },
-  { type: "PREMIUM", name: "Premium", price: 99, icon: "diamond-outline", features: ["Öne çıkan profil", "Sınırsız talep", "Profil analitiği", "Öncelikli destek"], popular: true },
-  { type: "VIP", name: "VIP", price: 199, icon: "star-outline", features: ["En üst sıra", "VIP rozeti", "Anında bildirim", "Öncelikli destek"] },
-];
 
 export default function SubscriptionScreen() {
   const router = useRouter();
-  const toast = useToast();
-  const [plans, setPlans] = useState<Plan[]>(defaultPlans);
-  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const [plansRes, mySubRes] = await Promise.all([
-          subscriptionApi.getPlans().catch(() => ({ data: null })),
-          subscriptionApi.getMy().catch(() => ({ data: null })),
-        ]);
-        if (plansRes.data) {
-          const mapped = (plansRes.data as any[]).map((p: any) => {
-            const planType = (p.id || p.type || "").toUpperCase();
-            const def = defaultPlans.find((dp) => dp.type === planType);
-            return {
-              type: planType,
-              name: p.name || def?.name || p.id,
-              price: p.price || def?.price || 0,
-              features: p.features || def?.features || [],
-              icon: def?.icon || "rocket-outline",
-              popular: def?.popular || false,
-            };
-          });
-          setPlans(mapped);
-        }
-        if (mySubRes.data) setCurrentPlan(mySubRes.data.planType);
-      } catch { /* */ }
-      setLoading(false);
-    })();
-  }, []);
-
-  const handleSubscribe = async (planType: string) => {
-    try {
-      await subscriptionApi.subscribe(planType);
-      toast.show("Abonelik başlatıldı", "success");
-      setCurrentPlan(planType);
-    } catch {
-      toast.show("Abonelik başlatılamadı", "error");
-    }
-  };
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.md, paddingTop: 56, paddingBottom: spacing.md }}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color={colors.text} />
+        <TouchableOpacity onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Geri">
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600", marginLeft: spacing.md }}>Abonelik</Text>
+        <Text style={{ color: colors.text, fontSize: 18, fontWeight: "600", marginLeft: spacing.md }}>İlk Sürüm</Text>
       </View>
 
-      <View style={{ paddingHorizontal: spacing.md }}>
-        {plans.map((plan) => (
-          <View
-            key={plan.type}
-            style={{
-              backgroundColor: colors.card,
-              borderRadius: radius.lg,
-              padding: spacing.lg,
-              marginBottom: spacing.md,
-              borderWidth: plan.popular ? 2 : 1,
-              borderColor: plan.popular ? colors.primary : colors.border,
-            }}
-          >
-            {plan.popular && (
-              <View key="popular-badge" style={{ backgroundColor: colors.primary, borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 4, alignSelf: "flex-start", marginBottom: spacing.sm }}>
-                <Text style={{ color: "#fff", fontSize: 11, fontWeight: "600" }}>POPÜLER</Text>
-              </View>
-            )}
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-                <Ionicons name={plan.icon} size={24} color={plan.popular ? colors.primary : colors.textSecondary} />
-                <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>{plan.name}</Text>
-              {currentPlan === plan.type && (
-                <View key="active-badge" style={{ backgroundColor: colors.success + "30", borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 2, marginLeft: spacing.sm }}>
-                  <Text style={{ color: colors.success, fontSize: 10, fontWeight: "700" }}>AKTİF</Text>
-                </View>
-              )}
-              </View>
-              <View style={{ flexDirection: "row", alignItems: "baseline" }}>
-                <Text style={{ color: colors.text, fontSize: 24, fontWeight: "700" }}>₺{plan.price}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 13 }}>/ay</Text>
-              </View>
-            </View>
-            <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
-              {plan.features.map((f, i) => (
-                <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-                  <Ionicons name="checkmark-circle" size={18} color={colors.success} />
-                  <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{f}</Text>
-                </View>
-              ))}
-            </View>
-            <Button title={`${plan.name} Başlat`} onPress={() => handleSubscribe(plan.type)} variant={plan.popular ? "primary" : "outline"} style={{ marginTop: spacing.md }} />
-          </View>
-        ))}
+      <View style={{ padding: spacing.md }}>
+        <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: spacing.lg }}>
+          <Ionicons name="gift-outline" size={36} color={colors.primary} />
+          <Text style={{ color: colors.text, fontSize: 24, fontWeight: "700", marginTop: spacing.md }}>Herkes için ücretsiz</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: spacing.sm }}>
+            İlk sürümde abonelik, paket satışı veya platform üzerinden ders ödemesi bulunmuyor.
+            Öğrenci ve öğretmen ders ücretini, ödeme zamanını ve yöntemini doğrudan kendi aralarında belirler.
+          </Text>
+        </View>
+
+        <View style={{ backgroundColor: "#fffbeb", borderRadius: radius.lg, borderWidth: 1, borderColor: "#fde68a", padding: spacing.md, marginTop: spacing.md }}>
+          <Text style={{ color: "#78350f", fontSize: 13, lineHeight: 19 }}>
+            öğret.io ödemenin tarafı, emanetçisi veya garantörü değildir. Ödeme öncesinde ders ve iptal koşullarını yazılı olarak netleştirin.
+          </Text>
+        </View>
       </View>
     </ScrollView>
   );

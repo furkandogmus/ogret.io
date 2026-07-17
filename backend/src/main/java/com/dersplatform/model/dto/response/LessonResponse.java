@@ -14,8 +14,8 @@ import java.util.UUID;
 @Data @AllArgsConstructor @Builder
 public class LessonResponse {
     private UUID id;
-    private UserResponse student;
-    private UserResponse tutor;
+    private PublicUserResponse student;
+    private PublicUserResponse tutor;
     private SubjectResponse subject;
     private LessonStatus status;
     private LocalDate lessonDate;
@@ -32,8 +32,8 @@ public class LessonResponse {
     public static LessonResponse fromEntity(Lesson lesson) {
         return LessonResponse.builder()
                 .id(lesson.getId())
-                .student(UserResponse.fromEntity(lesson.getStudent()))
-                .tutor(UserResponse.fromEntity(lesson.getTutor()))
+                .student(PublicUserResponse.fromEntity(lesson.getStudent()))
+                .tutor(PublicUserResponse.fromEntity(lesson.getTutor()))
                 .subject(SubjectResponse.fromEntity(lesson.getSubject()))
                 .status(lesson.getStatus())
                 .lessonDate(lesson.getLessonDate())

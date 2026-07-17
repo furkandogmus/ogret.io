@@ -1,6 +1,6 @@
 package com.dersplatform.controller;
 
-import com.dersplatform.model.dto.response.UserResponse;
+import com.dersplatform.model.dto.response.PublicUserResponse;
 import com.dersplatform.model.entity.FavoriteTutor;
 import com.dersplatform.model.entity.User;
 import com.dersplatform.repository.FavoriteTutorRepository;
@@ -28,11 +28,11 @@ public class FavoriteController {
 
     @GetMapping
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<List<UserResponse>> getFavorites(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<PublicUserResponse>> getFavorites(@AuthenticationPrincipal UserDetails userDetails) {
         UUID studentId = UUID.fromString(userDetails.getUsername());
-        List<UserResponse> tutors = favoriteRepository.findByStudentId(studentId)
+        List<PublicUserResponse> tutors = favoriteRepository.findByStudentId(studentId)
                 .stream()
-                .map(fav -> UserResponse.fromEntity(fav.getTutor()))
+                .map(fav -> PublicUserResponse.fromEntity(fav.getTutor()))
                 .toList();
         return ResponseEntity.ok(tutors);
     }

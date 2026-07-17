@@ -52,16 +52,14 @@ test.describe('Authentication (Login & Register) E2E Tests', () => {
     // Should redirect to homepage /
     await expect(page).toHaveURL(/\/$/);
 
-    // Verify localStorage has the token and user
-    const savedUser = await page.evaluate(() => localStorage.getItem('user'));
-    expect(savedUser).toContain('STUDENT');
+    await expect(page.getByText(mockStudent.fullName).first()).toBeVisible();
   });
 
   test('should log in tutor successfully and redirect to tutor dashboard', async ({ page }) => {
     // Intercept login post request
     await page.route(/\/api\/v1\/auth\/login/, async (route) => {
       await route.fulfill({
-        status: 200,
+        status: 201,
         contentType: 'application/json',
         body: JSON.stringify({
           accessToken: 'mock-tutor-access-token',
@@ -88,8 +86,6 @@ test.describe('Authentication (Login & Register) E2E Tests', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          accessToken: 'mock-registered-token',
-          refreshToken: 'mock-registered-refresh-token',
           user: { ...mockStudent, email: 'yeni@test.com', fullName: 'Yeni Kayit' },
         }),
       });
@@ -113,7 +109,7 @@ test.describe('Authentication (Login & Register) E2E Tests', () => {
     // Click register button
     await page.locator('button[type="submit"]').click();
 
-    // Verify redirect or completion state
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/giris\?registered=1$/);
+    await expect(page.getByText(/hesabınızı doğruladıktan sonra/i)).toBeVisible();
   });
 });

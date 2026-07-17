@@ -44,7 +44,7 @@ test.describe('Admin Dashboard E2E Tests', () => {
     });
 
     await page.goto('/admin');
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL('/giris');
   });
 
   test('should display platform statistics card view on default tab', async ({ page }) => {

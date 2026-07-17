@@ -24,8 +24,8 @@ export function ResetPasswordPage() {
     e.preventDefault();
     setError("");
 
-    if (password.length < 6) {
-      setError("Şifre en az 6 karakter olmalıdır");
+    if (password.length < 12) {
+      setError("Şifre en az 12 karakter olmalıdır");
       return;
     }
     if (password !== confirmPassword) {

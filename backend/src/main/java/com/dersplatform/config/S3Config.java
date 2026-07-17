@@ -37,6 +37,9 @@ public class S3Config {
     @Value("${aws.s3.buckets.private}")
     private String privateBucket;
 
+    @Value("${app.storage.fail-fast:false}")
+    private boolean failFast;
+
     @Bean
     @ConditionalOnProperty(name = "aws.s3.endpoint")
     public S3Client s3Client() {
@@ -112,6 +115,9 @@ public class S3Config {
             }
         } catch (Exception e) {
             log.error("Failed to check/create bucket: " + bucketName, e);
+            if (failFast) {
+                throw new IllegalStateException("Required object storage bucket is unavailable: " + bucketName, e);
+            }
         }
     }
 
@@ -127,7 +133,7 @@ public class S3Config {
                 "        \"s3:GetObject\"\n" +
                 "      ],\n" +
                 "      \"Resource\": [\n" +
-                "        \"arn:aws:s3:::" + bucketName + "/*\"\n" +
+                "        \"arn:aws:s3:::" + bucketName + "/avatars/*\"\n" +
                 "      ]\n" +
                 "    }\n" +
                 "  ]\n" +
@@ -141,6 +147,9 @@ public class S3Config {
             log.info("Successfully set public read policy for S3 bucket: {}", bucketName);
         } catch (Exception e) {
             log.error("Failed to set bucket policy for: " + bucketName, e);
+            if (failFast) {
+                throw new IllegalStateException("Public avatar bucket policy could not be applied", e);
+            }
         }
     }
 }

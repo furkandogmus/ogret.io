@@ -42,14 +42,10 @@ test.describe('Static Pages (404, FAQ, About, Contact)', () => {
     await expect(page.locator('text=öğret.io, öğrencilerle alanında uzman öğretmenleri buluşturan online bir özel ders platformudur.')).toBeVisible();
   });
 
-  test('should display About page with stats and values', async ({ page }) => {
+  test('should display About page with mission and values', async ({ page }) => {
     await page.goto('/hakkimizda');
 
     await expect(page.locator('h1')).toContainText('Hakkımızda');
-    await expect(page.locator('text=500+')).toBeVisible();
-    await expect(page.locator('text=10.000+')).toBeVisible();
-    await expect(page.locator('text=4.8/5')).toBeVisible();
-    await expect(page.locator('text=%100')).toBeVisible();
     await expect(page.locator('text=Misyonumuz')).toBeVisible();
     await expect(page.locator('text=Vizyonumuz')).toBeVisible();
     await expect(page.locator('text=Değerlerimiz')).toBeVisible();
@@ -60,8 +56,7 @@ test.describe('Static Pages (404, FAQ, About, Contact)', () => {
 
     await expect(page.locator('h1')).toContainText('İletişim');
     await expect(page.locator('text=info@ogret.io')).toBeVisible();
-    await expect(page.locator('text=İstanbul, Türkiye')).toBeVisible();
-    await expect(page.locator('text=Hafta içi 09:00 - 18:00')).toBeVisible();
+    await expect(page.locator('text=Destek taleplerinizi e-posta üzerinden iletebilirsiniz.')).toBeVisible();
   });
 
   test('should display Privacy page', async ({ page }) => {
@@ -77,6 +72,6 @@ test.describe('Static Pages (404, FAQ, About, Contact)', () => {
 
     await expect(page.locator('h1')).toContainText('Kullanım Koşulları');
     await expect(page.locator('text=Hesap Kaydı')).toBeVisible();
-    await expect(page.locator('text=İptal ve İade')).toBeVisible();
+    await expect(page.locator('text=Ders Ücreti ve Ödeme')).toBeVisible();
   });
 });

@@ -51,7 +51,7 @@ test.describe('Create Listing Wizard (6-Step Tutor Listing Creation)', () => {
 
     // Should auto-advance to step 2
     await expect(page.locator('text=Adım 2 / 6')).toBeVisible();
-    await expect(page.locator('text=Dersler Hakkında')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Dersler Hakkında' })).toBeVisible();
     await expect(page.locator('input[placeholder*="Boğaziçi"]')).toHaveValue('Matematik Özel Ders İlanı');
   });
 
@@ -79,7 +79,8 @@ test.describe('Create Listing Wizard (6-Step Tutor Listing Creation)', () => {
       'Derslerimde öğrencilerin seviyesine göre özel bir program uyguluyorum. ' +
       'Her öğrencinin öğrenme hızı farklıdır ve ben buna saygı duyarım. ' +
       'Amacım matematiği sevdirmek ve öğrencilerin başarısını artırmaktır. ' +
-      'Yıllardır bu işi yapıyorum ve çok deneyimliyim. Haydi gelin birlikte çalışalım!'
+      'Yıllardır bu işi yapıyorum ve çok deneyimliyim. Konuları bol örnekle pekiştiriyor, ' +
+      'düzenli gelişim takibi yapıyorum. Öğrenmeyi birlikte kolaylaştırıyoruz. Haydi gelin birlikte çalışalım!'
     );
     await page.locator('button:has-text("İleri")').click();
 
@@ -90,26 +91,27 @@ test.describe('Create Listing Wizard (6-Step Tutor Listing Creation)', () => {
       '10 yıldır özel ders veriyorum ve yüzlerce öğrenci yetiştirdim. ' +
       'LGS, YKS ve TYT gibi sınavlarda uzmanım. ' +
       'Öğrencilerimle birebir ilgilenir ve her ders sonunda ödev veririm. ' +
-      'Sabırlı ve anlayışlı bir öğretmenim. Referanslarımı görmekten çekinmeyin!'
+      'Sabırlı ve anlayışlı bir öğretmenim. Her öğrencinin güçlü yönlerine göre çalışma ' +
+      'planı hazırlıyor ve ilerlemeyi düzenli olarak değerlendiriyorum. Referanslarımı görmekten çekinmeyin!'
     );
     await page.locator('button:has-text("İleri")').click();
 
     // Step 4: Select formats
     await expect(page.locator('text=Adım 4 / 6')).toBeVisible();
-    await expect(page.locator('text=Dersin Verileceği Yer')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Dersin Verileceği Yer' })).toBeVisible();
     // Online is already checked, now also check tutor home
-    await page.locator('text=Evinizde').click();
+    await page.getByText('Evinizde', { exact: true }).click();
     await page.locator('button:has-text("İleri")').click();
 
     // Step 5: Select languages
     await expect(page.locator('text=Adım 5 / 6')).toBeVisible();
-    await expect(page.locator('text=Konuşulan Diller')).toBeVisible();
-    await page.locator('text=İngilizce').click();
+    await expect(page.getByRole('heading', { name: 'Konuşulan Diller' })).toBeVisible();
+    await page.getByText('İngilizce', { exact: true }).click();
     await page.locator('button:has-text("İleri")').click();
 
     // Step 6: Set hourly rate and publish
     await expect(page.locator('text=Adım 6 / 6')).toBeVisible();
-    await expect(page.locator('text=Saatlik Ücret')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Saatlik Ücret' })).toBeVisible();
     const rateInput = page.locator('input[type="number"]');
     await rateInput.fill('600');
     await page.locator('button:has-text("İlanı Yayınla")').click();

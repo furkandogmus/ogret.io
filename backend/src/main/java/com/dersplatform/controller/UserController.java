@@ -3,6 +3,8 @@ package com.dersplatform.controller;
 import com.dersplatform.model.dto.request.ChangePasswordRequest;
 import com.dersplatform.model.dto.request.UpdateProfileRequest;
 import com.dersplatform.model.dto.response.UserResponse;
+import com.dersplatform.model.dto.response.PublicUserResponse;
+import com.dersplatform.model.dto.response.UserDataExportResponse;
 import com.dersplatform.service.UserService;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
@@ -35,6 +37,21 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Şifre başarıyla değiştirildi"));
     }
 
+    @GetMapping("/me/data-export")
+    public ResponseEntity<UserDataExportResponse> exportMyData(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=ogret-io-veri-export.json")
+                .body(userService.exportUserData(UUID.fromString(userDetails.getUsername())));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyAccount(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        userService.deleteAccount(UUID.fromString(userDetails.getUsername()));
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/me")
     public ResponseEntity<UserResponse> updateProfile(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -50,14 +67,14 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponse>> searchUsers(
+    public ResponseEntity<List<PublicUserResponse>> searchUsers(
             @RequestParam(required = false) String q,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(userService.searchUsers(q, UUID.fromString(userDetails.getUsername())));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable UUID id) {
+    public ResponseEntity<PublicUserResponse> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 }

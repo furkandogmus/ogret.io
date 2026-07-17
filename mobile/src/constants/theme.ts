@@ -10,6 +10,7 @@ export const colors = {
   text: "#292524",
   textSecondary: "#78716c",
   textMuted: "#a8a090",
+  buttonText: "#ffffff",
   success: "#16a34a",
   warning: "#ff9f0a",
   error: "#d4183d",

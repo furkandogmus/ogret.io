@@ -65,4 +65,27 @@ class JwtTokenProviderTest {
 
         assertNotEquals(accessToken, refreshToken);
     }
+
+    @Test
+    void purposeTokens_ShouldBeDistinctAndCarryIds() {
+        UUID userId = UUID.randomUUID();
+        String verification = tokenProvider.generateEmailVerificationToken(userId);
+        String reset = tokenProvider.generatePasswordResetToken(userId);
+
+        assertEquals(userId, tokenProvider.getUserIdFromEmailVerificationToken(verification));
+        assertEquals(userId, tokenProvider.getUserIdFromPasswordResetToken(reset));
+        assertNotNull(tokenProvider.getTokenId(verification));
+        assertNotNull(tokenProvider.getTokenId(reset));
+        assertNotEquals(verification, reset);
+    }
+
+    @Test
+    void tokens_ShouldCarrySessionVersion() {
+        UUID userId = UUID.randomUUID();
+        String access = tokenProvider.generateAccessToken(userId, "test@example.com", "STUDENT", 3);
+        String refresh = tokenProvider.generateRefreshToken(userId, 3);
+
+        assertEquals(3, tokenProvider.getTokenVersion(access));
+        assertEquals(3, tokenProvider.getTokenVersion(refresh));
+    }
 }

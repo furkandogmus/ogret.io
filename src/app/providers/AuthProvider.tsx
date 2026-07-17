@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import api from "../api/client";
+import axios from "axios";
 
 export interface AuthUser {
   id: string;
@@ -25,7 +26,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   setUser: (user: AuthUser | null) => void;
   isAuthenticated: boolean;
   isTutor: boolean;
@@ -48,44 +49,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setUser = useCallback((newUser: AuthUser | null) => {
     setUserState(newUser);
-    if (newUser) {
-      localStorage.setItem("user", JSON.stringify(newUser));
-    } else {
-      localStorage.removeItem("user");
-    }
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) {
-      try {
-        setUserState(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem("user");
-      }
-    }
-    setLoading(false);
+    axios.post("/api/v1/auth/refresh", undefined, { withCredentials: true })
+      .then(() => api.get<AuthUser>("/users/me"))
+      .then(({ data }) => setUserState(data))
+      .catch(() => setUserState(null))
+      .finally(() => setLoading(false));
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const { data } = await api.post("/auth/login", { email, password });
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("refreshToken", data.refreshToken);
     setUser(data.user);
   }, []);
 
   const register = useCallback(async (registerData: RegisterData) => {
-    const { data } = await api.post("/auth/register", registerData);
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("refreshToken", data.refreshToken);
-    setUser(data.user);
-  }, []);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    await api.post("/auth/register", registerData);
     setUser(null);
-    window.location.href = "/";
+  }, [setUser]);
+
+  const logout = useCallback(async () => {
+    try {
+      await api.post("/auth/logout");
+    } finally {
+      setUser(null);
+      window.location.href = "/";
+    }
   }, []);
 
   return (

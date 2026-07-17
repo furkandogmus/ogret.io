@@ -10,7 +10,7 @@ import { Button } from "../../src/components/Button";
 import { Skeleton } from "../../src/components/Skeleton";
 import { useToast } from "../../src/components/Toast";
 import { tutorApi, reviewApi, referenceApi } from "../../src/api/services";
-import type { User, Subject, Review, Reference } from "../../src/types";
+import type { User, SubjectInfo, Review, Reference } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
 
 function ProfileSkeleton() {
@@ -37,7 +37,7 @@ export default function TutorProfileScreen() {
   const router = useRouter();
   const [tutor, setTutor] = useState<User | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [subjects, setSubjects] = useState<SubjectInfo[]>([]);
   const [references, setReferences] = useState<Reference[]>([]);
   const [loading, setLoading] = useState(true);
   const toast = useToast();

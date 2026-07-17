@@ -68,7 +68,7 @@ test.describe('Login Page Extended Features', () => {
   test('should toggle password visibility on login', async ({ page }) => {
     await page.goto('/giris');
 
-    const passwordField = page.locator('div.relative input');
+    const passwordField = page.locator('input[name="password"]');
     await expect(passwordField).toHaveAttribute('type', 'password');
 
     const toggleBtn = page.locator('button svg.lucide-eye').first();

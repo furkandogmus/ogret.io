@@ -9,5 +9,5 @@
   <rect x="60" y="60" width="1080" height="510" rx="24" fill="white" opacity="0.1"/>
   <text x="600" y="280" font-family="system-ui, sans-serif" font-size="72" font-weight="800" fill="white" text-anchor="middle">öğret.io</text>
   <text x="600" y="360" font-family="system-ui, sans-serif" font-size="28" font-weight="500" fill="rgba(255,255,255,0.85)" text-anchor="middle">Online Özel Ders Platformu</text>
-  <text x="600" y="420" font-family="system-ui, sans-serif" font-size="18" fill="rgba(255,255,255,0.6)" text-anchor="middle">Türkiye'nin En İyi Özel Ders Platformu</text>
+  <text x="600" y="420" font-family="system-ui, sans-serif" font-size="18" fill="rgba(255,255,255,0.6)" text-anchor="middle">Öğrenci ve Öğretmenleri Doğrudan Buluşturan Platform</text>
 </svg>

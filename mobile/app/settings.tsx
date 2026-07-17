@@ -10,6 +10,16 @@ import { Button } from "../src/components/Button";
 import { authApi } from "../src/api/services";
 import { colors, spacing, radius } from "../src/constants/theme";
 
+interface SettingsItem {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value?: string;
+  route?: string;
+  disabled?: boolean;
+  danger?: boolean;
+  onPress?: () => void;
+}
+
 export default function SettingsScreen() {
   const router = useRouter();
   const { logout, user } = useAuth();
@@ -35,8 +45,8 @@ export default function SettingsScreen() {
       toast.show("Tüm alanları doldurun", "error");
       return;
     }
-    if (newPassword.length < 6) {
-      toast.show("Şifre en az 6 karakter olmalı", "error");
+    if (newPassword.length < 12) {
+      toast.show("Şifre en az 12 karakter olmalı", "error");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -58,7 +68,7 @@ export default function SettingsScreen() {
     }
   };
 
-  const sections = useMemo(() => [
+  const sections = useMemo<{ title: string; items: SettingsItem[] }[]>(() => [
     {
       title: "Genel",
       items: [
@@ -71,10 +81,8 @@ export default function SettingsScreen() {
       title: "Hesap",
       items: [
         ...(user?.role === "TUTOR" ? [
-          { icon: "card-outline" as const, label: "Abonelik", route: "/subscription" },
           { icon: "id-card-outline" as const, label: "Kimlik Doğrulama", route: "/verification" },
         ] : []),
-        { icon: "wallet-outline" as const, label: "Ödeme Yöntemleri", route: "/payment/methods" },
       ],
     },
     {
@@ -117,7 +125,7 @@ export default function SettingsScreen() {
                     if (item.disabled) return;
                     haptics.light();
                     if (item.onPress) item.onPress();
-                    else if ((item as any).route) router.push((item as any).route as any);
+                    else if (item.route) router.push(item.route as any);
                   }}
                   disabled={item.disabled}
                   accessibilityRole="button"
@@ -133,8 +141,8 @@ export default function SettingsScreen() {
                     <Ionicons name={item.icon} size={20} color={item.danger ? colors.error : colors.textSecondary} />
                     <Text style={{ color: item.danger ? colors.error : colors.text, fontSize: 14 }}>{item.label}</Text>
                   </View>
-                  {(item as any).value ? (
-                    <Text style={{ color: colors.textMuted, fontSize: 13 }}>{(item as any).value}</Text>
+                  {item.value ? (
+                    <Text style={{ color: colors.textMuted, fontSize: 13 }}>{item.value}</Text>
                   ) : !item.disabled ? (
                     <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                   ) : null}
@@ -172,7 +180,7 @@ export default function SettingsScreen() {
                     secureTextEntry
                     value={newPassword}
                     onChangeText={setNewPassword}
-                    placeholder="En az 6 karakter"
+                    placeholder="En az 12 karakter"
                     placeholderTextColor={colors.textMuted}
                     style={{ backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, height: 48, color: colors.text, fontSize: 15 }}
                   />

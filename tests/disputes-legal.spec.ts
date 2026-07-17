@@ -110,7 +110,7 @@ test.describe('Legal Pages (Privacy, Terms, KVKK, Cookies)', () => {
     await page.goto('/gizlilik');
 
     await expect(page.locator('h1')).toContainText('Gizlilik Politikası');
-    await expect(page.locator('text=Son güncelleme: Mart 2026')).toBeVisible();
+    await expect(page.locator('text=Son güncelleme: 17 Temmuz 2026')).toBeVisible();
   });
 
   test('should display terms of use on /kullanim-kosullari', async ({ page }) => {

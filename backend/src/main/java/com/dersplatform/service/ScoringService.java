@@ -7,7 +7,6 @@ import com.dersplatform.model.enums.VerificationStatus;
 import com.dersplatform.repository.FavoriteTutorRepository;
 import com.dersplatform.repository.LessonRepository;
 import com.dersplatform.repository.ReviewRepository;
-import com.dersplatform.repository.SubscriptionRepository;
 import com.dersplatform.repository.TutorListingRepository;
 import com.dersplatform.repository.TutorReferenceRepository;
 import com.dersplatform.repository.TutorSubjectRepository;
@@ -37,7 +36,6 @@ public class ScoringService {
     private final LessonRepository lessonRepository;
     private final ReviewRepository reviewRepository;
     private final TutorSubjectRepository tutorSubjectRepository;
-    private final SubscriptionRepository subscriptionRepository;
     private final FavoriteTutorRepository favoriteTutorRepository;
     private final TutorReferenceRepository tutorReferenceRepository;
     private final TutorListingRepository tutorListingRepository;
@@ -105,9 +103,7 @@ public class ScoringService {
                 + experienceScore + recencyScore + newTutorBoost + verifiedBonus
                 + referenceScore + favoriteScore + flexibilityScore + listingScore;
 
-        double multiplier = computeSubscriptionMultiplier(id);
-
-        return Math.min(Math.min(base, 85.0) * multiplier, 100.0);
+        return Math.min(base, 85.0);
     }
 
     private double computeRatingScore(UUID tutorId) {
@@ -305,14 +301,4 @@ public class ScoringService {
         return Math.min(score, 5);
     }
 
-    private double computeSubscriptionMultiplier(UUID tutorId) {
-        var sub = subscriptionRepository.findByTutorIdAndIsActiveTrue(tutorId);
-        if (sub.isEmpty())
-            return 1.0;
-        return switch (sub.get().getPlanType()) {
-            case VIP -> 1.2;
-            case PREMIUM -> 1.1;
-            case BASIC -> 1.05;
-        };
-    }
 }

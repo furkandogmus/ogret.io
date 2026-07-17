@@ -1,9 +1,7 @@
 import { useEffect, useRef, createContext, useContext, type ReactNode } from "react";
-import { Platform } from "react-native";
 import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import { useAuth } from "./AuthProvider";
-import { api } from "../api/client";
 
 const isExpoGo = Constants.appOwnership === "expo";
 let Notifications: any = null;
@@ -44,8 +42,8 @@ function mapLink(link?: string) {
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const notificationListener = useRef<any>();
-  const responseListener = useRef<any>();
+  const notificationListener = useRef<any>(null);
+  const responseListener = useRef<any>(null);
   const expoPushTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -55,7 +53,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (status !== "granted") return;
       Notifications.getExpoPushTokenAsync().then(({ data: token }: any) => {
         expoPushTokenRef.current = token;
-        api.post("/notifications/register", { token, platform: Platform.OS }).catch(() => {});
       }).catch(() => {});
     });
 

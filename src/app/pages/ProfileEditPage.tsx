@@ -26,8 +26,7 @@ export function ProfileEditPage() {
   const [searchParams] = useSearchParams();
   const isOnboarding = searchParams.get("onboarding") === "true";
   
-  // Navigation tabs: My Profile, Tutor Settings (if tutor), My Invoices
-  const [subTab, setSubTab] = useState<"profile" | "tutor" | "billing">("profile");
+  const [subTab, setSubTab] = useState<"profile" | "tutor">("profile");
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -182,7 +181,7 @@ export function ProfileEditPage() {
     if (!file) return;
     try {
       setError("");
-      const uploadRes = await fileApi.upload(file, true);
+      const uploadRes = await fileApi.upload(file, "AVATAR");
       const fileUrl = uploadRes.data.url;
       const { data } = await userApi.updateAvatar(fileUrl);
       setUser(data);
@@ -281,16 +280,6 @@ export function ProfileEditPage() {
             Ders & Müsaitlik
           </button>
         )}
-        <button
-          onClick={() => setSubTab("billing")}
-          className={`pb-4 -mb-[18px] border-b-2 transition-all duration-300 ${
-            subTab === "billing"
-              ? "text-stone-900 border-rose-500 font-extrabold"
-              : "text-stone-400 border-transparent hover:text-stone-600"
-          }`}
-        >
-          Faturalarım
-        </button>
       </div>
 
       {/* TAB 1: PROFILIM (Screenshottaki 3 Sütunlu Kart Grid Arayüzü) */}
@@ -307,7 +296,7 @@ export function ProfileEditPage() {
               </span>
               <h2 className="text-3xl font-black tracking-tight">Hoş geldin, {firstName || user?.fullName?.split(" ")[0]}! 👋</h2>
               <p className="text-xs text-emerald-100/90 font-medium">
-                öğret.io profil ayarlarına hoş geldin. Hesap doğrulamalarını ve abonelik durumunu buradan takip edebilirsin.
+                öğret.io profil ayarlarına hoş geldin. Profilini, doğrulamalarını ve hesap güvenliğini buradan yönetebilirsin.
               </p>
             </div>
           </div>
@@ -443,7 +432,7 @@ export function ProfileEditPage() {
                       { state: emailActivity, setState: setEmailActivity, label: "Hesap hareketleri" },
                       { state: emailLessons, setState: setEmailLessons, label: "Ders talepleri" },
                       { state: emailOffers, setState: setEmailOffers, label: "İlanlarımı ilgilendiren teklifler" },
-                      { state: emailCancel, setState: setEmailCancel, label: "Abonelik iptali" }
+                      { state: emailCancel, setState: setEmailCancel, label: "Hesap ve güvenlik" }
                     ].map((item, idx) => (
                       <button
                         key={idx}
@@ -526,8 +515,27 @@ export function ProfileEditPage() {
               
               <div className="space-y-4 text-left">
                 <p className="text-xs text-stone-500 font-semibold leading-relaxed">
-                  <strong>DİKKAT!</strong> Tüm bilgileriniz (iletişim bilgileri, ilanlar, e-mailler,...) tamamen ve geri dönüşü olmaksızın silinecek. Lütfen aşağıdaki kutucuğu işaretleyin.
+                  <strong>DİKKAT!</strong> İletişim ve profil bilgileriniz anonimleştirilir; mesajlarınız ve doğrulama belgeleriniz silinir. Hukuki yükümlülük kapsamındaki işlem kayıtları kimliğinizden ayrıştırılarak saklanabilir. İşlemden önce veri kopyanızı indirebilirsiniz.
                 </p>
+
+                <button
+                  onClick={async () => {
+                    try {
+                      const { data } = await userApi.exportData();
+                      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+                      const link = document.createElement("a");
+                      link.href = url;
+                      link.download = "ogret-io-veri-export.json";
+                      link.click();
+                      URL.revokeObjectURL(url);
+                    } catch {
+                      toast.error("Veri kopyası oluşturulamadı. Lütfen tekrar deneyin.");
+                    }
+                  }}
+                  className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-xs font-bold text-stone-700 hover:bg-stone-50"
+                >
+                  Veri kopyamı indir
+                </button>
                 
                 <button
                   onClick={() => setDeleteChecked(!deleteChecked)}
@@ -541,11 +549,16 @@ export function ProfileEditPage() {
                   <span className="text-xs font-bold">Hesabımı sil</span>
                 </button>
 
-                {/* TODO: Hesap silme backend'e eklenecek - şimdilik sadece uyarı gösteriliyor */}
                 <button
                   disabled={!deleteChecked}
-                  onClick={() => {
-                    toast.error("Hesap silme işlemi şu an kullanılamıyor. Lütfen destek ekibimizle iletişime geçin.");
+                  onClick={async () => {
+                    if (!window.confirm("Hesabınız anonimleştirilecek ve oturumunuz kapatılacak. Devam edilsin mi?")) return;
+                    try {
+                      await userApi.deleteAccount();
+                      window.location.href = "/";
+                    } catch {
+                      toast.error("Hesap silme işlemi tamamlanamadı. Lütfen tekrar deneyin.");
+                    }
                   }}
                   className={`w-full py-3.5 rounded-2xl font-bold text-xs transition-all ${
                     deleteChecked
@@ -897,48 +910,6 @@ export function ProfileEditPage() {
         </div>
       )}
 
-      {/* TAB 3: FATURALARIM (Kullanıcının faturalarını listelediği premium tablo ekranı) */}
-      {subTab === "billing" && (
-        <div className="bg-white border border-stone-100 rounded-3xl p-6 shadow-sm space-y-6 max-w-4xl mx-auto">
-          <div className="space-y-2">
-            <h3 className="font-extrabold text-stone-900 text-lg">Ödeme Geçmişi & Faturalar</h3>
-            <p className="text-xs text-stone-400 font-medium">Satın aldığınız üyelikler ve ders paketleri faturaları.</p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-stone-100 text-xs font-bold text-stone-400">
-                  <th className="pb-3">Fatura No</th>
-                  <th className="pb-3">Tarih</th>
-                  <th className="pb-3">Açıklama</th>
-                  <th className="pb-3">Tutar</th>
-                  <th className="pb-3">Durum</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-50 text-xs font-semibold text-stone-600">
-                {[
-                  { no: "INV-2026-003", date: "28.06.2026", desc: "Uzman Öğretmen Aboneliği (1 Aylık)", price: "₺299", status: "Ödendi" },
-                  { no: "INV-2026-002", date: "28.05.2026", desc: "Uzman Öğretmen Aboneliği (1 Aylık)", price: "₺299", status: "Ödendi" },
-                  { no: "INV-2026-001", date: "15.04.2026", desc: "Sistem Komisyon Bedeli - Matematik Dersi", price: "₺95", status: "Ödendi" }
-                ].map((inv) => (
-                  <tr key={inv.no} className="hover:bg-stone-50/50 transition-colors">
-                    <td className="py-4 font-bold text-stone-900">{inv.no}</td>
-                    <td className="py-4">{inv.date}</td>
-                    <td className="py-4 font-medium">{inv.desc}</td>
-                    <td className="py-4 font-bold text-stone-900">{inv.price}</td>
-                    <td className="py-4">
-                      <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-[10px] font-bold">
-                        {inv.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

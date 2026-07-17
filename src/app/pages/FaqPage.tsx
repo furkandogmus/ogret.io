@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     q: "Ödeme nasıl yapılıyor?",
-    a: "Ödemeler güvenli bir şekilde online olarak gerçekleştirilir. Abonelik planları havale/EFT ile de ödenebilir.",
+    a: "İlk sürümde öğret.io üzerinden ödeme alınmaz. Ders ücreti, ödeme zamanı ve yöntemi öğrenci ile öğretmen tarafından doğrudan kararlaştırılır; platform ödeme aracısı veya garantör değildir.",
   },
   {
     q: "Öğretmenler güvenilir mi?",
@@ -25,22 +25,22 @@ const faqs = [
   },
   {
     q: "İptal ve iade politikası nedir?",
-    a: "Dersler, planlanan saatten en az 24 saat önce ücretsiz olarak iptal edilebilir. Abonelikler ise her ay sonunda iptal edilebilir.",
+    a: "İptal, erteleme ve varsa iade koşulları ders öncesinde öğrenci ile öğretmen arasında kararlaştırılır. öğret.io ilk sürümde ödeme almadığı için platform üzerinden iade işlemi yapmaz.",
   },
   {
     q: "Öğretmen olarak nasıl kayıt olabilirim?",
     a: "Kayıt sayfasından 'Öğretmen' rolünü seçerek ücretsiz hesap oluşturabilir, ardından profil bilgilerinizi tamamlayarak ders vermeye başlayabilirsiniz.",
   },
   {
-    q: "Abonelik planları nelerdir?",
-    a: "Öğretmenler için Basic, Premium ve VIP olmak üzere üç farklı abonelik planı sunuyoruz. Detaylı bilgi için Abonelik sayfamızı ziyaret edebilirsiniz.",
+    q: "Abonelik planları var mı?",
+    a: "Hayır. İlk sürümde öğrenciler ve öğretmenler platformu ücretsiz kullanır; ücretli abonelik ve öne çıkarma paketi sunulmaz.",
   },
 ];
 
 export function FaqPage() {
   useSeo({
     title: "Sıkça Sorulan Sorular",
-    description: "öğret.io hakkında sıkça sorulan sorular ve cevapları. Özel ders, ödeme, abonelik ve daha fazlası.",
+    description: "öğret.io hakkında sıkça sorulan sorular ve cevapları. Özel ders, doğrudan ödeme modeli ve daha fazlası.",
     canonical: "https://ogret.io/sikca-sorulan-sorular",
   });
 

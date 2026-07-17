@@ -39,26 +39,40 @@ public class AuthService {
     @Value("${app.base-url:http://localhost:5173}")
     private String baseUrl;
 
+    @Value("${app.email.fail-fast:false}")
+    private boolean emailFailFast;
+
     private static final long ACCESS_TOKEN_TTL = 900000;
     private static final long LOCKOUT_DURATION_MINUTES = 15;
+    private static final long ATTEMPT_WINDOW_MINUTES = 15;
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+    private static final long EMAIL_VERIFICATION_TTL_HOURS = 24;
+    private static final long PASSWORD_RESET_TTL_MINUTES = 15;
 
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase(java.util.Locale.ROOT);
+        String normalizedPhone = request.getPhone().trim();
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw ApiException.conflict("Bu e-posta adresi zaten kayıtlı");
         }
-        if (userRepository.existsByPhone(request.getPhone())) {
+        if (userRepository.existsByPhone(normalizedPhone)) {
             throw ApiException.conflict("Bu telefon numarası zaten kayıtlı");
         }
 
-        Role role = request.getRole() != null ? request.getRole() : Role.STUDENT;
+        Role role = request.getRole();
+        if (role != Role.STUDENT && role != Role.TUTOR) {
+            throw ApiException.forbidden("Public kayıt yalnızca öğrenci veya öğretmen rolüyle yapılabilir");
+        }
 
         User user = User.builder()
-                .email(request.getEmail())
-                .phone(request.getPhone())
+                .email(normalizedEmail)
+                .phone(normalizedPhone)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName())
+                .fullName(request.getFullName().trim())
                 .role(role)
                 .isVerified(false)
+                .tokenVersion(0)
                 .isProfileComplete(false)
                 .ratingAvg(java.math.BigDecimal.ZERO)
                 .ratingCount(0)
@@ -68,28 +82,16 @@ public class AuthService {
 
         user = userRepository.save(user);
 
-        try {
-            String verifyToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(),
-                    user.getRole().name());
-            String verifyLink = baseUrl + "/email-dogrula?token=" + verifyToken;
-            emailService.send(
-                    user.getEmail(),
-                    "E-posta Doğrulama - öğret.io",
-                    "Merhaba " + user.getFullName() + ",\n\n"
-                            + "E-posta adresinizi doğrulamak için aşağıdaki bağlantıya tıklayın:\n"
-                            + verifyLink + "\n\n"
-                            + "öğret.io");
-        } catch (Exception e) {
-            // Mail altyapısı yapılandırılmamış olabilir, kayıt devam etsin
-            log.warn("Verification email could not be sent to {}", user.getEmail(), e);
-        }
+        sendVerificationEmail(user);
 
-        return buildAuthResponse(user);
+        return AuthResponse.builder().user(UserResponse.fromEntity(user)).build();
     }
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        String lockoutKey = "bruteforce:" + request.getEmail();
+        String normalizedEmail = request.getEmail().trim().toLowerCase(java.util.Locale.ROOT);
+        String attemptKey = "auth:login:attempts:" + normalizedEmail;
+        String lockoutKey = "auth:login:lock:" + normalizedEmail;
 
         if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(lockoutKey))) {
             Long ttl = stringRedisTemplate.getExpire(lockoutKey, TimeUnit.SECONDS);
@@ -97,9 +99,9 @@ public class AuthService {
                     "Hesap geçici olarak kilitlendi. " + (ttl != null ? ttl : 0) + " saniye sonra tekrar deneyin.");
         }
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> {
-                    recordFailedAttempt(lockoutKey);
+                    recordFailedAttempt(attemptKey, lockoutKey);
                     return ApiException.unauthorized("E-posta veya şifre hatalı");
                 });
 
@@ -109,10 +111,15 @@ public class AuthService {
                             user.getId().toString(),
                             request.getPassword()));
         } catch (Exception e) {
-            recordFailedAttempt(lockoutKey);
+            recordFailedAttempt(attemptKey, lockoutKey);
             throw ApiException.unauthorized("E-posta veya şifre hatalı");
         }
 
+        if (!user.isVerified()) {
+            throw ApiException.forbidden("Giriş yapmadan önce e-posta adresinizi doğrulayın");
+        }
+
+        stringRedisTemplate.delete(attemptKey);
         stringRedisTemplate.delete(lockoutKey);
 
         user.setLastActiveAt(LocalDateTime.now());
@@ -137,6 +144,10 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
 
+        if (jwtTokenProvider.getTokenVersion(token) != tokenVersion(user)) {
+            throw ApiException.unauthorized("Oturum geçersiz veya süresi dolmuş");
+        }
+
         addToBlacklist(token, 7 * 24 * 60 * 60);
 
         return buildAuthResponse(user);
@@ -154,7 +165,20 @@ public class AuthService {
         if (request.getToken() == null || request.getToken().isBlank()) {
             throw ApiException.badRequest("Doğrulama token'ı gerekli");
         }
-        UUID userId = jwtTokenProvider.getUserIdFromToken(request.getToken());
+        UUID userId;
+        String jti;
+        try {
+            userId = jwtTokenProvider.getUserIdFromEmailVerificationToken(request.getToken());
+            jti = jwtTokenProvider.getTokenId(request.getToken());
+        } catch (Exception e) {
+            throw ApiException.badRequest("Doğrulama bağlantısı geçersiz veya süresi dolmuş");
+        }
+        String verificationUserId = jti == null
+                ? null
+                : stringRedisTemplate.opsForValue().getAndDelete("auth:verify:" + jti);
+        if (!userId.toString().equals(verificationUserId)) {
+            throw ApiException.badRequest("Doğrulama bağlantısı daha önce kullanılmış veya süresi dolmuş");
+        }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
         user.setVerified(true);
@@ -174,6 +198,12 @@ public class AuthService {
 
         User user = userOpt.get();
         String resetToken = jwtTokenProvider.generatePasswordResetToken(user.getId());
+        String resetJti = jwtTokenProvider.getTokenId(resetToken);
+        stringRedisTemplate.opsForValue().set(
+                "auth:reset:" + resetJti,
+                user.getId().toString(),
+                PASSWORD_RESET_TTL_MINUTES,
+                TimeUnit.MINUTES);
         String resetLink = baseUrl + "/sifre-sifirla?token=" + resetToken;
 
         try {
@@ -192,22 +222,50 @@ public class AuthService {
         }
     }
 
+    public void resendVerification(String email) {
+        if (email == null || email.isBlank()) {
+            throw ApiException.badRequest("E-posta adresi gerekli");
+        }
+        userRepository.findByEmail(email.trim().toLowerCase(java.util.Locale.ROOT))
+                .filter(user -> !user.isVerified())
+                .ifPresent(this::sendVerificationEmail);
+    }
+
     @Transactional
     public void resetPassword(String token, String password) {
         if (token == null || password == null || token.isBlank() || password.isBlank()) {
             throw ApiException.badRequest("Token ve yeni şifre gerekli");
         }
-        UUID userId = jwtTokenProvider.getUserIdFromPasswordResetToken(token);
+        UUID userId;
+        String jti;
+        try {
+            userId = jwtTokenProvider.getUserIdFromPasswordResetToken(token);
+            jti = jwtTokenProvider.getTokenId(token);
+        } catch (Exception e) {
+            throw ApiException.badRequest("Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş");
+        }
+        String resetUserId = jti == null
+                ? null
+                : stringRedisTemplate.opsForValue().getAndDelete("auth:reset:" + jti);
+        if (!userId.toString().equals(resetUserId)) {
+            throw ApiException.badRequest("Şifre sıfırlama bağlantısı daha önce kullanılmış veya süresi dolmuş");
+        }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
         user.setPasswordHash(passwordEncoder.encode(password));
+        user.setTokenVersion(tokenVersion(user) + 1);
         userRepository.save(user);
     }
 
-    private void recordFailedAttempt(String lockoutKey) {
-        Long attempts = stringRedisTemplate.opsForValue().increment(lockoutKey);
+    private void recordFailedAttempt(String attemptKey, String lockoutKey) {
+        Long attempts = stringRedisTemplate.opsForValue().increment(attemptKey);
         if (attempts != null && attempts == 1) {
-            stringRedisTemplate.expire(lockoutKey, LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
+            stringRedisTemplate.expire(attemptKey, ATTEMPT_WINDOW_MINUTES, TimeUnit.MINUTES);
+        }
+        if (attempts != null && attempts >= MAX_FAILED_ATTEMPTS) {
+            stringRedisTemplate.opsForValue().set(
+                    lockoutKey, "locked", LOCKOUT_DURATION_MINUTES, TimeUnit.MINUTES);
+            stringRedisTemplate.delete(attemptKey);
         }
     }
 
@@ -226,8 +284,10 @@ public class AuthService {
     }
 
     private AuthResponse buildAuthResponse(User user) {
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
+        int tokenVersion = tokenVersion(user);
+        String accessToken = jwtTokenProvider.generateAccessToken(
+                user.getId(), user.getEmail(), user.getRole().name(), tokenVersion);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), tokenVersion);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -236,5 +296,35 @@ public class AuthService {
                 .expiresIn(ACCESS_TOKEN_TTL)
                 .user(UserResponse.fromEntity(user))
                 .build();
+    }
+
+    private int tokenVersion(User user) {
+        return user.getTokenVersion() == null ? 0 : user.getTokenVersion();
+    }
+
+    private void sendVerificationEmail(User user) {
+        try {
+            String verifyToken = jwtTokenProvider.generateEmailVerificationToken(user.getId());
+            String verificationJti = jwtTokenProvider.getTokenId(verifyToken);
+            stringRedisTemplate.opsForValue().set(
+                    "auth:verify:" + verificationJti,
+                    user.getId().toString(),
+                    EMAIL_VERIFICATION_TTL_HOURS,
+                    TimeUnit.HOURS);
+            String verifyLink = baseUrl + "/email-dogrula?token=" + verifyToken;
+            emailService.send(
+                    user.getEmail(),
+                    "E-posta Doğrulama - öğret.io",
+                    "Merhaba " + user.getFullName() + ",\n\n"
+                            + "E-posta adresinizi doğrulamak için aşağıdaki bağlantıya tıklayın:\n"
+                            + verifyLink + "\n\n"
+                            + "Bu bağlantı 24 saat süreyle ve yalnızca bir kez kullanılabilir.\n\n"
+                            + "öğret.io");
+        } catch (Exception e) {
+            log.error("Verification email could not be sent to {}", user.getEmail(), e);
+            if (emailFailFast) {
+                throw ApiException.internalServerError("Doğrulama e-postası gönderilemedi");
+            }
+        }
     }
 }

@@ -15,8 +15,7 @@ test.describe('Messaging / Chat E2E Tests', () => {
   });
 
   test('should display empty state when there are no conversations', async ({ page }) => {
-    // Mock getUnread API returning empty array
-    await page.route('**/api/v1/messages/unread', async (route) => {
+    await page.route('**/api/v1/messages/all', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -32,8 +31,7 @@ test.describe('Messaging / Chat E2E Tests', () => {
   });
 
   test('should load conversations, show unread badge, and display message history upon click', async ({ page }) => {
-    // Mock getUnread returning messages (which group into conversations)
-    await page.route('**/api/v1/messages/unread', async (route) => {
+    await page.route('**/api/v1/messages/all', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -83,8 +81,7 @@ test.describe('Messaging / Chat E2E Tests', () => {
   });
 
   test('should handle sending messages and update chat list optimistically', async ({ page }) => {
-    // Mock getUnread returning messages
-    await page.route('**/api/v1/messages/unread', async (route) => {
+    await page.route('**/api/v1/messages/all', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -132,8 +129,7 @@ test.describe('Messaging / Chat E2E Tests', () => {
   });
 
   test('should support starting a new conversation via user search', async ({ page }) => {
-    // Mock getUnread returning empty list initially
-    await page.route('**/api/v1/messages/unread', async (route) => {
+    await page.route('**/api/v1/messages/all', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',

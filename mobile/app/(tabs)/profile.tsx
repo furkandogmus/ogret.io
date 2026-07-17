@@ -64,7 +64,6 @@ export default function ProfileScreen() {
   type MenuItem = { icon: keyof typeof Ionicons.glyphMap; label: string; route?: string; action?: () => void; danger?: boolean };
   const menuItems: MenuItem[] = useMemo(() => [
     ...(isTutor ? [
-      { icon: "card-outline" as const, label: "Abonelik", route: "/subscription" },
       { icon: "id-card-outline" as const, label: "Kimlik Doğrulama", route: "/verification" },
       { icon: "calendar-outline" as const, label: "Müsaitlik", route: "/tutor/availability" },
       { icon: "list-outline" as const, label: "İlanlarım", route: "/tutor/listings" },
@@ -73,7 +72,6 @@ export default function ProfileScreen() {
     { icon: "notifications-outline" as const, label: "Bildirimler", route: "/notifications" },
     { icon: "person-outline" as const, label: "Profili Düzenle", route: "/profile/edit" },
     { icon: "heart-outline" as const, label: "Favorilerim", route: "/favorites/index" },
-    { icon: "wallet-outline" as const, label: "Ödeme Yöntemleri", route: "/payment/methods" },
     { icon: "newspaper-outline" as const, label: "Blog", route: "/blog/index" },
     { icon: "settings-outline" as const, label: "Ayarlar", route: "/settings" },
     { icon: "log-out-outline" as const, label: "Çıkış Yap", action: handleLogout, danger: true },

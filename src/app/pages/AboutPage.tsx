@@ -1,9 +1,6 @@
-import { Link } from "react-router";
-import { BookOpen, GraduationCap, Users, Star, Shield, Zap } from "lucide-react";
+import { BookOpen, Star, Shield, Zap } from "lucide-react";
 import { useSeo } from "../hooks/useSeo";
 import { JsonLd } from "../components/shared/JsonLd";
-
-import { APP_CONFIG } from "../config/constants";
 
 const values = [
   {
@@ -14,19 +11,19 @@ const values = [
   {
     icon: Star,
     title: "Kalite",
-    desc: "Her öğretmen kimlik doğrulamasından geçer. Öğrenci yorumları ve puanlama sistemiyle kaliteyi sürekli takip ederiz.",
+    desc: "Öğretmenler doğrulama başvurusu yapabilir; doğrulanmış profiller açıkça işaretlenir. Yorum ve puanlar seçim yapmayı kolaylaştırır.",
   },
   {
     icon: Shield,
     title: "Güven",
-    desc: "Ödeme işlemleri güvenli altyapıyla gerçekleştirilir. Kişisel verileriniz KVKK kapsamında korunmaktadır.",
+    desc: "Platform ödeme almaz; ders koşulları taraflar arasında belirlenir. Kişisel veriler için güvenlik ve veri minimizasyonu uygularız.",
   },
 ];
 
 export function AboutPage() {
   useSeo({
     title: "Hakkımızda",
-    description: "öğret.io, Türkiye'nin lider online özel ders platformu. 500+ uzman öğretmen, 10.000+ mutlu öğrenci. Kaliteli eğitimi herkes için erişilebilir kılıyoruz.",
+    description: "öğret.io, öğrenciler ile öğretmenleri doğrudan buluşturan özel ders platformudur.",
     canonical: "https://ogret.io/hakkimizda",
   });
 
@@ -43,20 +40,9 @@ export function AboutPage() {
         </div>
         <h1 className="text-3xl md:text-4xl font-black text-stone-900">Hakkımızda</h1>
         <p className="text-stone-500 mt-3 text-sm max-w-2xl mx-auto leading-relaxed">
-          öğret.io, öğrencilerle alanında uzman öğretmenleri bir araya getiren Türkiye'nin 
-          en yenilikçi online özel ders platformudur. 2026 yılında İstanbul'da kurulan 
-          platformumuz, kaliteli eğitimi herkes için erişilebilir kılmayı hedefler.
+          öğret.io, öğrencilerle öğretmenleri doğrudan bir araya getiren bir özel ders platformudur.
+          Amacımız öğretmen keşfini, iletişimi ve ders planlamasını sade ve güvenli hale getirmektir.
         </p>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-        {APP_CONFIG.STATS.map((s) => (
-          <div key={s.label} className="bg-white border border-stone-100 rounded-2xl p-5 text-center shadow-sm">
-            <s.icon className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
-            <p className="text-2xl font-black text-stone-900">{s.value}</p>
-            <p className="text-xs text-stone-500 font-medium mt-0.5">{s.label}</p>
-          </div>
-        ))}
       </div>
 
       <div className="bg-white border border-stone-100 rounded-2xl p-6 md:p-8 mb-10 shadow-sm">
@@ -95,9 +81,8 @@ export function AboutPage() {
         name: "öğret.io",
         url: "https://ogret.io/",
         logo: "https://ogret.io/favicon.svg",
-        description: "Türkiye'nin lider online özel ders platformu.",
+        description: "Öğrenciler ile öğretmenleri doğrudan buluşturan özel ders platformu.",
         foundingDate: "2026",
-        location: { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: "İstanbul", addressCountry: "TR" } },
         sameAs: [],
       }} />
     </div>

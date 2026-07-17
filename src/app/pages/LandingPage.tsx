@@ -49,7 +49,7 @@ const SUBJECT_ICONS: Record<string, any> = {
 export function LandingPage() {
   useSeo({
     title: "Online Özel Ders Platformu",
-    description: "Türkiye'nin en iyi online özel ders platformu. Alanında uzman öğretmenlerle online olarak buluşun. Her konuda, her seviyede, her zaman.",
+    description: "Öğrencilerle özel ders öğretmenlerini doğrudan buluşturan ücretsiz platform.",
     canonical: "https://ogret.io/",
   });
   const navigate = useNavigate();
@@ -82,7 +82,7 @@ export function LandingPage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
 
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-stone-900 tracking-tight leading-[1.1] mb-8">
-            Türkiye'nin En İyi<br />
+            Sana Uygun<br />
             <span className="text-rose-500">Özel Ders</span> Platformu
           </h1>
 
@@ -149,11 +149,11 @@ export function LandingPage() {
             ))}
           </div>
 
-          {/* Minimal Stats Row */}
+          {/* First release value propositions */}
           <div className="flex justify-center items-center gap-8 text-stone-500 text-xs font-semibold mt-10 border-t border-stone-100 pt-6">
-            <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-rose-500" /> Uzman Öğretmen</span>
-            <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-rose-500" /> Mutlu Öğrenci</span>
-            <span className="flex items-center gap-1.5"><Star className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> 4.8/5 Puan</span>
+            <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-rose-500" /> Doğrudan iletişim</span>
+            <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-rose-500" /> Ücretsiz platform</span>
+            <span className="flex items-center gap-1.5"><Star className="w-3.5 h-3.5 text-rose-500" /> Şeffaf profiller</span>
           </div>
 
         </div>
@@ -193,7 +193,7 @@ export function LandingPage() {
               <h2 className="text-2xl md:text-3xl font-black text-stone-900 tracking-tight">
                 Öne Çıkan Öğretmenler
               </h2>
-              <p className="text-sm text-stone-500 mt-1 font-medium">39 milyon öğretmen değerlendirildi</p>
+              <p className="text-sm text-stone-500 mt-1 font-medium">Profilleri inceleyin ve doğrudan iletişime geçin</p>
             </div>
             <button
               onClick={() => navigate("/arama")}
@@ -254,17 +254,17 @@ export function LandingPage() {
             {[
               { heading: "Platform", links: ["Nasıl Çalışır", "Fiyatlandırma", "Öğretmenler", "Öğrenciler", "Blog"] },
               { heading: "Kategoriler", links: ["Matematik", "İngilizce", "Yazılım", "Müzik"] },
-              { heading: "Destek", links: ["SSS", "İletişim", "Gizlilik", "Kullanım Koşulları"] },
+              { heading: "Destek", links: ["SSS", "İletişim", "Gizlilik", "Kullanım Koşulları", "Yasal"] },
               { heading: "Takip Et", links: ["Instagram", "Twitter / X", "LinkedIn", "YouTube"] },
             ].map(({ heading, links }) => (
               <div key={heading}>
                 <h4 className="text-white font-medium mb-4 text-xs uppercase tracking-wider">{heading}</h4>
                 {links.map((l) => {
                   const routeMap: Record<string, string> = {
-                    "Nasıl Çalışır": "#",
-                    "Fiyatlandırma": "#",
+                    "Nasıl Çalışır": "/nasil-calisir",
+                    "Fiyatlandırma": "/fiyatlandirma",
                     "Öğretmenler": "/arama",
-                    "Öğrenciler": "#",
+                    "Öğrenciler": "/ogrenciler",
                     "Blog": "/blog",
                     "Matematik": "/arama?q=matematik",
                     "İngilizce": "/arama?q=ingilizce",
@@ -274,12 +274,13 @@ export function LandingPage() {
                     "İletişim": "/iletisim",
                     "Gizlilik": "/gizlilik",
                     "Kullanım Koşulları": "/kullanim-kosullari",
+                    "Yasal": "/yasal",
                     "Instagram": "https://instagram.com/ogret.io",
                     "Twitter / X": "https://x.com/ogretio",
                     "LinkedIn": "https://linkedin.com/company/ogretio",
                     "YouTube": "https://youtube.com/@ogretio",
                   };
-                  const href = routeMap[l] || "#";
+                  const href = routeMap[l] || "/";
                   const isExternal = href.startsWith("http");
                   if (isExternal) {
                     return (
@@ -294,7 +295,7 @@ export function LandingPage() {
             ))}
           </div>
           <div className="border-t border-stone-850 mt-10 pt-8 text-center text-xs text-stone-500">
-            © 2026 öğret.io · Tüm hakları saklıdır · İstanbul, Türkiye
+            © 2026 öğret.io · Tüm hakları saklıdır
           </div>
         </div>
       </footer>

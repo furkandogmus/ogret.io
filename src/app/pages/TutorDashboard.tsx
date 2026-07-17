@@ -405,7 +405,7 @@ export function TutorDashboard() {
               {[
                 { label: "Bu Ay Ders", value: String(upcomingLessons.length), icon: BookOpen, bg: "bg-emerald-50", iconColor: "text-emerald-600" },
                 { label: "Toplam Öğrenci", value: String(students.size), icon: Users, bg: "bg-emerald-50", iconColor: "text-emerald-600" },
-                { label: "Bu Ay Gelir", value: `₺${totalEarnings.toLocaleString("tr-TR")}`, icon: DollarSign, bg: "bg-violet-50", iconColor: "text-violet-600" },
+                { label: "Ders Tutarı", value: `₺${totalEarnings.toLocaleString("tr-TR")}`, icon: DollarSign, bg: "bg-violet-50", iconColor: "text-violet-600" },
                 { label: "Ortalama Puan", value: `${avgRating} ★`, icon: Star, bg: "bg-emerald-50", iconColor: "text-emerald-600" },
               ].map(({ label, value, icon: Icon, bg, iconColor }) => (
                 <div key={label} className="bg-card border border-border rounded-2xl p-4">
@@ -441,12 +441,14 @@ export function TutorDashboard() {
                       <div className="flex gap-2 flex-shrink-0">
                         <button
                           onClick={() => handleCancel(req.id)}
+                          aria-label={`${req.student.fullName} ders talebini reddet`}
                           className="p-2 rounded-lg border border-border hover:bg-red-50 hover:border-red-200 text-muted-foreground hover:text-red-600 transition-colors"
                         >
                           <X className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleConfirm(req.id)}
+                          aria-label={`${req.student.fullName} ders talebini onayla`}
                           className="p-2 rounded-lg bg-primary text-white hover:opacity-90 transition-opacity"
                         >
                           <Check className="w-4 h-4" />
@@ -514,8 +516,8 @@ export function TutorDashboard() {
             <div className="bg-card border border-border rounded-2xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="font-semibold text-foreground">Aylık Gelir</h2>
-                  <p className="text-xs text-muted-foreground">Son 7 ay</p>
+                  <h2 className="font-semibold text-foreground">Aylık Ders Tutarı</h2>
+                  <p className="text-xs text-muted-foreground">Tamamlanan derslerin kayıtlı tutarı · ödeme takibi değildir</p>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-primary">₺{totalEarnings.toLocaleString("tr-TR")}</div>
@@ -539,7 +541,7 @@ export function TutorDashboard() {
                       tickFormatter={(v) => `₺${Math.round(v / 1000)}k`}
                     />
                     <Tooltip
-                      formatter={(v: number) => [`₺${v.toLocaleString("tr-TR")}`, "Gelir"]}
+                      formatter={(v: number) => [`₺${v.toLocaleString("tr-TR")}`, "Ders tutarı"]}
                       contentStyle={{ borderRadius: "12px", border: "1px solid var(--border)", fontSize: "13px" }}
                     />
                     <Area
@@ -561,17 +563,11 @@ export function TutorDashboard() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Zap className="w-5 h-5" />
-                    <span className="font-bold text-lg">Profilimi Öne Çıkar</span>
+                    <span className="font-bold text-lg">İlk sürüm ücretsiz</span>
                   </div>
                   <p className="text-emerald-100 text-sm max-w-xs leading-relaxed">
-                    Arama sonuçlarında üst sıralarda çık, daha fazla öğrenciye ulaş. Ayda ₺49'dan başlayan planlar.
+                    Profil, ilan, ders talebi ve mesajlaşma özelliklerini ücretsiz kullanabilirsiniz. Ders ücretini ve ödeme yöntemini öğrencinizle doğrudan kararlaştırın.
                   </p>
-                  <button
-                    onClick={() => navigate("/abonelik")}
-                    className="mt-4 bg-white text-emerald-600 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-emerald-50 transition-colors"
-                  >
-                    Planları İncele
-                  </button>
                 </div>
                 <div className="text-5xl opacity-25 flex-shrink-0">⭐</div>
               </div>

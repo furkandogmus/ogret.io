@@ -71,6 +71,7 @@ class LessonControllerTest {
                 request.setLessonDate(LocalDate.now().plusDays(1));
                 request.setStartTime(LocalTime.of(14, 0));
                 request.setEndTime(LocalTime.of(15, 0));
+                request.setNotes("Matematik dersi talebi");
 
                 when(lessonService.createLesson(any(), any())).thenReturn(
                                 LessonResponse.builder()
