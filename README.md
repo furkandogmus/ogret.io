@@ -71,6 +71,7 @@ npm run dev
 | [docs/api.md](docs/api.md) | Tüm REST API endpoint referansı |
 | [docs/development.md](docs/development.md) | Geliştirme rehberi, test, konvansiyonlar |
 | [SPEC.md](SPEC.md) | Detaylı sistem şartnamesi, DB şeması, tüm API'ler |
+| [specs/14-production-readiness.md](specs/14-production-readiness.md) | Production çıkış kapıları, riskler, kabul kriterleri ve Go/No-Go planı |
 | [ROADMAP.md](ROADMAP.md) | Geliştirme fazları ve gelecek planları |
 | [LAUNCH_STRATEGY.md](LAUNCH_STRATEGY.md) | Pazara giriş, büyüme ve exit stratejisi |
 
