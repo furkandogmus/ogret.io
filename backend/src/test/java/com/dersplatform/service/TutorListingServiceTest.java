@@ -30,6 +30,7 @@ class TutorListingServiceTest {
     @Mock private TutorListingRepository tutorListingRepository;
     @Mock private UserRepository userRepository;
     @Mock private SubjectRepository subjectRepository;
+    @Mock private ProfileCompletionService profileCompletionService;
 
     private TutorListingService tutorListingService;
     private User tutor;
@@ -38,8 +39,9 @@ class TutorListingServiceTest {
 
     @BeforeEach
     void setUp() {
-        tutorListingService = new TutorListingService(tutorListingRepository, userRepository, subjectRepository);
-        tutor = User.builder().id(UUID.randomUUID()).fullName("Selim Hoca").role(Role.TUTOR).build();
+        tutorListingService = new TutorListingService(tutorListingRepository, userRepository, subjectRepository,
+                profileCompletionService);
+        tutor = User.builder().id(UUID.randomUUID()).fullName("Selim Hoca").role(Role.TUTOR).isVerified(true).build();
         subject = Subject.builder().id(UUID.randomUUID()).name("Matematik").build();
         validFiftyWords = "kelime ".repeat(50);
     }
@@ -81,6 +83,7 @@ class TutorListingServiceTest {
         assertEquals("Matematik", response.getSubjectName());
         assertEquals(BigDecimal.valueOf(500), response.getHourlyRate());
         verify(tutorListingRepository, times(1)).save(any(TutorListing.class));
+        verify(profileCompletionService).refresh(tutor);
     }
 
     @Test

@@ -14,10 +14,14 @@ import com.dersplatform.repository.LessonRepository;
 import com.dersplatform.repository.MessageRepository;
 import com.dersplatform.repository.TutorVerificationRepository;
 import com.dersplatform.repository.NotificationRepository;
+import com.dersplatform.model.enums.UploadPurpose;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -35,11 +39,12 @@ public class UserService {
     private final MessageRepository messageRepository;
     private final TutorVerificationRepository tutorVerificationRepository;
     private final NotificationRepository notificationRepository;
+    private final ProfileCompletionService profileCompletionService;
 
     public UserResponse getProfile(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
-        return UserResponse.fromEntity(user);
+        return withCompletion(user);
     }
 
     @Transactional
@@ -55,10 +60,9 @@ public class UserService {
         if (request.getHourlyRate() != null) user.setHourlyRate(request.getHourlyRate());
         if (request.getPhone() != null) user.setPhone(request.getPhone());
 
-        user.setProfileComplete(true);
         user = userRepository.save(user);
 
-        return UserResponse.fromEntity(user);
+        return withCompletion(user);
     }
 
     @Transactional
@@ -71,13 +75,90 @@ public class UserService {
             throw ApiException.badRequest("Geçersiz profil fotoğrafı adresi");
         }
 
-        // Delete old avatar if it exists
-        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isBlank()) {
-            fileStorageService.deleteFile(user.getAvatarUrl());
+        String oldAvatarUrl = user.getAvatarUrl();
+        if (avatarUrl.equals(oldAvatarUrl)) {
+            return withCompletion(user);
         }
+
         user.setAvatarUrl(avatarUrl);
         user = userRepository.save(user);
-        return UserResponse.fromEntity(user);
+        deleteAfterCommit(oldAvatarUrl);
+        return withCompletion(user);
+    }
+
+    /**
+     * Uploads and assigns an avatar as one application operation. The newly
+     * uploaded object is removed if the database transaction rolls back; the
+     * previous object is removed only after the new URL is committed.
+     */
+    @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"tutorDetail", "userById"}, allEntries = true)
+    public UserResponse uploadAvatar(UUID userId, MultipartFile file) {
+        String newAvatarUrl = fileStorageService.uploadFile(file, UploadPurpose.AVATAR);
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
+            String oldAvatarUrl = user.getAvatarUrl();
+            user.setAvatarUrl(newAvatarUrl);
+            user = userRepository.save(user);
+            swapFilesAfterTransaction(oldAvatarUrl, newAvatarUrl);
+            return withCompletion(user);
+        } catch (RuntimeException exception) {
+            fileStorageService.deleteFile(newAvatarUrl);
+            throw exception;
+        }
+    }
+
+    @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"tutorDetail", "userById"}, allEntries = true)
+    public UserResponse removeAvatar(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
+        String oldAvatarUrl = user.getAvatarUrl();
+        if (oldAvatarUrl == null || oldAvatarUrl.isBlank()) {
+            return withCompletion(user);
+        }
+        user.setAvatarUrl(null);
+        user = userRepository.save(user);
+        deleteAfterCommit(oldAvatarUrl);
+        return withCompletion(user);
+    }
+
+    private UserResponse withCompletion(User user) {
+        return UserResponse.fromEntity(user, profileCompletionService.refresh(user));
+    }
+
+    private void swapFilesAfterTransaction(String oldAvatarUrl, String newAvatarUrl) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            fileStorageService.deleteFile(oldAvatarUrl);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status == TransactionSynchronization.STATUS_COMMITTED) {
+                    fileStorageService.deleteFile(oldAvatarUrl);
+                } else {
+                    fileStorageService.deleteFile(newAvatarUrl);
+                }
+            }
+        });
+    }
+
+    private void deleteAfterCommit(String fileUrl) {
+        if (fileUrl == null || fileUrl.isBlank()) {
+            return;
+        }
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            fileStorageService.deleteFile(fileUrl);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                fileStorageService.deleteFile(fileUrl);
+            }
+        });
     }
 
     @Transactional

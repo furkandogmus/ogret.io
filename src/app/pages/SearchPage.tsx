@@ -320,12 +320,12 @@ export function SearchPage() {
                 fullName={l.tutorName}
                 avatarUrl={l.tutorAvatar}
                 listingTitle={l.title}
-                rating={0}
-                reviewCount={0}
+                rating={l.tutorRatingAvg ?? 0}
+                reviewCount={l.tutorRatingCount ?? 0}
                 hourlyRate={l.hourlyRate}
-                experienceYears={0}
-                online={l.allowsOnline}
-                verified={false}
+                experienceYears={l.experienceYears ?? 0}
+                online={l.tutorOnline}
+                verified={l.tutorIdentityVerified}
                 subjects={[l.subjectName]}
               />
             ))}

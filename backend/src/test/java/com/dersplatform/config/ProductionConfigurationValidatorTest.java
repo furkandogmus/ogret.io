@@ -34,6 +34,27 @@ class ProductionConfigurationValidatorTest {
                 .hasMessageContaining("HTTPS URL");
     }
 
+    @Test
+    void acceptsProductionConfigurationWithEmailDisabled() {
+        MockEnvironment environment = strongEnvironment()
+                .withProperty("app.email.enabled", "false")
+                .withProperty("aws.ses.from-email", "");
+
+        assertThatCode(() -> new ProductionConfigurationValidator(environment).validate())
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void requiresSenderOnlyWhenEmailIsEnabled() {
+        MockEnvironment environment = strongEnvironment()
+                .withProperty("app.email.enabled", "true")
+                .withProperty("aws.ses.from-email", "");
+
+        assertThatThrownBy(() -> new ProductionConfigurationValidator(environment).validate())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("aws.ses.from-email");
+    }
+
     private ProductionConfigurationValidator validatorWithStrongConfiguration() {
         return new ProductionConfigurationValidator(strongEnvironment());
     }

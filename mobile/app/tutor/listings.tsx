@@ -9,6 +9,7 @@ import { useHaptics } from "../../src/hooks/useHaptics";
 import { listingApi, subjectApi } from "../../src/api/services";
 import { colors, spacing, radius } from "../../src/constants/theme";
 import type { Subject, TutorListing } from "../../src/types";
+import { countWords, listingDescriptionError, MIN_LISTING_DESCRIPTION_WORDS } from "../../src/utils/listingValidation";
 
 const LANGUAGES_LIST = [
   "Türkçe", "İngilizce", "Almanca", "Fransızca", "İspanyolca", "İtalyanca", "Rusça", "Arapça", "Farsça", "Çince"
@@ -65,11 +66,6 @@ export default function TutorListingsScreen() {
   useEffect(() => {
     fetchListingsAndSubjects();
   }, []);
-
-  const getWordCount = (text: string) => {
-    if (!text || !text.trim()) return 0;
-    return text.trim().split(/\s+/).length;
-  };
 
   const containsContactInfo = (text: string) => {
     const phoneRegex = /[0-9]{7,}/;
@@ -134,8 +130,8 @@ export default function TutorListingsScreen() {
         toast.show("Lütfen ilan başlığı girin", "error");
         return;
       }
-      if (getWordCount(lessonDescription) < 15) { // Adjusted from 50 to 15 for better mobile UX, but keeping the rule
-        toast.show("Ders açıklaması en az 15 kelime olmalıdır", "error");
+      if (countWords(lessonDescription) < MIN_LISTING_DESCRIPTION_WORDS) {
+        toast.show(`Ders açıklaması en az ${MIN_LISTING_DESCRIPTION_WORDS} kelime olmalıdır`, "error");
         return;
       }
       if (containsContactInfo(lessonDescription)) {
@@ -145,8 +141,8 @@ export default function TutorListingsScreen() {
     }
 
     if (step === 3) {
-      if (getWordCount(aboutTutor) < 15) {
-        toast.show("Hakkınızda açıklaması en az 15 kelime olmalıdır", "error");
+      if (countWords(aboutTutor) < MIN_LISTING_DESCRIPTION_WORDS) {
+        toast.show(`Hakkınızda açıklaması en az ${MIN_LISTING_DESCRIPTION_WORDS} kelime olmalıdır`, "error");
         return;
       }
       if (containsContactInfo(aboutTutor)) {
@@ -195,6 +191,11 @@ export default function TutorListingsScreen() {
   };
 
   const handleSave = async () => {
+    const descriptionError = listingDescriptionError(lessonDescription, aboutTutor);
+    if (descriptionError) {
+      toast.show(descriptionError, "error");
+      return;
+    }
     if (!hourlyRate.trim() || isNaN(Number(hourlyRate)) || Number(hourlyRate) <= 0) {
       toast.show("Lütfen geçerli bir saatlik ücret girin", "error");
       return;
@@ -381,8 +382,18 @@ export default function TutorListingsScreen() {
                   <Input label="Deneyim (Yıl)" value={experienceYears} onChangeText={setExperienceYears} keyboardType="numeric" placeholder="5" />
                 </View>
               </View>
-              <Input label="Ders Açıklaması" value={lessonDescription} onChangeText={setLessonDescription} multiline placeholder="Ders işleme yönteminiz, materyalleriniz, vb..." />
-              <Input label="Hakkınızda" value={aboutTutor} onChangeText={setAboutTutor} multiline placeholder="Eğitim geçmişiniz, tecrübeleriniz, başarılarınız..." />
+              <View>
+                <Input label="Ders Açıklaması" value={lessonDescription} onChangeText={setLessonDescription} multiline placeholder={`Ders işleme yönteminiz ve materyalleriniz; en az ${MIN_LISTING_DESCRIPTION_WORDS} kelime.`} />
+                <Text style={{ color: countWords(lessonDescription) >= MIN_LISTING_DESCRIPTION_WORDS ? colors.success : colors.textMuted, fontSize: 12, marginTop: -8, textAlign: "right" }}>
+                  Kelime sayısı: {countWords(lessonDescription)} / {MIN_LISTING_DESCRIPTION_WORDS}
+                </Text>
+              </View>
+              <View>
+                <Input label="Hakkınızda" value={aboutTutor} onChangeText={setAboutTutor} multiline placeholder={`Eğitiminiz ve tecrübeleriniz; en az ${MIN_LISTING_DESCRIPTION_WORDS} kelime.`} />
+                <Text style={{ color: countWords(aboutTutor) >= MIN_LISTING_DESCRIPTION_WORDS ? colors.success : colors.textMuted, fontSize: 12, marginTop: -8, textAlign: "right" }}>
+                  Kelime sayısı: {countWords(aboutTutor)} / {MIN_LISTING_DESCRIPTION_WORDS}
+                </Text>
+              </View>
               
               <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: spacing.sm, marginTop: spacing.md }}>
                 Konuşulan Diller
@@ -527,10 +538,10 @@ export default function TutorListingsScreen() {
                       value={lessonDescription}
                       onChangeText={setLessonDescription}
                       multiline
-                      placeholder="Ders yönteminizi detaylı açıklayın. En az 15 kelime girmelisiniz..."
+                      placeholder={`Ders yönteminizi detaylı açıklayın. En az ${MIN_LISTING_DESCRIPTION_WORDS} kelime girmelisiniz...`}
                     />
-                    <Text style={{ color: getWordCount(lessonDescription) >= 15 ? colors.success : colors.textMuted, fontSize: 12, marginTop: -8, textAlign: "right" }}>
-                      Kelime sayısı: {getWordCount(lessonDescription)} / 15 (Önerilen: 50+)
+                    <Text style={{ color: countWords(lessonDescription) >= MIN_LISTING_DESCRIPTION_WORDS ? colors.success : colors.textMuted, fontSize: 12, marginTop: -8, textAlign: "right" }}>
+                      Kelime sayısı: {countWords(lessonDescription)} / {MIN_LISTING_DESCRIPTION_WORDS}
                     </Text>
                   </View>
                 </View>
@@ -548,10 +559,10 @@ export default function TutorListingsScreen() {
                       value={aboutTutor}
                       onChangeText={setAboutTutor}
                       multiline
-                      placeholder="Öğrencilere kendinizi tanıtın. En az 15 kelime girmelisiniz..."
+                      placeholder={`Öğrencilere kendinizi tanıtın. En az ${MIN_LISTING_DESCRIPTION_WORDS} kelime girmelisiniz...`}
                     />
-                    <Text style={{ color: getWordCount(aboutTutor) >= 15 ? colors.success : colors.textMuted, fontSize: 12, marginTop: -8, textAlign: "right" }}>
-                      Kelime sayısı: {getWordCount(aboutTutor)} / 15 (Önerilen: 50+)
+                    <Text style={{ color: countWords(aboutTutor) >= MIN_LISTING_DESCRIPTION_WORDS ? colors.success : colors.textMuted, fontSize: 12, marginTop: -8, textAlign: "right" }}>
+                      Kelime sayısı: {countWords(aboutTutor)} / {MIN_LISTING_DESCRIPTION_WORDS}
                     </Text>
                   </View>
                 </View>

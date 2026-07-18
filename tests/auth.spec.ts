@@ -109,7 +109,6 @@ test.describe('Authentication (Login & Register) E2E Tests', () => {
     // Click register button
     await page.locator('button[type="submit"]').click();
 
-    await expect(page).toHaveURL(/\/giris\?registered=1$/);
-    await expect(page.getByText(/hesabınızı doğruladıktan sonra/i)).toBeVisible();
+    await expect(page).toHaveURL(/\/ogrenci-panel$/);
   });
 });

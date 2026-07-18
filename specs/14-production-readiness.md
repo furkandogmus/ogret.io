@@ -20,7 +20,7 @@
 İlk release aşağıdaki kapsamla **web-first** yapılmalıdır:
 
 - Responsive web uygulaması ve Spring Boot API
-- Öğrenci ve öğretmen kaydı, giriş, e-posta doğrulama ve şifre sıfırlama
+- Öğrenci ve öğretmen kaydı, doğrudan giriş ve isteğe bağlı şifre sıfırlama
 - Öğretmen profili, ilan, arama, favori ve ders talebi
 - Öğretmen/öğrenci panelleri ve ders yaşam döngüsü
 - Mesajlaşma ve temel operasyonel bildirimler
@@ -160,15 +160,13 @@ Kabul kriterleri:
 
 **Kabul:** API integration testi public register ile admin oluşturulamadığını; mevcut adminin kendine admin üretemediğini ve yetkili süreç dışında rol değişmediğini kanıtlar.
 
-### PR-AUTH-002 — E-posta doğrulama — P0
+### PR-AUTH-002 — E-posta doğrulama — İlk sürüm kapsamı dışı
 
-- Verification token access token'dan ayrı key/purpose/audience kullanır.
-- Token tek kullanımlı, kısa ömürlü ve hash/JTI olarak server-side takip edilir.
-- Tekrar gönderme endpoint'i rate limitlidir.
-- E-posta sahibi doğrulanmadan hassas akışlar (mesaj, ilan, doğrulama belgesi, abonelik) ürün kararına göre kısıtlanır.
-- Link hem web hem mobil deep link fallback'ine sahiptir.
+- İlk self-hosted sürümde hesaplar kayıt anında aktif olur; e-posta teslimatı temel işlevler için zorunlu değildir.
+- Doğrulama endpoint'leri geriye dönük uyumluluk için kalabilir ancak kayıt, giriş, mesaj, ders talebi ve ilan akışlarını engellemez.
+- İleride doğrulama yeniden etkinleştirilirse token access token'dan ayrı key/purpose/audience kullanır ve tek kullanımlı olur.
 
-**Kabul:** Geçerli, süresi geçmiş, yanlış amaçlı ve ikinci kez kullanılan token testleri vardır; gerçek SES sandbox teslimi kanıtlanır.
+**Kabul:** Harici e-posta sağlayıcısı olmadan kayıt sonrası doğrudan oturum açılır ve temel ürün akışları çalışır.
 
 ### PR-AUTH-003 — Login, rate limit ve brute-force — P0
 
@@ -252,7 +250,7 @@ Her endpoint için `anonymous / student / tutor / admin / resource owner` matris
 
 ### PR-FUNC-001 — Öğretmen onboarding — P0
 
-- Kayıt -> e-posta doğrulama -> profil -> konu/ücret -> müsaitlik -> ilan -> doğrulama belgesi -> yayın akışı kesintisizdır.
+- Kayıt -> doğrudan oturum -> profil -> konu/ücret -> müsaitlik -> ilan akışı kesintisizdır.
 - Her adım kaydedilir, devam edilebilir ve kullanıcıya tamamlanma durumu gösterilir.
 - Zorunlu alanlar backend tarafından da doğrulanır.
 - Doğrulanmamış veya askıya alınmış öğretmenin listelenme kuralı ürün tarafından belirlenir.

@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { authApi } from "../api/services";
 import { useSeo } from "../hooks/useSeo";
+import { useAuth } from "../providers/AuthProvider";
 
 export function EmailVerificationPage() {
   useSeo({
@@ -11,6 +12,8 @@ export function EmailVerificationPage() {
   });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user, refreshUser } = useAuth();
+  const userRef = useRef(user);
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
 
@@ -22,7 +25,10 @@ export function EmailVerificationPage() {
       return;
     }
     authApi.verifyEmail(token)
-      .then(() => {
+      .then(async () => {
+        if (userRef.current) {
+          await refreshUser();
+        }
         setStatus("success");
         setMessage("E-posta adresiniz başarıyla doğrulandı!");
       })
@@ -30,7 +36,7 @@ export function EmailVerificationPage() {
         setStatus("error");
         setMessage(err.response?.data?.message || "Doğrulama sırasında bir hata oluştu. Link süresi dolmuş olabilir.");
       });
-  }, [searchParams]);
+  }, [searchParams, refreshUser]);
 
   return (
     <div className="max-w-lg mx-auto px-4 py-20">
@@ -55,10 +61,10 @@ export function EmailVerificationPage() {
 
         {(status === "success" || status === "error") && (
           <button
-            onClick={() => navigate("/giris")}
+            onClick={() => navigate(user ? (user.role === "TUTOR" ? "/ogretmen-panel" : "/ogrenci-panel") : "/giris")}
             className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all"
           >
-            Giriş Yap
+            {user ? "Panele Dön" : "Giriş Yap"}
           </button>
         )}
       </div>

@@ -4,6 +4,7 @@ import com.dersplatform.exception.ApiException;
 import com.dersplatform.model.entity.Subject;
 import com.dersplatform.model.entity.TutorListing;
 import com.dersplatform.model.entity.User;
+import com.dersplatform.model.dto.response.ProfileCompletionResponse;
 import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.SubjectRepository;
 import com.dersplatform.repository.TutorListingRepository;
@@ -32,6 +33,7 @@ class TutorOnboardingServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private SubjectRepository subjectRepository;
     @Mock private TutorListingRepository tutorListingRepository;
+    @Mock private ProfileCompletionService profileCompletionService;
 
     private TutorOnboardingService onboardingService;
     private User tutor;
@@ -40,7 +42,8 @@ class TutorOnboardingServiceTest {
 
     @BeforeEach
     void setUp() {
-        onboardingService = new TutorOnboardingService(userRepository, subjectRepository, tutorListingRepository);
+        onboardingService = new TutorOnboardingService(userRepository, subjectRepository, tutorListingRepository,
+                profileCompletionService);
 
         subject = Subject.builder()
                 .id(UUID.randomUUID())
@@ -57,6 +60,7 @@ class TutorOnboardingServiceTest {
                 .hourlyRate(BigDecimal.valueOf(500))
                 .experienceYears(10)
                 .avatarUrl("https://example.com/avatar.jpg")
+                .isVerified(true)
                 .isIdentityVerified(true)
                 .build();
 
@@ -71,8 +75,7 @@ class TutorOnboardingServiceTest {
     @Test
     void getProgress_WithCompleteProfile_ShouldReturn100Percent() {
         when(userRepository.findById(tutor.getId())).thenReturn(Optional.of(tutor));
-        when(tutorListingRepository.findByTutorIdAndStatusOrderByCreatedAtDesc(tutor.getId(), "ACTIVE"))
-                .thenReturn(List.of(MOCK_LISTING));
+        when(profileCompletionService.refresh(tutor)).thenReturn(completion(100, true));
 
         Map<String, Object> progress = onboardingService.getProgress(tutor.getId());
 
@@ -82,8 +85,7 @@ class TutorOnboardingServiceTest {
     @Test
     void getProgress_WithIncompleteProfile_ShouldReturnLowerPercent() {
         when(userRepository.findById(incompleteTutor.getId())).thenReturn(Optional.of(incompleteTutor));
-        when(tutorListingRepository.findByTutorIdAndStatusOrderByCreatedAtDesc(incompleteTutor.getId(), "ACTIVE"))
-                .thenReturn(List.of());
+        when(profileCompletionService.refresh(incompleteTutor)).thenReturn(completion(20, false));
 
         Map<String, Object> progress = onboardingService.getProgress(incompleteTutor.getId());
 
@@ -153,5 +155,19 @@ class TutorOnboardingServiceTest {
         assertThrows(ApiException.class,
                 () -> onboardingService.createListing(tutor.getId(), subject.getId(),
                         "Ders", "Açıklama", "Hakkımda", true));
+    }
+
+    private ProfileCompletionResponse completion(int score, boolean complete) {
+        return ProfileCompletionResponse.builder()
+                .score(score)
+                .complete(complete)
+                .completedItems(complete ? 1 : 0)
+                .totalItems(1)
+                .items(List.of(ProfileCompletionResponse.Item.builder()
+                        .key("profile")
+                        .label("Profil")
+                        .completed(complete)
+                        .build()))
+                .build();
     }
 }

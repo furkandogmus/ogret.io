@@ -9,5 +9,13 @@ playwright-report
 test-results
 backend/build
 backend/.gradle
+backend
+mobile
+terraform
+docs
+specs
+tests
+.opencode
+.wrongstack
 .idea
 *.log

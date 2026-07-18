@@ -12,62 +12,54 @@ Türkçe online tutoring marketplace. Öğrenciler öğretmen bulur, mesajlaşı
 | Cache | Redis 7 |
 | WebSocket | STOMP over raw WebSocket (no SockJS) |
 | Auth | JWT (access + refresh token) |
-| Docs | OpenAPI/Swagger (http://localhost:8080/swagger-ui.html) |
+| Docs | OpenAPI/Swagger (http://localhost:3000/api/v1/swagger-ui.html) |
 
 ## Ortam Gereksinimleri
 
-- Java 17+
-- Node.js 18+
-- Docker & Docker Compose (PostgreSQL + Redis için)
+- Docker Desktop veya Docker Engine + Compose v2
 
 ## Hızlı Başlangıç
 
 ```bash
-# 1. Altyapıyı başlat
-docker compose up -d
-
-# 2. Backend
-cd backend
-./gradlew bootRun
-
-# 3. Frontend (ayrı terminal)
-npm install
-npm run dev
+docker compose up --build
 ```
 
-- Frontend: http://localhost:5173
-- Backend: http://localhost:8080
-- API Docs: http://localhost:8080/swagger-ui.html
+- `.env`, API token'ı veya harici servis hesabı gerekmez.
+- Frontend: http://localhost:3000
+- API Docs: http://localhost:3000/api/v1/swagger-ui.html
+- PostgreSQL, Redis, MinIO ve backend host ağına açılmaz.
 
 ## Seed Verisi
 
-7 kullanıcı oluşturulur (tümünün şifresi: `123456`):
+`dev` profilinde 3 başlangıç kullanıcısı oluşturulur:
 
 | Rol | Ad | Email | Branş |
 |-----|-----|-------|-------|
 | ADMIN | Admin | admin@ogret.io | - |
 | TUTOR | Zeynep Kaya | zeynep@ogret.io | Matematik, Fizik |
-| TUTOR | Mehmet Yılmaz | mehmet@ogret.io | Yazılım, Java, React |
-| TUTOR | Ayşe Demir | ayse@ogret.io | İngilizce, Almanca |
-| TUTOR | Can Özkan | can@ogret.io | Piyano, Gitar, Keman |
 | STUDENT | Ahmet Öğrenci | ahmet@ogret.io | - |
-| STUDENT | Elif Öğrenci | elif@ogret.io | - |
+
+İlk şifreler `docker compose exec backend show-bootstrap-credentials` komutuyla
+görülebilir. JWT anahtarı ve başlangıç şifreleri ilk açılışta rastgele üretilip
+kalıcı Docker volume'ünde saklanır.
 
 ## Seed Verisi Detayı
 
-Toplam: **33 ders konusu**, 4 öğretmen, 2 öğrenci, 7 ders kaydı, 3 yorum.
-Ders kategorileri: YKS, LGS, DIL, YAZILIM, MUZIK, DIGER.
+Toplam **33 ders konusu** korunur. Örnek öğretmen için aktif matematik ilanı ve
+hafta içi uygunluk saatleri eklenir; admin, öğrenci ve öğretmen akışları hemen
+denenebilir. Geliştirme kullanıcıları production profilinde oluşturulmaz.
 
 ## Ortam Değişkenleri
 
-`.env` dosyası backend kök dizininde:
+Docker dışından backend geliştirmek isterseniz aşağıdaki ayarları override
+edebilirsiniz; varsayılan Docker akışında bunlara gerek yoktur:
 
 ```
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/dersplatform
 SPRING_DATASOURCE_USERNAME=dersplatform
 SPRING_DATASOURCE_PASSWORD=dersplatform
-SPRING_REDIS_HOST=localhost
-JWT_SECRET=<256-bit-base64-secret>
+REDIS_HOST=localhost
+EMAIL_ENABLED=false
 ```
 
-Varsayılan değerler `application.properties` içinde tanımlıdır.
+Yerel varsayılanlar `application.yml` ve `application-dev.yml` içinde tanımlıdır.

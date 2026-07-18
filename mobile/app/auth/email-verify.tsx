@@ -5,10 +5,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Button } from "../../src/components/Button";
 import { authApi } from "../../src/api/services";
 import { colors, spacing } from "../../src/constants/theme";
+import { useAuth } from "../../src/providers/AuthProvider";
 
 export default function EmailVerifyScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
+  const { user, refreshUser } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -21,6 +23,7 @@ export default function EmailVerifyScreen() {
     (async () => {
       try {
         await authApi.verifyEmail(token);
+        if (user) await refreshUser();
         setStatus("success");
       } catch (err: any) {
         setStatus("error");
@@ -42,7 +45,7 @@ export default function EmailVerifyScreen() {
           <Ionicons name="checkmark-circle" size={80} color={colors.success} />
           <Text style={{ color: colors.text, fontSize: 22, fontWeight: "700", marginTop: spacing.lg, textAlign: "center" }}>E-posta Doğrulandı</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: "center", marginTop: spacing.sm }}>Hesabın başarıyla doğrulandı.</Text>
-          <Button title="Giriş Yap" onPress={() => router.replace("/auth/login")} size="lg" style={{ marginTop: spacing.xl }} />
+          <Button title={user ? "Uygulamaya Dön" : "Giriş Yap"} onPress={() => router.replace(user ? "/(tabs)" : "/auth/login")} size="lg" style={{ marginTop: spacing.xl }} />
         </>
       )}
       {status === "error" && (

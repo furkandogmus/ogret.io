@@ -13,9 +13,9 @@ export function getApiBaseUrl() {
   const hostUri = Constants.expoConfig?.hostUri;
   if (hostUri) {
     const ip = hostUri.split(":")[0];
-    return `http://${ip}:8080/api/v1`;
+    return `http://${ip}:3000/api/v1`;
   }
-  return "http://localhost:8080/api/v1";
+  return "http://localhost:3000/api/v1";
 }
 
 const api = axios.create({
@@ -39,7 +39,7 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
-    if ((error.response?.status === 401 || error.response?.status === 403) && !original._retry) {
+    if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
       if (refreshToken) {

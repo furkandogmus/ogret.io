@@ -22,7 +22,7 @@ export default function ChatScreen() {
   const router = useRouter();
   const { user: me } = useAuth();
   const toast = useToast();
-  const { connected, incomingMessages, typingUsers, sendMessage: wsSend, sendTyping, clearIncoming } = useWebSocket();
+  const { connected, incomingMessages, typingUsers, sendTyping, clearIncoming } = useWebSocket();
   const [otherUser, setOtherUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
@@ -182,19 +182,16 @@ export default function ChatScreen() {
       createdAt: new Date().toISOString(),
     }]);
 
-    if (connected) {
-      wsSend(id, msg);
-    } else {
-      try {
-        const { data } = await messageApi.send({ receiverId: id, content: msg });
-        setMessages((prev) => prev.map((m) => (m.id === tempId ? (data as unknown as Message) : m)));
-      } catch {
-        setMessages((prev) => prev.filter((m) => m.id !== tempId));
-      }
+    try {
+      const { data } = await messageApi.send({ receiverId: id, content: msg });
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? (data as unknown as Message) : m)));
+    } catch (error: any) {
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      toast.show(error?.response?.data?.message || "Mesaj gönderilemedi", "error");
     }
 
     setTimeout(() => scrollToEnd(true), 50);
-  }, [id, me?.id, connected, wsSend, scrollToEnd]);
+  }, [id, me?.id, scrollToEnd, toast]);
 
   const isTyping = typingUsers.has(id);
   const statusText = isTyping ? "Yazıyor..." : (online ? "Çevrimiçi" : "Çevrimdışı");

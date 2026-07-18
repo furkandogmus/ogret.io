@@ -16,6 +16,7 @@ import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +27,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final StringRedisTemplate stringRedisTemplate;
+    private final WebSocketSessionVersionRegistry sessionVersionRegistry;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -36,30 +38,43 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         }
 
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            if (accessor.getUser() != null) {
+            String authHeader = accessor.getFirstNativeHeader("Authorization");
+            String token = authHeader != null && authHeader.startsWith("Bearer ")
+                    ? authHeader.substring(7)
+                    : cookieToken(accessor);
+            if (token != null) {
+                if (!jwtTokenProvider.validateToken(token)) {
+                    throw new MessageDeliveryException("WebSocket oturumu geçersiz");
+                }
+                UUID userId = jwtTokenProvider.getUserIdFromToken(token);
+                var user = userRepository.findById(userId).orElse(null);
+                int currentVersion = user == null || user.getTokenVersion() == null ? 0 : user.getTokenVersion();
+                if (user == null || jwtTokenProvider.getTokenVersion(token) != currentVersion) {
+                    throw new MessageDeliveryException("WebSocket oturumu geçersiz");
+                }
+                authenticateSession(accessor, user, currentVersion);
                 return message;
             }
-            String authHeader = accessor.getFirstNativeHeader("Authorization");
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                if (jwtTokenProvider.validateToken(token)) {
-                    UUID userId = jwtTokenProvider.getUserIdFromToken(token);
-                    var user = userRepository.findById(userId).orElse(null);
-                    int currentVersion = user == null || user.getTokenVersion() == null ? 0 : user.getTokenVersion();
-                    if (user == null || jwtTokenProvider.getTokenVersion(token) != currentVersion) {
-                        throw new MessageDeliveryException("WebSocket oturumu geçersiz");
-                    }
-                    accessor.setUser(new UsernamePasswordAuthenticationToken(
-                            userId.toString(), null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))));
-                    return message;
-                }
+            if (accessor.getUser() != null) {
+                authenticateExistingPrincipal(accessor);
+                return message;
             }
             throw new MessageDeliveryException("WebSocket kimlik doğrulaması gerekli");
         }
 
+        if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
+            sessionVersionRegistry.remove(accessor.getSessionId());
+            return message;
+        }
+
         if (accessor.getUser() == null) {
             throw new MessageDeliveryException("WebSocket kimlik doğrulaması gerekli");
+        }
+
+        if ((StompCommand.SEND.equals(accessor.getCommand())
+                || StompCommand.SUBSCRIBE.equals(accessor.getCommand()))
+                && !sessionVersionRegistry.isCurrent(accessor.getSessionId())) {
+            throw new MessageDeliveryException("WebSocket oturumu geçersiz");
         }
 
         String destination = accessor.getDestination();
@@ -74,6 +89,38 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         }
 
         return message;
+    }
+
+    private String cookieToken(StompHeaderAccessor accessor) {
+        Map<String, Object> attributes = accessor.getSessionAttributes();
+        if (attributes == null) return null;
+        Object value = attributes.get(WebSocketCookieHandshakeInterceptor.ACCESS_TOKEN_ATTRIBUTE);
+        return value instanceof String token && !token.isBlank() ? token : null;
+    }
+
+    private void authenticateExistingPrincipal(StompHeaderAccessor accessor) {
+        try {
+            UUID userId = UUID.fromString(accessor.getUser().getName());
+            var user = userRepository.findById(userId)
+                    .orElseThrow(() -> new MessageDeliveryException("WebSocket oturumu geçersiz"));
+            int currentVersion = user.getTokenVersion() == null ? 0 : user.getTokenVersion();
+            authenticateSession(accessor, user, currentVersion);
+        } catch (IllegalArgumentException ignored) {
+            throw new MessageDeliveryException("WebSocket oturumu geçersiz");
+        }
+    }
+
+    private void authenticateSession(
+            StompHeaderAccessor accessor,
+            com.dersplatform.model.entity.User user,
+            int tokenVersion) {
+        UUID userId = user.getId();
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                userId.toString(), null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
+        authentication.setDetails(tokenVersion);
+        accessor.setUser(authentication);
+        sessionVersionRegistry.register(accessor.getSessionId(), userId, tokenVersion);
     }
 
     private boolean isAllowedSubscription(String destination) {

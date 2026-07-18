@@ -37,15 +37,31 @@ test.describe('Tutor Profile Page & Booking Wizard E2E Tests', () => {
     // Check availability calendar is showing grid/slots (Pzt, Sal, etc.)
     await expect(page.locator('text=Pzt')).toBeVisible();
     await expect(page.locator('text=Sal')).toBeVisible();
+    await expect(page.getByLabel('Pzt 9:00 müsait')).toBeVisible();
+    await expect(page.getByLabel('Sal 9:00 müsait değil')).toBeVisible();
   });
 
   test('should complete the 4-step Lesson Request Modal wizard successfully', async ({ page }) => {
+    await page.route(/\/api\/v1\/tutors\/user-tutor-1\/availability/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(Array.from({ length: 7 }, (_, dayOfWeek) => ({
+          dayOfWeek,
+          startTime: '10:30',
+          endTime: '12:00',
+        }))),
+      });
+    });
+
     // Intercept lesson creation POST request
     await page.route(/\/api\/v1\/lessons/, async (route) => {
       const requestBody = route.request().postDataJSON();
       expect(requestBody.tutorId).toBe('user-tutor-1');
       expect(requestBody.durationMinutes).toBeUndefined(); // Wait, let's verify duration is calculated into startTime/endTime or not needed.
       expect(requestBody.notes).toBe('Matematik sınavı için özel destek gerekiyor.');
+      expect(requestBody.startTime).toBe('10:30');
+      expect(requestBody.endTime).toBe('11:30');
 
       await route.fulfill({
         status: 200,
@@ -86,11 +102,13 @@ test.describe('Tutor Profile Page & Booking Wizard E2E Tests', () => {
     // Check that we are on step 2
     await expect(page.locator('text=Adım 2 / 4')).toBeVisible();
     
-    // Pick date (Bugün or Yarın)
-    await page.locator('button:has-text("Bugün"), button:has-text("Yarın")').first().click();
+    // Only dates covered by the teacher's weekly availability are offered.
+    await page.getByTestId('available-date').first().click();
 
-    // Select hour (e.g. 14:00)
-    await page.locator('button:has-text("14:00")').click();
+    // The 10:30-12:00 range supports 10:30 and 11:00 for a 60-minute lesson.
+    await expect(page.getByTestId('available-time')).toHaveCount(2);
+    await expect(page.getByTestId('available-time').filter({ hasText: '14:00' })).toHaveCount(0);
+    await page.getByTestId('available-time').filter({ hasText: '10:30' }).click();
     
     // Click "Devam Et"
     await page.locator('button:has-text("Devam Et")').click();
@@ -117,5 +135,20 @@ test.describe('Tutor Profile Page & Booking Wizard E2E Tests', () => {
 
     // Modal should close (check header is no longer visible)
     await expect(page.locator('h2:has-text("Ders Talep Et")')).not.toBeVisible();
+  });
+
+  test('should explain when the tutor has no available booking slots', async ({ page }) => {
+    await page.route(/\/api\/v1\/tutors\/user-tutor-1\/availability/, async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    });
+
+    await page.goto('/ogretmen/user-tutor-1');
+    await page.locator('button:has-text("Ders Talep Et")').click();
+    await page.locator('button:has-text("Matematik")').first().click();
+    await page.locator('button:has-text("Devam Et")').click();
+
+    await expect(page.getByText('Uygun ders saati bulunmuyor')).toBeVisible();
+    await expect(page.getByText(/önümüzdeki 14 günde 60 dakikalık/)).toBeVisible();
+    await expect(page.locator('button:has-text("Devam Et")')).toBeDisabled();
   });
 });

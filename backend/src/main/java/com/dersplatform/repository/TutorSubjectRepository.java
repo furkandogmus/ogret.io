@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface TutorSubjectRepository extends JpaRepository<TutorSubject, UUID> {
+    boolean existsByTutorId(UUID tutorId);
+
     @Query("SELECT ts FROM TutorSubject ts JOIN FETCH ts.tutor JOIN FETCH ts.subject WHERE ts.tutor.id = :tutorId")
     List<TutorSubject> findByTutorId(UUID tutorId);
 

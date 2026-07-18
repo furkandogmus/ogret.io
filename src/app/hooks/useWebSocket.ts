@@ -22,7 +22,10 @@ export function useWebSocket() {
         client.subscribe("/user/queue/messages", (msg) => {
           try {
             const body: MessageResponse = JSON.parse(msg.body);
-            setIncoming((prev) => [...prev, body]);
+            // Consumers only need the latest event. Keeping an append-only
+            // history here reprocessed old messages and grew for the entire
+            // session; persisted history always comes from the REST API.
+            setIncoming([body]);
           } catch { /* ignore */ }
         });
       },

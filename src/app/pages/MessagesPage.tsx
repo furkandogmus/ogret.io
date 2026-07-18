@@ -18,7 +18,7 @@ interface Conversation {
 
 export function MessagesPage() {
   const { user } = useAuth();
-  const { connected, incoming, sendMessage } = useWebSocket();
+  const { connected, incoming } = useWebSocket();
   const [searchParams] = useSearchParams();
   const selectUserId = searchParams.get("userId");
   
@@ -30,9 +30,11 @@ export function MessagesPage() {
   const [userResults, setUserResults] = useState<UserResponse[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sendError, setSendError] = useState("");
   const [showMobileList, setShowMobileList] = useState(true);
   const chatEnd = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const conversationEventIds = useRef(new Set<string>());
 
   useEffect(() => {
     if (user) {
@@ -112,9 +114,13 @@ export function MessagesPage() {
 
   useEffect(() => {
     if (incoming.length === 0) return;
+    const freshIncoming = incoming.filter((message) => !conversationEventIds.current.has(message.id));
+    if (freshIncoming.length === 0) return;
+    freshIncoming.forEach((message) => conversationEventIds.current.add(message.id));
+
     setConversations((prev) => {
       const map = new Map(prev.map((c) => [c.userId, c]));
-      for (const msg of incoming) {
+      for (const msg of freshIncoming) {
         const isMe = msg.senderId === user?.id;
         const otherId = isMe ? msg.receiverId : msg.senderId;
         const otherName = isMe ? msg.receiverName : msg.senderName;
@@ -194,29 +200,39 @@ export function MessagesPage() {
     } catch { console.error("Mesajlar yuklenemedi"); setMessages([]); }
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!text.trim() || !activeId) return;
-    sendMessage(activeId, text);
+    const content = text.trim();
+    const temporaryId = `temp-${Date.now()}`;
     const optimistic: MessageResponse = {
-      id: String(Date.now()),
+      id: temporaryId,
       senderId: user?.id ?? "",
       senderName: user?.fullName ?? "",
       receiverId: activeId,
       receiverName: "",
-      content: text,
+      content,
       messageType: "TEXT",
       read: false,
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, optimistic]);
+    setText("");
+    setSendError("");
+    try {
+      const { data } = await messageApi.send({ receiverId: activeId, content });
+      setMessages((prev) => prev.map((message) => message.id === temporaryId ? data : message));
+    } catch (error: any) {
+      setMessages((prev) => prev.filter((message) => message.id !== temporaryId));
+      setSendError(error.response?.data?.message || "Mesaj gönderilemedi. Lütfen tekrar deneyin.");
+      return;
+    }
     setConversations((prev) =>
       prev.map((c) =>
         c.userId === activeId
-          ? { ...c, lastMessage: text, time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) }
+          ? { ...c, lastMessage: content, time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) }
           : c
       )
     );
-    setText("");
   };
 
   const startConversation = (targetUser: UserResponse) => {
@@ -389,6 +405,7 @@ export function MessagesPage() {
             </div>
 
             <div className="px-4 py-3 border-t border-border">
+              {sendError && <p className="mb-2 text-xs font-medium text-red-600">{sendError}</p>}
               <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-1.5">
                 <input
                   type="text"

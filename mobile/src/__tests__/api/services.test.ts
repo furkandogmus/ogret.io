@@ -87,6 +87,17 @@ describe("authApi", () => {
     expect(mockAxios.post).toHaveBeenCalledWith("/auth/register", payload);
     expect(data.user.id).toBe("user-1");
   });
+
+  it("resetPassword sends the backend password field", async () => {
+    mockAxios.post.mockResolvedValue({ status: 200 });
+
+    await authApi.resetPassword("reset-token", "new-password-123");
+
+    expect(mockAxios.post).toHaveBeenCalledWith("/auth/reset-password", {
+      token: "reset-token",
+      password: "new-password-123",
+    });
+  });
 });
 
 describe("userApi", () => {
@@ -269,5 +280,24 @@ describe("adminApi", () => {
     const { data } = await adminApi.getDashboard();
     expect(mockAxios.get).toHaveBeenCalledWith("/admin/dashboard");
     expect(data.totalUsers).toBe(100);
+  });
+
+  it("getVerifications fetches pending document records", async () => {
+    mockAxios.get.mockResolvedValue({ data: [] });
+
+    await adminApi.getVerifications();
+
+    expect(mockAxios.get).toHaveBeenCalledWith("/admin/verifications");
+  });
+
+  it("reviewVerification sends the selected moderation decision", async () => {
+    mockAxios.put.mockResolvedValue({ status: 200 });
+
+    await adminApi.reviewVerification("verification-1", false, "Belge okunamıyor");
+
+    expect(mockAxios.put).toHaveBeenCalledWith("/admin/verifications/verification-1", {
+      approved: false,
+      adminNote: "Belge okunamıyor",
+    });
   });
 });

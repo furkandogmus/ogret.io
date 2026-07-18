@@ -14,6 +14,10 @@ import java.util.UUID;
 
 public interface TutorListingRepository extends JpaRepository<TutorListing, UUID> {
 
+    boolean existsByTutorIdAndStatus(UUID tutorId, String status);
+
+    long countByStatus(String status);
+
     @Query("SELECT l FROM TutorListing l JOIN FETCH l.tutor JOIN FETCH l.subject WHERE l.tutor.id = :tutorId")
     List<TutorListing> findByTutorId(UUID tutorId);
 

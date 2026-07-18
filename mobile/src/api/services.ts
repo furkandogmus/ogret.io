@@ -1,14 +1,34 @@
 import { api } from "./client";
 import type { User, TutorSummary, Lesson, Subject, Review, Message, Subscription, Reference, DashboardStats, TutorListing, CreateListingRequest } from "../types";
 
+export interface AvailabilitySlot {
+  id?: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  isActive?: boolean;
+}
+
+export interface AdminVerificationRecord {
+  id: string;
+  tutorId: string;
+  tutorName: string;
+  documentType: string;
+  documentUrl: string;
+  status: string;
+  createdAt: string;
+}
+
 export const authApi = {
   login: (email: string, password: string) =>
     api.post<{ accessToken: string; refreshToken: string }>("/auth/login", { email, password }),
   register: (data: { email: string; phone: string; password: string; fullName: string; role: "STUDENT" | "TUTOR" }) =>
-    api.post<{ user: User }>("/auth/register", data),
+    api.post<{ accessToken: string; refreshToken: string; user: User }>("/auth/register", data),
   verifyEmail: (token: string) => api.post("/auth/verify-email", { token }),
-  forgotPassword: (email: string) => api.post("/auth/forgot-password", { email }),
-  resetPassword: (token: string, newPassword: string) => api.post("/auth/reset-password", { token, newPassword }),
+  resendVerification: (email: string) => api.post("/auth/resend-verification", { email }),
+  forgotPassword: (email: string) =>
+    api.post<{ message: string; deliveryEnabled: boolean }>("/auth/forgot-password", { email }),
+  resetPassword: (token: string, newPassword: string) => api.post("/auth/reset-password", { token, password: newPassword }),
   changePassword: (currentPassword: string, newPassword: string) =>
     api.put("/users/me/password", { currentPassword, newPassword }),
 };
@@ -18,6 +38,17 @@ export const userApi = {
   getById: (id: string) => api.get<User>(`/users/${id}`),
   updateProfile: (data: Partial<{ fullName: string; bio: string; education: string; hourlyRate: number; experienceYears: number; phone: string }>) => api.put<User>("/users/me", data),
   updateAvatar: (avatarUrl: string) => api.put<User>("/users/me/avatar", { avatarUrl }),
+  uploadAvatar: async (uri: string) => {
+    const formData = new FormData();
+    const filename = uri.split("/").pop() || "avatar.jpg";
+    const ext = filename.split(".").pop()?.toLowerCase() || "jpg";
+    const mimeType = ext === "png" ? "image/png" : "image/jpeg";
+    formData.append("file", { uri, name: filename, type: mimeType } as any);
+    return api.post<User>("/users/me/avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  removeAvatar: () => api.delete<User>("/users/me/avatar"),
   search: (q: string) => api.get<User[]>("/users", { params: { q } }),
 };
 
@@ -27,10 +58,10 @@ export const tutorApi = {
   getById: (id: string) => api.get<User>(`/tutors/${id}`),
   getMySubjects: () => api.get<{ subjectId: string; subjectName: string; id: string }[]>("/tutors/me/subjects"),
   updateSubjects: (subjectIds: string[]) => api.put("/tutors/me/subjects", subjectIds),
-  getAvailability: (id: string, date?: string) => api.get<{ dayOfWeek: number; startTime: string; endTime: string }[]>(`/tutors/${id}/availability`, { params: { date } }),
-  getMyAvailability: () => api.get<{ id: string; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }[]>("/tutors/me/availability"),
+  getAvailability: (id: string, date?: string) => api.get<AvailabilitySlot[]>(`/tutors/${id}/availability`, { params: { date } }),
+  getMyAvailability: () => api.get<AvailabilitySlot[]>("/tutors/me/availability"),
   updateAvailability: (slots: { dayOfWeek: number; startTime: string; endTime: string }[]) =>
-    api.put("/tutors/me/availability", slots),
+    api.put<AvailabilitySlot[]>("/tutors/me/availability", slots),
 };
 
 export const subjectApi = {
@@ -111,7 +142,7 @@ export const adminApi = {
     api.get<{ content: User[]; totalPages: number; totalElements: number }>("/admin/users", { params }),
   getDashboard: () => api.get<DashboardStats>("/admin/dashboard"),
   verifyUser: (userId: string) => api.put(`/admin/users/${userId}/verify`),
-  getVerifications: () => api.get<{ id: string; userId: string; documentType: string; status: string }[]>("/admin/verifications"),
+  getVerifications: () => api.get<AdminVerificationRecord[]>("/admin/verifications"),
   reviewVerification: (id: string, approved: boolean, adminNote?: string) => api.put(`/admin/verifications/${id}`, { approved, adminNote }),
   getLessons: (params?: { page?: number; size?: number }) =>
     api.get<{ content: Lesson[]; totalPages: number; totalElements: number }>("/admin/lessons", { params }),

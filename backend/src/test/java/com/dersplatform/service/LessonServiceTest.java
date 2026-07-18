@@ -3,6 +3,7 @@ package com.dersplatform.service;
 import com.dersplatform.model.dto.request.CreateLessonRequest;
 import com.dersplatform.model.dto.response.LessonResponse;
 import com.dersplatform.model.entity.Lesson;
+import com.dersplatform.model.entity.TutorAvailability;
 import com.dersplatform.model.entity.User;
 import com.dersplatform.model.entity.Subject;
 import com.dersplatform.model.enums.LessonStatus;
@@ -18,11 +19,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.MockitoAnnotations;
-
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,6 +35,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class LessonServiceTest {
+
+    private static final Clock FIXED_CLOCK = Clock.fixed(
+            Instant.parse("2026-07-19T07:00:00Z"), ZoneId.of("Europe/Istanbul"));
 
     @Mock private LessonRepository lessonRepository;
     @Mock private UserRepository userRepository;
@@ -52,13 +57,22 @@ class LessonServiceTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        lessonService = new LessonService(lessonRepository, userRepository, subjectRepository, tutorListingRepository, tutorAvailabilityRepository, messageRepository, notificationService, scoringService);
+        lessonService = new LessonService(
+                lessonRepository,
+                userRepository,
+                subjectRepository,
+                tutorListingRepository,
+                tutorAvailabilityRepository,
+                messageRepository,
+                notificationService,
+                scoringService,
+                FIXED_CLOCK);
 
         student = User.builder()
                 .id(UUID.randomUUID())
                 .fullName("Student")
                 .role(Role.STUDENT)
+                .isVerified(true)
                 .build();
 
         tutor = User.builder()
@@ -79,7 +93,7 @@ class LessonServiceTest {
                 .tutor(tutor)
                 .subject(subject)
                 .status(LessonStatus.PENDING)
-                .lessonDate(LocalDate.now().plusDays(1))
+                .lessonDate(LocalDate.of(2026, 7, 20))
                 .startTime(LocalTime.of(14, 0))
                 .endTime(LocalTime.of(15, 0))
                 .durationMinutes(60)
@@ -89,7 +103,7 @@ class LessonServiceTest {
         createRequest = new CreateLessonRequest();
         createRequest.setTutorId(tutor.getId());
         createRequest.setSubjectId(subject.getId());
-        createRequest.setLessonDate(LocalDate.now().plusDays(1));
+        createRequest.setLessonDate(LocalDate.of(2026, 7, 20));
         createRequest.setStartTime(LocalTime.of(14, 0));
         createRequest.setEndTime(LocalTime.of(15, 0));
     }
@@ -99,7 +113,8 @@ class LessonServiceTest {
         when(userRepository.findById(student.getId())).thenReturn(Optional.of(student));
         when(userRepository.findById(tutor.getId())).thenReturn(Optional.of(tutor));
         when(subjectRepository.findById(subject.getId())).thenReturn(Optional.of(subject));
-        when(tutorAvailabilityRepository.findByTutorIdAndIsActiveTrue(tutor.getId())).thenReturn(List.of());
+        when(tutorAvailabilityRepository.findByTutorIdAndIsActiveTrue(tutor.getId()))
+                .thenReturn(List.of(availabilityForRequest()));
         when(lessonRepository.save(any(Lesson.class))).thenReturn(lesson);
 
         LessonResponse response = lessonService.createLesson(student.getId(), createRequest);
@@ -110,6 +125,22 @@ class LessonServiceTest {
         assertEquals(60, response.getDurationMinutes());
 
         verify(lessonRepository).save(any(Lesson.class));
+    }
+
+    @Test
+    void createLesson_ShouldRejectWhenTutorHasNoAvailability() {
+        when(userRepository.findById(student.getId())).thenReturn(Optional.of(student));
+        when(userRepository.findById(tutor.getId())).thenReturn(Optional.of(tutor));
+        when(subjectRepository.findById(subject.getId())).thenReturn(Optional.of(subject));
+        when(tutorAvailabilityRepository.findByTutorIdAndIsActiveTrue(tutor.getId())).thenReturn(List.of());
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> lessonService.createLesson(student.getId(), createRequest));
+
+        assertEquals("Öğretmen henüz müsaitlik takvimi oluşturmadı", exception.getMessage());
+        verify(lessonRepository, never()).save(any(Lesson.class));
+        verify(messageRepository, never()).save(any());
     }
 
     @Test
@@ -156,6 +187,30 @@ class LessonServiceTest {
     }
 
     @Test
+    void startLesson_ShouldMoveConfirmedLessonToInProgress() {
+        lesson.setStatus(LessonStatus.CONFIRMED);
+        when(lessonRepository.findByIdWithJoins(lesson.getId())).thenReturn(Optional.of(lesson));
+        when(lessonRepository.save(any(Lesson.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LessonResponse response = lessonService.startLesson(lesson.getId(), tutor.getId());
+
+        assertEquals(LessonStatus.IN_PROGRESS, response.getStatus());
+    }
+
+    @Test
+    void createLesson_ShouldRejectPastStartTimeBeforeDatabaseWork() {
+        createRequest.setLessonDate(LocalDate.of(2026, 7, 19));
+        createRequest.setStartTime(LocalTime.of(9, 59));
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> lessonService.createLesson(student.getId(), createRequest));
+
+        assertEquals("Ders başlangıç zamanı gelecekte olmalıdır", exception.getMessage());
+        verifyNoInteractions(userRepository, subjectRepository, lessonRepository);
+    }
+
+    @Test
     void getStudentLessons_ShouldReturnList() {
         when(lessonRepository.findByStudentIdOrderByCreatedAtDesc(student.getId()))
                 .thenReturn(List.of(lesson));
@@ -163,5 +218,15 @@ class LessonServiceTest {
         var lessons = lessonService.getStudentLessons(student.getId());
 
         assertEquals(1, lessons.size());
+    }
+
+    private TutorAvailability availabilityForRequest() {
+        return TutorAvailability.builder()
+                .tutor(tutor)
+                .dayOfWeek(createRequest.getLessonDate().getDayOfWeek().getValue() - 1)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(18, 0))
+                .isActive(true)
+                .build();
     }
 }

@@ -55,6 +55,18 @@ class FileStorageServiceTest {
     }
 
     @Test
+    void uploadAvatar_SupportsSameOriginStoragePath() throws Exception {
+        ReflectionTestUtils.setField(service, "publicUrl", "/storage");
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "avatar.png", "image/png", createPng());
+
+        String result = service.uploadFile(file, UploadPurpose.AVATAR);
+
+        assertThat(result).matches("/storage/public-files/avatars/[0-9a-f-]{36}\\.png");
+        assertThat(service.isManagedPublicAvatarUrl(result)).isTrue();
+    }
+
+    @Test
     void uploadIdentityDocument_ReturnsOpaqueKeyInsteadOfStorageUrl() {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "identity.pdf", "application/pdf", "%PDF-1.4\nfixture".getBytes());

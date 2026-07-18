@@ -2,21 +2,13 @@ import { memo, useMemo } from "react";
 import { View, Text } from "react-native";
 import { Image } from "expo-image";
 import { colors } from "../constants/theme";
+import { resolveMediaUrl } from "../utils/mediaUrl";
 
 interface Props {
   uri?: string | null;
   name: string;
   size?: number;
   online?: boolean;
-}
-
-function isReachableUrl(url: string): boolean {
-  try {
-    const host = new URL(url).hostname;
-    return !["localhost", "127.0.0.1", "minio", "0.0.0.0"].includes(host);
-  } catch {
-    return false;
-  }
 }
 
 function AvatarComponent({ uri, name, size = 48, online }: Props) {
@@ -30,8 +22,9 @@ function AvatarComponent({ uri, name, size = 48, online }: Props) {
         .slice(0, 2),
     [name],
   );
+  const resolvedUri = useMemo(() => resolveMediaUrl(uri), [uri]);
 
-  const showFallback = !uri || !isReachableUrl(uri);
+  const showFallback = !resolvedUri;
 
   return (
     <View style={{ position: "relative" }} accessibilityLabel={name} accessibilityRole="image">
@@ -41,7 +34,7 @@ function AvatarComponent({ uri, name, size = 48, online }: Props) {
         </View>
       ) : (
         <Image
-          source={{ uri }}
+          source={{ uri: resolvedUri! }}
           style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.surfaceLight }}
           contentFit="cover"
           transition={300}

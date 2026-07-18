@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface TutorVerificationRepository extends JpaRepository<TutorVerification, UUID> {
+    long countByStatus(VerificationStatus status);
+
     @Query("SELECT v FROM TutorVerification v JOIN FETCH v.tutor WHERE v.status = :status ORDER BY v.createdAt DESC")
     List<TutorVerification> findByStatusOrderByCreatedAtDesc(VerificationStatus status);
 

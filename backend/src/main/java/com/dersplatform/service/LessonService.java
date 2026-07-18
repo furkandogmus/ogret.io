@@ -22,7 +22,9 @@ import com.dersplatform.model.enums.MessageType;
 import com.dersplatform.repository.MessageRepository;
 import com.dersplatform.repository.TutorAvailabilityRepository;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,9 +40,12 @@ public class LessonService {
     private final MessageRepository messageRepository;
     private final NotificationService notificationService;
     private final ScoringService scoringService;
+    private final Clock applicationClock;
 
     @Transactional
     public LessonResponse createLesson(UUID studentId, CreateLessonRequest request) {
+        validateLessonTime(request);
+
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> ApiException.notFound("Öğrenci bulunamadı"));
         User tutor = userRepository.findById(request.getTutorId())
@@ -267,7 +272,9 @@ public class LessonService {
         LessonStatus current = lesson.getStatus();
         boolean valid = switch (current) {
             case PENDING -> target == LessonStatus.CONFIRMED || target == LessonStatus.CANCELLED;
-            case CONFIRMED -> target == LessonStatus.COMPLETED || target == LessonStatus.CANCELLED;
+            case CONFIRMED -> target == LessonStatus.IN_PROGRESS
+                    || target == LessonStatus.COMPLETED
+                    || target == LessonStatus.CANCELLED;
             case IN_PROGRESS -> target == LessonStatus.COMPLETED || target == LessonStatus.CANCELLED;
             default -> false;
         };
@@ -278,11 +285,23 @@ public class LessonService {
         }
     }
 
+    private void validateLessonTime(CreateLessonRequest request) {
+        if (request.getLessonDate() == null || request.getStartTime() == null) {
+            return;
+        }
+        LocalDateTime lessonStart = LocalDateTime.of(request.getLessonDate(), request.getStartTime());
+        if (!lessonStart.isAfter(LocalDateTime.now(applicationClock))) {
+            throw ApiException.badRequest("Ders başlangıç zamanı gelecekte olmalıdır");
+        }
+    }
+
     private void checkTutorAvailability(UUID tutorId, java.time.LocalDate date,
                                           java.time.LocalTime start, java.time.LocalTime end) {
         List<TutorAvailability> slots = tutorAvailabilityRepository
                 .findByTutorIdAndIsActiveTrue(tutorId);
-        if (slots.isEmpty()) return;
+        if (slots.isEmpty()) {
+            throw ApiException.badRequest("Öğretmen henüz müsaitlik takvimi oluşturmadı");
+        }
 
         int dayOfWeek = date.getDayOfWeek().getValue() - 1;
         boolean available = slots.stream()

@@ -33,6 +33,7 @@ public class TutorListingService {
     private final TutorListingRepository tutorListingRepository;
     private final UserRepository userRepository;
     private final SubjectRepository subjectRepository;
+    private final ProfileCompletionService profileCompletionService;
 
     private static final Pattern PHONE_PATTERN = Pattern.compile(".*[0-9]{7,}.*");
     private static final Pattern EMAIL_PATTERN = Pattern
@@ -78,6 +79,8 @@ public class TutorListingService {
             tutor.setHourlyRate(request.getHourlyRate());
             userRepository.save(tutor);
         }
+        tutorListingRepository.flush();
+        profileCompletionService.refresh(tutor);
         return ListingResponse.fromEntity(savedListing);
     }
 
@@ -111,6 +114,8 @@ public class TutorListingService {
             tutor.setHourlyRate(request.getHourlyRate());
             userRepository.save(tutor);
         }
+        tutorListingRepository.flush();
+        profileCompletionService.refresh(tutor);
         return ListingResponse.fromEntity(savedListing);
     }
 
@@ -124,6 +129,8 @@ public class TutorListingService {
         }
 
         tutorListingRepository.delete(listing);
+        tutorListingRepository.flush();
+        profileCompletionService.refresh(listing.getTutor());
     }
 
     public List<ListingResponse> getTutorListings(UUID tutorId, String status) {

@@ -47,9 +47,11 @@ public class ProductionConfigurationValidator {
 
         requireHttpsUrl("app.base-url");
         requireHttpsUrl("aws.s3.public-url");
-        String fromEmail = required("aws.ses.from-email");
-        if (!fromEmail.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
-            throw new IllegalStateException("Production sender email is invalid");
+        if (environment.getProperty("app.email.enabled", Boolean.class, false)) {
+            String fromEmail = required("aws.ses.from-email");
+            if (!fromEmail.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+                throw new IllegalStateException("Production sender email is invalid");
+            }
         }
 
         String origins = required("app.cors.allowed-origins");

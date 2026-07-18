@@ -19,6 +19,7 @@ public class TutorOnboardingService {
     private final UserRepository userRepository;
     private final SubjectRepository subjectRepository;
     private final TutorListingRepository tutorListingRepository;
+    private final ProfileCompletionService profileCompletionService;
 
     public Map<String, Object> getProgress(UUID userId) {
         User user = userRepository.findById(userId)
@@ -28,49 +29,21 @@ public class TutorOnboardingService {
             throw ApiException.forbidden("Bu sayfa yalnızca öğretmenler içindir");
         }
 
+        var completion = profileCompletionService.refresh(user);
         Map<String, Object> progress = new LinkedHashMap<>();
         List<Map<String, Object>> steps = new ArrayList<>();
+        for (int index = 0; index < completion.getItems().size(); index++) {
+            var item = completion.getItems().get(index);
+            steps.add(Map.of(
+                    "id", index + 1,
+                    "title", item.getLabel(),
+                    "fields", List.of(item.getKey()),
+                    "completed", item.isCompleted()
+            ));
+        }
 
-        boolean step1 = user.getFullName() != null && !user.getFullName().isBlank()
-                && user.getPhone() != null && !user.getPhone().isBlank();
-        steps.add(Map.of(
-                "id", 1, "title", "Profesyonel Bilgiler",
-                "fields", List.of("fullName", "phone", "bio", "education"),
-                "completed", step1
-        ));
-
-        boolean step2 = user.getHourlyRate() != null && user.getHourlyRate().compareTo(java.math.BigDecimal.ZERO) > 0;
-        steps.add(Map.of(
-                "id", 2, "title", "Hizmet Detayları",
-                "fields", List.of("hourlyRate", "experienceYears"),
-                "completed", step2
-        ));
-
-        boolean step3 = !tutorListingRepository.findByTutorIdAndStatusOrderByCreatedAtDesc(userId, "ACTIVE").isEmpty();
-        steps.add(Map.of(
-                "id", 3, "title", "Ders İlanı Oluştur",
-                "fields", List.of("title", "description", "subject"),
-                "completed", step3
-        ));
-
-        boolean step4 = user.getAvatarUrl() != null && !user.getAvatarUrl().isBlank();
-        steps.add(Map.of(
-                "id", 4, "title", "Profil Fotoğrafı",
-                "fields", List.of("avatarUrl"),
-                "completed", step4
-        ));
-
-        boolean step5 = user.isIdentityVerified();
-        steps.add(Map.of(
-                "id", 5, "title", "Kimlik Doğrulama",
-                "fields", List.of("identityVerified"),
-                "completed", step5
-        ));
-
-        long completedCount = steps.stream().filter(s -> (boolean) s.get("completed")).count();
-        int percentage = (int) (completedCount * 100 / steps.size());
-
-        progress.put("percentage", percentage);
+        progress.put("percentage", completion.getScore());
+        progress.put("complete", completion.isComplete());
         progress.put("steps", steps);
 
         return progress;
@@ -84,7 +57,9 @@ public class TutorOnboardingService {
         user.setPhone(phone);
         user.setBio(bio);
         user.setEducation(education);
-        return userRepository.save(user);
+        user = userRepository.save(user);
+        profileCompletionService.refresh(user);
+        return user;
     }
 
     @Transactional
@@ -93,7 +68,9 @@ public class TutorOnboardingService {
                 .orElseThrow(() -> ApiException.notFound("Kullanıcı bulunamadı"));
         user.setHourlyRate(hourlyRate != null ? java.math.BigDecimal.valueOf(hourlyRate) : null);
         user.setExperienceYears(experienceYears);
-        return userRepository.save(user);
+        user = userRepository.save(user);
+        profileCompletionService.refresh(user);
+        return user;
     }
 
     @Transactional
@@ -117,6 +94,9 @@ public class TutorOnboardingService {
                 .status("ACTIVE")
                 .build();
 
-        return tutorListingRepository.save(listing);
+        TutorListing saved = tutorListingRepository.save(listing);
+        tutorListingRepository.flush();
+        profileCompletionService.refresh(tutor);
+        return saved;
     }
 }

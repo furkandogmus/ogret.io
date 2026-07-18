@@ -24,6 +24,38 @@ test.describe('Profile Edit Page', () => {
     await expect(page.locator('button:has-text("Faturalarım")')).not.toBeVisible();
   });
 
+  test('renders the authoritative completion score and never claims optional verification', async ({ page }) => {
+    const partialTutor = {
+      ...mockTutor,
+      identityVerified: false,
+      profileComplete: false,
+      profileCompletionScore: 70,
+      profileCompletion: {
+        ...mockTutor.profileCompletion,
+        score: 70,
+        complete: false,
+        completedItems: 7,
+        items: mockTutor.profileCompletion.items.map((item) => (
+          ['avatarUrl', 'activeListing', 'availability'].includes(item.key)
+            ? { ...item, completed: false }
+            : item
+        )),
+      },
+    };
+    await page.addInitScript(({ user }) => {
+      localStorage.setItem('user', JSON.stringify(user));
+    }, { user: partialTutor });
+
+    await page.goto('/profil/duzenle');
+
+    await expect(page.getByTestId('profile-completion-score')).toHaveText('%70');
+    await expect(page.getByRole('progressbar', { name: 'Profil tamamlanma yüzdesi' })).toHaveAttribute('aria-valuenow', '70');
+    await expect(page.getByText('Haftalık müsaitlik', { exact: true })).toBeVisible();
+    await expect(page.getByText('Kimlik onaylandı', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Diploma onaylandı', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('İsteğe bağlı doğrulamayı başlat', { exact: true })).toBeVisible();
+  });
+
   test('should not show Ders tab for student users', async ({ page }) => {
     await page.addInitScript(({ user }) => {
       localStorage.setItem('user', JSON.stringify(user));
@@ -145,6 +177,68 @@ test.describe('Profile Edit Page', () => {
     await expect(page.locator('text=Verdiğiniz Dersler')).toBeVisible();
 
     // Availability section
-    await expect(page.locator('text=Müsaitlik Takvimi')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Haftalık Müsaitlik' })).toBeVisible();
+  });
+
+  test('uploads, renders and removes a same-origin profile photo', async ({ page }) => {
+    const avatarUrl = '/storage/dersplatform-public/avatars/11111111-1111-1111-1111-111111111111.png';
+    const tutorWithoutAvatar = { ...mockTutor, avatarUrl: undefined };
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zlq8AAAAASUVORK5CYII=',
+      'base64',
+    );
+    let uploadCalled = false;
+    let removeCalled = false;
+
+    await page.route(/\/api\/v1\/users\/me\/avatar$/, async (route) => {
+      const method = route.request().method();
+      if (method === 'POST') {
+        uploadCalled = true;
+        expect(route.request().headers()['content-type']).toContain('multipart/form-data; boundary=');
+        expect(route.request().postDataBuffer()?.toString('latin1')).toContain('avatar.png');
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ ...tutorWithoutAvatar, avatarUrl }),
+        });
+        return;
+      }
+      if (method === 'DELETE') {
+        removeCalled = true;
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(tutorWithoutAvatar),
+        });
+        return;
+      }
+      await route.abort();
+    });
+    await page.route(`**${avatarUrl}`, async (route) => {
+      await route.fulfill({ status: 200, contentType: 'image/png', body: png });
+    });
+    await page.addInitScript(({ user }) => {
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('accessToken', 'mock-tutor-access-token');
+      localStorage.setItem('refreshToken', 'mock-tutor-refresh-token');
+    }, { user: tutorWithoutAvatar });
+
+    await page.goto('/profil/duzenle');
+    const profilePhotoCard = page.getByRole('heading', { name: 'Profil Resmi' }).locator('..');
+    await profilePhotoCard.getByLabel('Profil fotoğrafı seç').setInputFiles({
+      name: 'avatar.png',
+      mimeType: 'image/png',
+      buffer: png,
+    });
+
+    const renderedAvatar = profilePhotoCard.getByRole('img', { name: 'Selim Hoca' });
+    await expect(renderedAvatar).toHaveAttribute('src', avatarUrl);
+    await expect.poll(() => renderedAvatar.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+    expect(uploadCalled).toBe(true);
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await profilePhotoCard.getByRole('button', { name: 'Fotoğrafı kaldır' }).click();
+    await expect(renderedAvatar).toHaveCount(0);
+    expect(removeCalled).toBe(true);
   });
 });

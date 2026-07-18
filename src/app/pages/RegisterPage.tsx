@@ -47,7 +47,7 @@ export function RegisterPage() {
     setError("");
     try {
       await register({ ...values, phone: values.phone.replace(/\s/g, "") });
-      navigate("/giris?registered=1");
+      navigate(values.role === "TUTOR" ? "/ogretmen-panel" : "/ogrenci-panel");
     } catch (err: any) {
       setError(err.response?.data?.message || "Kayıt olurken bir hata oluştu");
     }

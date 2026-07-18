@@ -106,6 +106,11 @@ public class NotificationService {
         notificationRepository.markAllRead(recipientId);
     }
 
+    @Transactional
+    public void clearNotifications(UUID recipientId) {
+        notificationRepository.deleteByRecipientId(recipientId);
+    }
+
     // ── Convenience Methods ──
 
     public void notifyNewMessage(User sender, User receiver, String messageContent) {

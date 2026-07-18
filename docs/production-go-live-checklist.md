@@ -13,12 +13,12 @@ Bu belge repo içindeki güvenlik ve kalite düzeltmelerinden sonra, production 
 | KVKK metinleri ve saklama/imha politikası | Hukuk | Versiyonlu nihai metin, veri işleme envanteri ve onay kaydı | NO-GO |
 | Domain, DNS ve TLS | Operasyon | `ogret.io` ve API için geçerli sertifika, HTTPS yönlendirme ve HSTS kontrolü | NO-GO |
 | Production secret'ları | Operasyon | Secret manager kaydı; güçlü JWT/DB/Redis/S3 anahtarları; varsayılan değer bulunmadığına dair startup kanıtı | NO-GO |
-| E-posta teslimatı | Operasyon | SES/domain doğrulaması, SPF, DKIM, DMARC; kayıt doğrulama ve parola sıfırlama teslim testi | NO-GO |
+| E-posta teslimatı | Operasyon | İlk sürümde opsiyonel; etkinleştirilecekse SPF, DKIM, DMARC ve parola sıfırlama teslim testi | SONRAKİ FAZ |
 | Veritabanı yedeği ve PITR | Operasyon | Otomatik yedek politikası ve tarihli başarılı restore tatbikatı | NO-GO |
 | Obje depolama koruması | Operasyon | Private bucket public-access-block, encryption, versioning/lifecycle ve silme politikası | NO-GO |
 | Malware tarayıcı | Operasyon | Güncel ClamAV imza veritabanı, EICAR reddi ve tarayıcı kesintisinde fail-closed testi | NO-GO |
 | Gözlemlenebilirlik | Operasyon | Merkezi log, hata takibi, metrik/dashboard, alarm kanalları ve nöbet sorumlusu | NO-GO |
-| Staging smoke/E2E | QA + teknik | Kayıt → e-posta doğrulama → profil/ilan → arama → ders talebi → mesaj → ders tamamlama testi | NO-GO |
+| Staging smoke/E2E | QA + teknik | Kayıt → doğrudan oturum → profil/ilan → arama → ders talebi → mesaj → ders tamamlama testi | NO-GO |
 | Güvenlik doğrulaması | Teknik + bağımsız test | SAST/dependency/image/secret scan sonuçları ve kritik-yüksek bulgu kalmadığına dair rapor | NO-GO |
 | Rollback tatbikatı | Operasyon | Aynı image'ın staging deploy'u, health gate ve önceki sürüme başarılı dönüş kaydı | NO-GO |
 | Branch protection | Repo yöneticisi | `main` için PR zorunluluğu ve CI kontrollerinin required olması | NO-GO |

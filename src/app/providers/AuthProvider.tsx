@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import api from "../api/client";
 import axios from "axios";
+import type { ProfileCompletion } from "../api/services";
 
 export interface AuthUser {
   id: string;
@@ -19,6 +20,8 @@ export interface AuthUser {
   ratingCount?: number;
   online: boolean;
   identityVerified: boolean;
+  profileCompletionScore?: number;
+  profileCompletion?: ProfileCompletion;
 }
 
 interface AuthContextType {
@@ -27,6 +30,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   setUser: (user: AuthUser | null) => void;
   isAuthenticated: boolean;
   isTutor: boolean;
@@ -65,8 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(async (registerData: RegisterData) => {
-    await api.post("/auth/register", registerData);
-    setUser(null);
+    const { data } = await api.post("/auth/register", registerData);
+    setUser(data.user);
+  }, [setUser]);
+
+  const refreshUser = useCallback(async () => {
+    const { data } = await api.get<AuthUser>("/users/me");
+    setUser(data);
   }, [setUser]);
 
   const logout = useCallback(async () => {
@@ -86,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        refreshUser,
         setUser,
         isAuthenticated: !!user,
         isTutor: user?.role === "TUTOR",

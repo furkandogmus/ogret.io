@@ -21,7 +21,7 @@ interface NotificationContextType {
   addNotification: (n: Omit<AppNotification, "id" | "read" | "createdAt">) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  clearNotifications: () => void;
+  clearNotifications: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -30,7 +30,7 @@ const NotificationContext = createContext<NotificationContextType>({
   addNotification: () => {},
   markAsRead: () => {},
   markAllAsRead: () => {},
-  clearNotifications: () => {},
+    clearNotifications: async () => {},
 });
 
 export function useNotifications() {
@@ -120,8 +120,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     api.put("/notifications/read-all").catch(() => undefined);
   }, []);
 
-  const clearNotifications = useCallback(() => {
-    setNotifications([]);
+  const clearNotifications = useCallback(async () => {
+    try {
+      await api.delete("/notifications");
+      setNotifications([]);
+    } catch {
+      // Keep the visible list when persistence fails so reload behavior stays honest.
+    }
   }, []);
 
   return (

@@ -98,7 +98,7 @@ export function TutorCard({
         <div className="absolute bottom-3 left-3 right-3 text-white z-10">
           <h3 className="font-semibold text-lg text-white tracking-tight truncate">{fullName}</h3>
           {(listingTitle || title || (experienceYears != null && experienceYears > 0)) && (
-            <p className="text-xs text-white/90 font-medium truncate mt-0.5">{listingTitle || title || experienceYears != null && `${experienceYears} yıl desneyim`}</p>
+            <p className="text-xs text-white/90 font-medium truncate mt-0.5">{listingTitle || title || experienceYears != null && `${experienceYears} yıl deneyim`}</p>
           )}
         </div>
       </div>
@@ -147,7 +147,7 @@ export function TutorCard({
               <span className="font-extrabold text-stone-900 text-xl">₺{hourlyRate}</span>
               <span className="text-[11px] text-muted-foreground font-semibold">/saat</span>
             </div>
-            <div className="text-[10px] text-rose-500 font-bold mt-0.5">İlk ders ücretsiz</div>
+            <div className="text-[10px] text-stone-500 font-medium mt-0.5">Ücret öğretmenle doğrudan kararlaştırılır</div>
           </div>
           <div className="flex gap-2">
             <button

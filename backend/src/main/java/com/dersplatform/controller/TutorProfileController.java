@@ -1,7 +1,13 @@
 package com.dersplatform.controller;
 
 import com.dersplatform.model.entity.*;
+import com.dersplatform.model.dto.request.UpdateTutorAvailabilityRequest;
+import com.dersplatform.model.dto.response.TutorAvailabilityResponse;
+import com.dersplatform.model.dto.response.UserResponse;
 import com.dersplatform.repository.*;
+import com.dersplatform.service.TutorAvailabilityService;
+import com.dersplatform.service.ProfileCompletionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +16,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -22,8 +27,9 @@ public class TutorProfileController {
 
     private final UserRepository userRepository;
     private final TutorSubjectRepository tutorSubjectRepository;
-    private final TutorAvailabilityRepository tutorAvailabilityRepository;
     private final SubjectRepository subjectRepository;
+    private final TutorAvailabilityService tutorAvailabilityService;
+    private final ProfileCompletionService profileCompletionService;
 
     @GetMapping("/subjects")
     @PreAuthorize("hasRole('TUTOR')")
@@ -51,7 +57,7 @@ public class TutorProfileController {
     @PutMapping("/subjects")
     @PreAuthorize("hasRole('TUTOR')")
     @CacheEvict(value = {"tutorDetail", "subjects"}, allEntries = true)
-    public ResponseEntity<Void> updateMySubjects(
+    public ResponseEntity<UserResponse> updateMySubjects(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody List<UUID> subjectIds) {
         User tutor = userRepository.findById(UUID.fromString(userDetails.getUsername()))
@@ -62,44 +68,24 @@ public class TutorProfileController {
             tutorSubjectRepository.save(TutorSubject.builder()
                     .tutor(tutor).subject(subject).build());
         }
-        return ResponseEntity.ok().build();
+        tutorSubjectRepository.flush();
+        return ResponseEntity.ok(UserResponse.fromEntity(tutor, profileCompletionService.refresh(tutor)));
     }
 
     @GetMapping("/availability")
     @PreAuthorize("hasRole('TUTOR')")
-    public ResponseEntity<List<Map<String, Object>>> getMyAvailability(
+    public ResponseEntity<List<TutorAvailabilityResponse>> getMyAvailability(
             @AuthenticationPrincipal UserDetails userDetails) {
-        User tutor = userRepository.findById(UUID.fromString(userDetails.getUsername()))
-                .orElseThrow();
-        return ResponseEntity.ok(tutorAvailabilityRepository.findByTutorId(tutor.getId())
-                .stream()
-                .map(a -> Map.<String, Object>of(
-                        "id", a.getId().toString(),
-                        "dayOfWeek", a.getDayOfWeek(),
-                        "startTime", a.getStartTime().toString(),
-                        "endTime", a.getEndTime().toString(),
-                        "isActive", a.isActive()
-                ))
-                .toList());
+        return ResponseEntity.ok(tutorAvailabilityService.getMyAvailability(
+                UUID.fromString(userDetails.getUsername())));
     }
 
     @PutMapping("/availability")
     @PreAuthorize("hasRole('TUTOR')")
-    public ResponseEntity<Void> updateMyAvailability(
+    public ResponseEntity<List<TutorAvailabilityResponse>> updateMyAvailability(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody List<Map<String, Object>> slots) {
-        User tutor = userRepository.findById(UUID.fromString(userDetails.getUsername()))
-                .orElseThrow();
-        tutorAvailabilityRepository.deleteAll(tutorAvailabilityRepository.findByTutorId(tutor.getId()));
-        for (Map<String, Object> slot : slots) {
-            tutorAvailabilityRepository.save(TutorAvailability.builder()
-                    .tutor(tutor)
-                    .dayOfWeek((Integer) slot.get("dayOfWeek"))
-                    .startTime(LocalTime.parse((String) slot.get("startTime")))
-                    .endTime(LocalTime.parse((String) slot.get("endTime")))
-                    .isActive(true)
-                    .build());
-        }
-        return ResponseEntity.ok().build();
+            @Valid @RequestBody List<@Valid UpdateTutorAvailabilityRequest> slots) {
+        return ResponseEntity.ok(tutorAvailabilityService.updateMyAvailability(
+                UUID.fromString(userDetails.getUsername()), slots));
     }
 }

@@ -18,6 +18,8 @@ import java.util.Arrays;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketAuthInterceptor authInterceptor;
+    private final WebSocketOutboundAuthInterceptor outboundAuthInterceptor;
+    private final WebSocketCookieHandshakeInterceptor cookieHandshakeInterceptor;
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
@@ -33,14 +35,21 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws/chat")
                 .setAllowedOrigins(origins())
+                .addInterceptors(cookieHandshakeInterceptor)
                 .withSockJS();
         registry.addEndpoint("/ws/chat")
-                .setAllowedOrigins(origins());
+                .setAllowedOrigins(origins())
+                .addInterceptors(cookieHandshakeInterceptor);
     }
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(authInterceptor);
+    }
+
+    @Override
+    public void configureClientOutboundChannel(ChannelRegistration registration) {
+        registration.interceptors(outboundAuthInterceptor);
     }
 
     @Override

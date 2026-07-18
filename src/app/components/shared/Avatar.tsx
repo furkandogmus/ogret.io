@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 interface AvatarProps {
   src?: string | null;
   alt: string;
@@ -6,8 +8,14 @@ interface AvatarProps {
 }
 
 export function Avatar({ src, alt, className = "w-10 h-10", online }: AvatarProps) {
-  const initial = alt.charAt(0).toUpperCase();
-  if (src) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const initial = alt.trim().charAt(0).toUpperCase() || "?";
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [src]);
+
+  if (src && !imageFailed) {
     return (
       <div className="relative inline-flex flex-shrink-0">
         <img
@@ -15,6 +23,7 @@ export function Avatar({ src, alt, className = "w-10 h-10", online }: AvatarProp
           alt={alt}
           loading="lazy"
           decoding="async"
+          onError={() => setImageFailed(true)}
           className={`rounded-xl object-cover bg-stone-100 ${className}`}
         />
         {online !== undefined && (

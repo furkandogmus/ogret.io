@@ -1,24 +1,25 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
 import {
-  Save, ArrowLeft, Camera, Check, X, Zap, ShieldCheck,
-  GraduationCap, MapPin, Lock, Search, Trash2, CheckCircle, ChevronRight
+  ArrowLeft, Camera, Check, ShieldCheck,
+  GraduationCap, Trash2, ChevronRight
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../providers/AuthProvider";
 import { toast } from "sonner";
-import { userApi, subjectApi, tutorApi, fileApi, type SubjectResponse } from "../api/services";
+import { userApi, subjectApi, tutorApi, type SubjectResponse } from "../api/services";
 import { JsonLd } from "../components/shared/JsonLd";
 import { Avatar } from "../components/shared/Avatar";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "../components/ui/form";
 import { profileSchema, type ProfileForm } from "../lib/validation";
+import { TutorAvailabilityEditor } from "../components/tutor/TutorAvailabilityEditor";
 
-const DAY_LABELS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
-
-const ALL_TIMES = Array.from({ length: 24 }, (_, i) =>
-  `${String(i).padStart(2, "0")}:00`
-);
+function apiErrorMessage(error: unknown, fallback: string) {
+  if (typeof error !== "object" || error === null || !("response" in error)) return fallback;
+  const response = (error as { response?: { data?: { message?: unknown } } }).response;
+  return typeof response?.data?.message === "string" ? response.data.message : fallback;
+}
 
 export function ProfileEditPage() {
   const { user, setUser } = useAuth();
@@ -31,22 +32,13 @@ export function ProfileEditPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [avatarBusy, setAvatarBusy] = useState(false);
 
   // Genel Bilgiler form states
-  const [gender, setGender] = useState("Erkek");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [birthDate, setBirthDate] = useState("2002-01-30");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("Türkiye");
-
-  // Notifications states
-  const [smsLessons, setSmsLessons] = useState(true);
-  const [emailActivity, setEmailActivity] = useState(true);
-  const [emailLessons, setEmailLessons] = useState(true);
-  const [emailOffers, setEmailOffers] = useState(true);
-  const [emailCancel, setEmailCancel] = useState(true);
 
   // Change Password states
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -72,11 +64,10 @@ export function ProfileEditPage() {
 
   const [allSubjects, setAllSubjects] = useState<SubjectResponse[]>([]);
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
-
-  const [availSlots, setAvailSlots] = useState<{ dayOfWeek: number; startTime: string; endTime: string }[]>([]);
-  const [availDays, setAvailDays] = useState<Record<number, boolean>>({});
-  const [availStart, setAvailStart] = useState("09:00");
-  const [availEnd, setAvailEnd] = useState("18:00");
+  const completionScore = user?.profileCompletion?.score
+    ?? user?.profileCompletionScore
+    ?? (user?.profileComplete ? 100 : 0);
+  const missingCompletionItems = user?.profileCompletion?.items.filter((item) => !item.completed) ?? [];
 
   useEffect(() => {
     if (user) {
@@ -105,13 +96,7 @@ export function ProfileEditPage() {
   useEffect(() => {
     if (user?.role !== "TUTOR") return;
     subjectApi.list().then(({ data }) => setAllSubjects(data)).catch(() => {});
-    tutorApi.getMySubjects().then(({ data }) => setSelectedSubjectIds(data.map((s: any) => s.subjectId))).catch(() => {});
-    tutorApi.getMyAvailability().then(({ data }) => {
-      setAvailSlots(data.map((s: any) => ({ dayOfWeek: s.dayOfWeek, startTime: s.startTime.substring(0, 5), endTime: s.endTime.substring(0, 5) })));
-      const days: Record<number, boolean> = {};
-      data.forEach((s: any) => { days[s.dayOfWeek] = true; });
-      setAvailDays(days);
-    }).catch(() => {});
+    tutorApi.getMySubjects().then(({ data }) => setSelectedSubjectIds(data.map((subject) => subject.subjectId))).catch(() => {});
   }, [user]);
 
   const handleSaveProfile = async (values: ProfileForm) => {
@@ -122,8 +107,8 @@ export function ProfileEditPage() {
       setUser(data);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Kaydedilirken hata oluştu");
+    } catch (err: unknown) {
+      setError(apiErrorMessage(err, "Kaydedilirken hata oluştu"));
     } finally {
       setSaving(false);
     }
@@ -145,8 +130,8 @@ export function ProfileEditPage() {
       setUser(data);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Bilgiler güncellenirken hata oluştu");
+    } catch (err: unknown) {
+      setError(apiErrorMessage(err, "Bilgiler güncellenirken hata oluştu"));
     } finally {
       setSaving(false);
     }
@@ -156,37 +141,50 @@ export function ProfileEditPage() {
     setSaving(true);
     setError("");
     try {
-      await tutorApi.updateMySubjects(selectedSubjectIds);
+      const { data } = await tutorApi.updateMySubjects(selectedSubjectIds);
+      setUser(data);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch { setError("Konular kaydedilirken hata oluştu"); } finally { setSaving(false); }
   };
 
-  const handleSaveAvailability = async () => {
-    setSaving(true);
-    setError("");
-    try {
-      const slots = Object.entries(availDays)
-        .filter(([_, active]) => active)
-        .map(([day]) => ({ dayOfWeek: parseInt(day), startTime: availStart, endTime: availEnd }));
-      await tutorApi.updateMyAvailability(slots);
-      setAvailSlots(slots);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch { setError("Müsaitlik kaydedilirken hata oluştu"); } finally { setSaving(false); }
-  };
-
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      setError("Profil fotoğrafı JPEG veya PNG formatında olmalı");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Profil fotoğrafı 5 MB'dan küçük olmalı");
+      return;
+    }
     try {
+      setAvatarBusy(true);
       setError("");
-      const uploadRes = await fileApi.upload(file, "AVATAR");
-      const fileUrl = uploadRes.data.url;
-      const { data } = await userApi.updateAvatar(fileUrl);
+      const { data } = await userApi.uploadAvatar(file);
       setUser(data);
-    } catch {
-      setError("Avatar yüklenirken hata oluştu");
+      toast.success("Profil fotoğrafı güncellendi");
+    } catch (err: unknown) {
+      setError(apiErrorMessage(err, "Profil fotoğrafı yüklenirken hata oluştu"));
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const handleAvatarRemove = async () => {
+    if (!window.confirm("Profil fotoğrafını kaldırmak istediğinize emin misiniz?")) return;
+    try {
+      setAvatarBusy(true);
+      setError("");
+      const { data } = await userApi.removeAvatar();
+      setUser(data);
+      toast.success("Profil fotoğrafı kaldırıldı");
+    } catch (err: unknown) {
+      setError(apiErrorMessage(err, "Profil fotoğrafı kaldırılamadı"));
+    } finally {
+      setAvatarBusy(false);
     }
   };
 
@@ -194,10 +192,6 @@ export function ProfileEditPage() {
     setSelectedSubjectIds((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );
-  };
-
-  const toggleDay = (day: number) => {
-    setAvailDays((prev) => ({ ...prev, [day]: !prev[day] }));
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -222,8 +216,8 @@ export function ProfileEditPage() {
         setShowPasswordForm(false);
         setPasswordSuccess("");
       }, 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Şifre değiştirilirken hata oluştu");
+    } catch (err: unknown) {
+      setError(apiErrorMessage(err, "Şifre değiştirilirken hata oluştu"));
     }
   };
 
@@ -298,6 +292,27 @@ export function ProfileEditPage() {
               <p className="text-xs text-emerald-100/90 font-medium">
                 öğret.io profil ayarlarına hoş geldin. Profilini, doğrulamalarını ve hesap güvenliğini buradan yönetebilirsin.
               </p>
+              <div className="mt-5 max-w-xl rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                <div className="flex items-center justify-between gap-3 text-xs font-extrabold">
+                  <span>Profil tamamlanma durumu</span>
+                  <span data-testid="profile-completion-score">%{completionScore}</span>
+                </div>
+                <div
+                  className="mt-2 h-2 overflow-hidden rounded-full bg-white/20"
+                  role="progressbar"
+                  aria-label="Profil tamamlanma yüzdesi"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={completionScore}
+                >
+                  <div className="h-full rounded-full bg-white transition-all" style={{ width: `${completionScore}%` }} />
+                </div>
+                <p className="mt-2 text-[11px] font-medium text-emerald-50">
+                  {completionScore === 100
+                    ? "Profiliniz kullanıma hazır."
+                    : `Sıradaki eksikler: ${missingCompletionItems.slice(0, 3).map((item) => item.label).join(", ") || "profil bilgileri"}`}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -310,17 +325,6 @@ export function ProfileEditPage() {
               <h3 className="font-extrabold text-stone-900 text-base">Genel Bilgiler</h3>
               
               <div className="space-y-3 text-left">
-                <div>
-                  <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    className="w-full bg-stone-50/50 rounded-xl px-4 py-2.5 text-xs font-bold text-stone-700 outline-none border border-stone-200/80 focus:border-rose-450 transition-colors appearance-none cursor-pointer"
-                  >
-                    <option value="Erkek">Erkek</option>
-                    <option value="Kadın">Kadın</option>
-                    <option value="Belirtmek istemiyorum">Belirtmek istemiyorum</option>
-                  </select>
-                </div>
                 <div>
                   <input
                     type="text"
@@ -339,14 +343,6 @@ export function ProfileEditPage() {
                     className="w-full bg-white rounded-xl px-4 py-2.5 text-xs font-bold text-stone-700 outline-none border border-stone-200/80 focus:border-rose-450 transition-colors"
                   />
                 </div>
-                <div>
-                  <input
-                    type="date"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    className="w-full bg-white rounded-xl px-4 py-2.5 text-xs font-bold text-stone-700 outline-none border border-stone-200/80 focus:border-rose-450 transition-colors"
-                  />
-                </div>
                 <div className="relative">
                   <input
                     type="email"
@@ -354,9 +350,6 @@ export function ProfileEditPage() {
                     disabled
                     className="w-full bg-stone-50/30 rounded-xl px-4 py-2.5 pr-10 text-xs font-bold text-stone-500 outline-none border border-stone-200/40 cursor-not-allowed"
                   />
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-emerald-500 text-white p-0.5 rounded-full">
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
-                  </div>
                 </div>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold flex items-center gap-1 text-stone-700">
@@ -369,9 +362,11 @@ export function ProfileEditPage() {
                     placeholder="Telefon"
                     className="w-full bg-white rounded-xl pl-14 pr-10 py-2.5 text-xs font-bold text-stone-700 outline-none border border-stone-200/80 focus:border-rose-450 transition-colors"
                   />
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-emerald-500 text-white p-0.5 rounded-full">
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
-                  </div>
+                  {phone.trim() && (
+                    <div title="Telefon bilgisi mevcut" className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-emerald-500 text-white p-0.5 rounded-full">
+                      <Check className="w-2.5 h-2.5 stroke-[3]" />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -387,127 +382,53 @@ export function ProfileEditPage() {
               </button>
             </div>
 
-            {/* Diploma 📜 */}
-            <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Diploma</h3>
+            {/* Education information */}
+            {user?.role === "TUTOR" && <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
+              <h3 className="font-extrabold text-stone-900 text-base">Eğitim Bilgisi</h3>
               
               <div className="flex flex-col items-center justify-center p-3">
                 <div className="relative w-24 h-24 bg-stone-50 rounded-full flex items-center justify-center border border-stone-100/60 shadow-inner">
                   <GraduationCap className="w-10 h-10 text-stone-400" />
-                  <div className="absolute bottom-0 right-0 bg-emerald-500 text-white p-1 rounded-full border-4 border-white">
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </div>
-                </div>
-              </div>
-
-              <button className="w-full bg-emerald-500 text-white py-3 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-default">
-                Diploma onaylandı
-              </button>
-            </div>
-
-            {/* Bildirimler 🗣️ */}
-            <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-5 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Bildirimler</h3>
-              
-              <div className="space-y-4 text-left">
-                <div>
-                  <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider block mb-2">SMS</span>
-                  <button
-                    onClick={() => setSmsLessons(!smsLessons)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
-                      smsLessons ? "bg-emerald-500 text-white shadow-sm" : "bg-stone-50 text-stone-400 border border-stone-200/60"
-                    }`}
-                  >
-                    <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${smsLessons ? "border-white bg-white text-emerald-500" : "border-stone-300 bg-white"}`}>
-                      {smsLessons && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                  {user?.education?.trim() && (
+                    <div className="absolute bottom-0 right-0 bg-emerald-500 text-white p-1 rounded-full border-4 border-white">
+                      <Check className="w-3 h-3 stroke-[3]" />
                     </div>
-                    <span className="text-xs font-bold">Ders talepleri</span>
-                  </button>
-                </div>
-
-                <div>
-                  <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider block mb-2">E-MAIL</span>
-                  <div className="space-y-2">
-                    {[
-                      { state: emailActivity, setState: setEmailActivity, label: "Hesap hareketleri" },
-                      { state: emailLessons, setState: setEmailLessons, label: "Ders talepleri" },
-                      { state: emailOffers, setState: setEmailOffers, label: "İlanlarımı ilgilendiren teklifler" },
-                      { state: emailCancel, setState: setEmailCancel, label: "Hesap ve güvenlik" }
-                    ].map((item, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => item.setState(!item.state)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
-                          item.state ? "bg-emerald-500 text-white shadow-sm" : "bg-stone-50 text-stone-400 border border-stone-200/60"
-                        }`}
-                      >
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${item.state ? "border-white bg-white text-emerald-500" : "border-stone-300 bg-white"}`}>
-                          {item.state && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                        </div>
-                        <span className="text-xs font-bold">{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
+                  )}
                 </div>
               </div>
-            </div>
+
+              <div className={`w-full py-3 rounded-2xl font-bold text-xs ${user?.education?.trim() ? "bg-emerald-50 text-emerald-700" : "bg-stone-100 text-stone-500"}`}>
+                {user?.education?.trim() ? "Eğitim bilgisi eklendi" : "Eğitim bilgisi henüz eklenmedi"}
+              </div>
+            </div>}
           </div>
 
           {/* SÜTUN 2 */}
           <div className="space-y-6">
-            {/* Posta adresi 📍 */}
-            <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
-              <h3 className="font-extrabold text-stone-900 text-base">Posta Adresi</h3>
-              
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Ülke / Şehir"
-                  className="w-full bg-white rounded-xl px-4 py-2.5 text-xs font-bold text-stone-700 outline-none border border-stone-200/80 focus:border-rose-450 transition-colors"
-                />
-                
-                {/* CSS simulated vector MapPin Locator */}
-                <div className="relative h-44 w-full bg-stone-50 rounded-2xl overflow-hidden border border-stone-200/60 flex items-center justify-center shadow-inner">
-                  {/* Grid layout */}
-                  <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
-                  <div className="absolute top-8 left-12 w-28 h-2 bg-stone-200/50 rounded-full rotate-12" />
-                  <div className="absolute top-16 left-6 w-36 h-2 bg-stone-200/50 rounded-full -rotate-6" />
-                  <div className="absolute top-24 left-20 w-24 h-2 bg-stone-200/50 rounded-full rotate-45" />
-                  
-                  {/* Pin indicator */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                    <span className="relative flex h-6 w-6 items-center justify-center">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                      <MapPin className="relative w-6 h-6 text-rose-500 fill-rose-500" />
-                    </span>
-                  </div>
-
-                  <div className="absolute bottom-2 left-2 bg-white/80 backdrop-blur-md px-2 py-0.5 rounded text-[8px] font-bold text-stone-500 shadow-sm border border-stone-100">
-                    Google
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Kimlik 🪪 */}
-            <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
+            {/* Identity verification is optional and only applies to tutors. */}
+            {user?.role === "TUTOR" && <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
               <h3 className="font-extrabold text-stone-900 text-base">Kimlik</h3>
               
               <div className="flex flex-col items-center justify-center p-3">
                 <div className="relative w-24 h-24 bg-stone-50 rounded-full flex items-center justify-center border border-stone-100/60 shadow-inner">
                   <ShieldCheck className="w-10 h-10 text-stone-400" />
-                  <div className="absolute bottom-0 right-0 bg-emerald-500 text-white p-1 rounded-full border-4 border-white">
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </div>
+                  {user.identityVerified && (
+                    <div className="absolute bottom-0 right-0 bg-emerald-500 text-white p-1 rounded-full border-4 border-white">
+                      <Check className="w-3 h-3 stroke-[3]" />
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <button className="w-full bg-emerald-500 text-white py-3 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-default">
-                Kimlik onaylandı
+              <button
+                type="button"
+                onClick={() => !user.identityVerified && navigate("/dogrulama")}
+                className={`w-full py-3 rounded-2xl font-bold text-xs shadow-sm transition-all ${user.identityVerified ? "bg-emerald-500 text-white cursor-default" : "bg-stone-100 text-stone-600 hover:bg-stone-200"}`}
+              >
+                {user.identityVerified ? "Kimlik doğrulandı" : "İsteğe bağlı doğrulamayı başlat"}
               </button>
-            </div>
+              {!user.identityVerified && <p className="text-[10px] font-medium text-stone-400">Kimlik doğrulaması profil yüzdesini veya uygulamayı kullanmanızı etkilemez.</p>}
+            </div>}
 
             {/* Hesabımı sil 😲 */}
             <div className="bg-white border border-stone-100 rounded-[32px] p-6 shadow-sm space-y-4 text-center">
@@ -583,33 +504,28 @@ export function ProfileEditPage() {
                   <circle cx="56" cy="56" r="48" className="stroke-stone-100" strokeWidth="8" fill="transparent" />
                   <circle
                     cx="56" cy="56" r="48" className="stroke-emerald-500 transition-all duration-1000" strokeWidth="8"
-                    fill="transparent" strokeDasharray="301.6" strokeDashoffset="45.2"
+                    fill="transparent" strokeDasharray="301.6" strokeDashoffset={301.6 * (1 - completionScore / 100)}
                     strokeLinecap="round"
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center">
-                  <span className="text-2xl font-black text-stone-900">%85</span>
-                  <span className="text-[9px] text-emerald-600 font-extrabold uppercase tracking-wider">Çok Başarılı</span>
+                  <span className="text-2xl font-black text-stone-900">%{completionScore}</span>
+                  <span className="text-[9px] text-emerald-600 font-extrabold uppercase tracking-wider">{completionScore === 100 ? "Tamamlandı" : "Devam ediyor"}</span>
                 </div>
               </div>
 
               <div className="space-y-2.5 text-left bg-stone-50/50 p-4 rounded-2xl border border-stone-100/60">
-                <div className="flex items-center gap-2 text-xs font-bold text-stone-700">
-                  <div className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]">✓</div>
-                  <span>Kimlik doğrulandı (+%30)</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-bold text-stone-700">
-                  <div className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]">✓</div>
-                  <span>Diploma onaylandı (+%30)</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-bold text-stone-700">
-                  <div className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]">✓</div>
-                  <span>İletişim bilgileri (+%25)</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-stone-400">
-                  <div className="w-4 h-4 rounded-full bg-stone-200 text-stone-500 flex items-center justify-center text-[10px]">•</div>
-                  <span>Profil fotoğrafı ekle (+%15)</span>
-                </div>
+                {(user?.profileCompletion?.items ?? []).map((item) => (
+                  <div key={item.key} className={`flex items-center gap-2 text-xs ${item.completed ? "font-bold text-stone-700" : "font-semibold text-stone-400"}`}>
+                    <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${item.completed ? "bg-emerald-100 text-emerald-700" : "bg-stone-200 text-stone-500"}`}>
+                      {item.completed ? "✓" : "•"}
+                    </div>
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+                {!user?.profileCompletion?.items?.length && (
+                  <p className="text-xs font-semibold text-stone-500">Profil bilgilerinizi yenileyerek güncel kontrol listesini görüntüleyin.</p>
+                )}
               </div>
             </div>
 
@@ -624,12 +540,36 @@ export function ProfileEditPage() {
                     alt={user?.fullName || ""}
                     className="w-40 h-40 rounded-[28px] object-cover shadow-sm"
                   />
-                  <label className="absolute bottom-1 right-1 w-10 h-10 bg-rose-400 hover:bg-rose-500 rounded-full flex items-center justify-center cursor-pointer transition-all hover:scale-105 shadow-md shadow-rose-300">
-                    <Camera className="w-4 h-4 text-white" />
-                    <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                  <label
+                    aria-disabled={avatarBusy}
+                    className={`absolute bottom-1 right-1 w-10 h-10 bg-rose-400 rounded-full flex items-center justify-center transition-all shadow-md shadow-rose-300 ${
+                      avatarBusy ? "cursor-wait opacity-70" : "hover:bg-rose-500 cursor-pointer hover:scale-105"
+                    }`}
+                  >
+                    <Camera className={`w-4 h-4 text-white ${avatarBusy ? "animate-pulse" : ""}`} />
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      aria-label="Profil fotoğrafı seç"
+                      className="hidden"
+                      disabled={avatarBusy}
+                      onChange={handleAvatarUpload}
+                    />
                   </label>
                 </div>
               </div>
+              <p className="text-[11px] font-medium text-stone-400">JPEG veya PNG, en fazla 5 MB</p>
+              {user?.avatarUrl && (
+                <button
+                  type="button"
+                  onClick={handleAvatarRemove}
+                  disabled={avatarBusy}
+                  className="mx-auto flex items-center justify-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Fotoğrafı kaldır
+                </button>
+              )}
             </div>
 
             {/* Şifremi değiştir 🔒 */}
@@ -836,77 +776,7 @@ export function ProfileEditPage() {
             </button>
           </div>
 
-          {/* Availability schedule matrix */}
-          <div className="bg-white border border-stone-100 rounded-3xl p-6 shadow-sm space-y-4">
-            <div>
-              <h3 className="font-extrabold text-stone-900 text-lg mb-1">Müsaitlik Takvimi</h3>
-              <p className="text-xs text-stone-400 font-medium mb-4">Hangi gün ve saatlerde müsait olduğunuzu belirtin</p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                <div>
-                  <label className="text-xs font-bold text-stone-400 block mb-1">Başlangıç Saati</label>
-                  <select
-                    value={availStart}
-                    onChange={(e) => setAvailStart(e.target.value)}
-                    className="w-full bg-stone-50/50 rounded-xl px-3 py-2 text-sm text-foreground border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {ALL_TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-stone-400 block mb-1">Bitiş Saati</label>
-                  <select
-                    value={availEnd}
-                    onChange={(e) => setAvailEnd(e.target.value)}
-                    className="w-full bg-stone-50/50 rounded-xl px-3 py-2 text-sm text-foreground border border-stone-200 focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {ALL_TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {DAY_LABELS.map((label, i) => {
-                  const active = availDays[i] || false;
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => toggleDay(i)}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                        active
-                          ? "bg-green-50 text-green-700 border-green-300 shadow-sm"
-                          : "border-stone-200 text-stone-500 hover:text-stone-700"
-                      }`}
-                    >
-                      {active && <Check className="w-3 h-3 inline mr-1 stroke-[3]" />}
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {availSlots.length > 0 && (
-                <div className="mt-4 p-3 bg-stone-50 rounded-xl border border-stone-150">
-                  <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Kayıtlı Müsaitlik Saatleri:</p>
-                  <p className="text-xs font-bold text-stone-700 mt-1">
-                    {availSlots
-                      .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-                      .map((s) => DAY_LABELS[s.dayOfWeek])
-                      .join(", ")}
-                    {availSlots.length > 0 && ` (${availSlots[0]?.startTime || "?"} - ${availSlots[0]?.endTime || "?"})`}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={handleSaveAvailability}
-              disabled={saving}
-              className="w-full bg-primary text-white font-semibold py-2.5 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2 mt-4"
-            >
-              {saving ? "Kaydediliyor..." : "Müsaitliği Kaydet"}
-            </button>
-          </div>
+          <TutorAvailabilityEditor />
         </div>
       )}
 

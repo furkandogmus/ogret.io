@@ -19,6 +19,26 @@ export function VerificationPage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
+  const selectFile = (file?: File) => {
+    if (!file) return;
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      setSelectedFile(null);
+      setFileUrl("");
+      setError("Belge PDF, JPEG veya PNG formatında olmalıdır.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setSelectedFile(null);
+      setFileUrl("");
+      setError("Belge boyutu 10 MB'dan küçük olmalıdır.");
+      return;
+    }
+    setError("");
+    setSelectedFile(file);
+    setFileUrl(file.name);
+  };
+
   if (!isTutor) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 text-center">
@@ -113,27 +133,22 @@ export function VerificationPage() {
 
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">Belge Yükle</label>
-          <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
+          <label htmlFor="verification-document" className="block border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 focus-within:border-primary transition-colors cursor-pointer">
             <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-foreground font-medium">Belgeyi buraya sürükleyin veya tıklayın</p>
+            <p className="text-sm text-foreground font-medium">Dosya seçmek için tıklayın</p>
             <p className="text-xs text-muted-foreground mt-1">PDF, JPG veya PNG — Max 10MB</p>
             <input
+              id="verification-document"
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setSelectedFile(file);
-                  setFileUrl(file.name);
-                }
-              }}
+              className="sr-only"
+              onChange={(event) => selectFile(event.target.files?.[0])}
             />
-          </div>
+          </label>
           {fileUrl && (
             <div className="flex items-center gap-2 mt-3 text-sm text-green-600">
               <CheckCircle className="w-4 h-4" />
-              Dosya yüklendi
+              {fileUrl} seçildi
             </div>
           )}
         </div>

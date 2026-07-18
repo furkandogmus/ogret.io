@@ -3,6 +3,7 @@ package com.dersplatform.service;
 import com.dersplatform.model.dto.request.LoginRequest;
 import com.dersplatform.model.dto.request.RegisterRequest;
 import com.dersplatform.model.dto.response.AuthResponse;
+import com.dersplatform.model.dto.response.ProfileCompletionResponse;
 import com.dersplatform.model.entity.User;
 import com.dersplatform.model.enums.Role;
 import com.dersplatform.repository.UserRepository;
@@ -34,6 +35,7 @@ class AuthServiceTest {
     @Mock private EmailService emailService;
     @Mock private StringRedisTemplate stringRedisTemplate;
     @Mock private ValueOperations<String, String> valueOperations;
+    @Mock private ProfileCompletionService profileCompletionService;
 
     private AuthService authService;
     private RegisterRequest registerRequest;
@@ -42,8 +44,11 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userRepository, new BCryptPasswordEncoder(), jwtTokenProvider, authenticationManager, emailService, stringRedisTemplate);
+        authService = new AuthService(userRepository, new BCryptPasswordEncoder(), jwtTokenProvider, authenticationManager,
+                emailService, stringRedisTemplate, profileCompletionService);
         lenient().when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(profileCompletionService.refresh(any(User.class))).thenReturn(ProfileCompletionResponse.builder()
+                .score(67).complete(false).completedItems(2).totalItems(3).items(java.util.List.of()).build());
 
         registerRequest = new RegisterRequest();
         registerRequest.setEmail("test@example.com");
@@ -73,23 +78,24 @@ class AuthServiceTest {
     }
 
     @Test
-    void register_ShouldCreateUnverifiedUserWithoutSessionTokens() {
+    void register_ShouldCreateActiveUserWithSessionTokens() {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByPhone(anyString())).thenReturn(false);
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
-        when(jwtTokenProvider.generateEmailVerificationToken(any())).thenReturn("verify-token");
-        when(jwtTokenProvider.getTokenId("verify-token")).thenReturn("verify-jti");
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(jwtTokenProvider.generateAccessToken(any(), anyString(), anyString(), anyInt())).thenReturn("access-token");
+        when(jwtTokenProvider.generateRefreshToken(any(), anyInt())).thenReturn("refresh-token");
 
         AuthResponse response = authService.register(registerRequest);
 
         assertNotNull(response);
-        assertNull(response.getAccessToken());
-        assertNull(response.getRefreshToken());
+        assertEquals("access-token", response.getAccessToken());
+        assertEquals("refresh-token", response.getRefreshToken());
         assertNotNull(response.getUser());
+        assertTrue(response.getUser().isVerified());
         assertEquals("test@example.com", response.getUser().getEmail());
         assertEquals("Test User", response.getUser().getFullName());
 
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).saveAndFlush(any(User.class));
     }
 
     @Test
@@ -193,6 +199,16 @@ class AuthServiceTest {
         assertTrue(testUser.isVerified());
 
         assertThrows(com.dersplatform.exception.ApiException.class, () -> authService.verifyEmail(request));
+    }
+
+    @Test
+    void forgotPassword_ShouldSkipTokenCreationWhenEmailDeliveryIsDisabled() {
+        when(emailService.isEnabled()).thenReturn(false);
+
+        authService.forgotPassword("test@example.com");
+
+        verify(userRepository, never()).findByEmail(anyString());
+        verifyNoInteractions(jwtTokenProvider);
     }
 
     @Test

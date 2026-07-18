@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface TutorReferenceRepository extends JpaRepository<TutorReference, UUID> {
+    long countByStatus(VerificationStatus status);
+
     @Query("SELECT r FROM TutorReference r JOIN FETCH r.tutor WHERE r.tutor.id = :tutorId AND r.status = :status ORDER BY r.createdAt DESC")
     List<TutorReference> findByTutorIdAndStatusOrderByCreatedAtDesc(UUID tutorId, VerificationStatus status);
 

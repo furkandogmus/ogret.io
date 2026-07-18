@@ -31,6 +31,7 @@ public class UserResponse {
     private BigDecimal responseTimeHours;
     private BigDecimal lessonCompletionRate;
     private Integer profileCompletionScore;
+    private ProfileCompletionResponse profileCompletion;
 
     public static UserResponse fromEntity(User user) {
         return UserResponse.builder()
@@ -55,5 +56,13 @@ public class UserResponse {
                 .lessonCompletionRate(user.getLessonCompletionRate())
                 .profileCompletionScore(user.getProfileCompletionScore())
                 .build();
+    }
+
+    public static UserResponse fromEntity(User user, ProfileCompletionResponse completion) {
+        UserResponse response = fromEntity(user);
+        response.setProfileCompletionScore(completion.getScore());
+        response.setProfileComplete(completion.isComplete());
+        response.setProfileCompletion(completion);
+        return response;
     }
 }

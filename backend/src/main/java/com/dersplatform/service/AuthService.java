@@ -35,6 +35,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final StringRedisTemplate stringRedisTemplate;
+    private final ProfileCompletionService profileCompletionService;
 
     @Value("${app.base-url:http://localhost:5173}")
     private String baseUrl;
@@ -71,7 +72,7 @@ public class AuthService {
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName().trim())
                 .role(role)
-                .isVerified(false)
+                .isVerified(true)
                 .tokenVersion(0)
                 .isProfileComplete(false)
                 .ratingAvg(java.math.BigDecimal.ZERO)
@@ -80,11 +81,13 @@ public class AuthService {
                 .isIdentityVerified(false)
                 .build();
 
-        user = userRepository.save(user);
+        // Flush the INSERT before profile completion mutates the same entity.
+        // UUIDs are generated on persist while @CreationTimestamp is assigned
+        // on flush; a second save in between can otherwise be treated as a
+        // merge and issue an UPDATE with created_at still null.
+        user = userRepository.saveAndFlush(user);
 
-        sendVerificationEmail(user);
-
-        return AuthResponse.builder().user(UserResponse.fromEntity(user)).build();
+        return buildAuthResponse(user);
     }
 
     @Transactional
@@ -113,10 +116,6 @@ public class AuthService {
         } catch (Exception e) {
             recordFailedAttempt(attemptKey, lockoutKey);
             throw ApiException.unauthorized("E-posta veya şifre hatalı");
-        }
-
-        if (!user.isVerified()) {
-            throw ApiException.forbidden("Giriş yapmadan önce e-posta adresinizi doğrulayın");
         }
 
         stringRedisTemplate.delete(attemptKey);
@@ -190,6 +189,14 @@ public class AuthService {
         if (email == null || email.isBlank()) {
             throw ApiException.badRequest("E-posta adresi gerekli");
         }
+
+        // Zero-config/self-host installations intentionally run without a mail
+        // provider. Avoid creating an unusable reset token in that mode; an
+        // administrator can set a temporary password from the admin panel.
+        if (!emailService.isEnabled()) {
+            return;
+        }
+
         var userOpt = userRepository.findByEmail(email);
 
         if (userOpt.isEmpty()) {
@@ -222,9 +229,16 @@ public class AuthService {
         }
     }
 
+    public boolean isEmailDeliveryEnabled() {
+        return emailService.isEnabled();
+    }
+
     public void resendVerification(String email) {
         if (email == null || email.isBlank()) {
             throw ApiException.badRequest("E-posta adresi gerekli");
+        }
+        if (!emailService.isEnabled()) {
+            return;
         }
         userRepository.findByEmail(email.trim().toLowerCase(java.util.Locale.ROOT))
                 .filter(user -> !user.isVerified())
@@ -284,6 +298,7 @@ public class AuthService {
     }
 
     private AuthResponse buildAuthResponse(User user) {
+        var completion = profileCompletionService.refresh(user);
         int tokenVersion = tokenVersion(user);
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getId(), user.getEmail(), user.getRole().name(), tokenVersion);
@@ -294,7 +309,7 @@ public class AuthService {
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .expiresIn(ACCESS_TOKEN_TTL)
-                .user(UserResponse.fromEntity(user))
+                .user(UserResponse.fromEntity(user, completion))
                 .build();
     }
 

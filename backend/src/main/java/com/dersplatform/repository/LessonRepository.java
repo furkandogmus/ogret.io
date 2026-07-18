@@ -12,6 +12,8 @@ import java.util.UUID;
 
 public interface LessonRepository extends JpaRepository<Lesson, UUID> {
 
+    long countByStatus(LessonStatus status);
+
     @Query("SELECT l FROM Lesson l JOIN FETCH l.student JOIN FETCH l.tutor JOIN FETCH l.subject WHERE l.student.id = :studentId ORDER BY l.createdAt DESC")
     List<Lesson> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
 

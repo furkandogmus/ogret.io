@@ -74,7 +74,6 @@ export default function SettingsScreen() {
       items: [
         { icon: "language-outline" as const, label: "Dil", value: "Türkçe", disabled: true },
         { icon: "lock-closed-outline" as const, label: "Şifre Değiştir", onPress: () => { setShowPasswordModal(true); setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); } },
-        { icon: "mail-outline" as const, label: "E-posta Doğrulama", onPress: () => Linking.openURL("https://ogret.io/email-dogrula") },
       ],
     },
     {

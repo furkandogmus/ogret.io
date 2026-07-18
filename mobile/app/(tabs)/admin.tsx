@@ -1,28 +1,32 @@
 import { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Platform } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Platform, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "../../src/components/Avatar";
 import { useToast } from "../../src/components/Toast";
-import { adminApi } from "../../src/api/services";
+import { adminApi, type AdminVerificationRecord } from "../../src/api/services";
 import type { User, DashboardStats } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
 
 export default function AdminPanel() {
   const toast = useToast();
   const [users, setUsers] = useState<User[]>([]);
+  const [verifications, setVerifications] = useState<AdminVerificationRecord[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [tab, setTab] = useState<"users" | "verifications">("users");
 
   const fetchData = useCallback(async () => {
     try {
-      const [usersRes, dashRes] = await Promise.all([
+      const [usersRes, dashRes, verificationsRes] = await Promise.all([
         adminApi.getUsers(),
         adminApi.getDashboard(),
+        adminApi.getVerifications(),
       ]);
       setUsers(usersRes.data.content || []);
       setStats(dashRes.data);
+      setVerifications(verificationsRes.data || []);
     } catch { toast.show("Veriler yüklenemedi", "error"); }
     setLoading(false);
     setRefreshing(false);
@@ -30,15 +34,31 @@ export default function AdminPanel() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleVerify = async (userId: string) => {
+  const handleReview = async (verificationId: string, approved: boolean) => {
+    setReviewingId(verificationId);
     try {
-      await adminApi.verifyUser(userId);
-      toast.show("Kullanıcı doğrulandı", "success");
-      fetchData();
-    } catch { toast.show("Doğrulanamadı", "error"); }
+      await adminApi.reviewVerification(verificationId, approved);
+      setVerifications((current) => current.filter((item) => item.id !== verificationId));
+      toast.show(approved ? "Belge onaylandı" : "Belge reddedildi", "success");
+    } catch {
+      toast.show("Doğrulama kararı kaydedilemedi", "error");
+    } finally {
+      setReviewingId(null);
+    }
   };
 
-  const pendingVerifications = users.filter((u) => u.role === "TUTOR" && !u.identityVerified);
+  const openDocument = async (url: string) => {
+    try {
+      await Linking.openURL(url);
+    } catch {
+      toast.show("Belge açılamadı", "error");
+    }
+  };
+
+  const formatDate = (value: string) => new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
 
   if (loading) {
     return (
@@ -82,46 +102,101 @@ export default function AdminPanel() {
             style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: radius.full, backgroundColor: tab === t ? colors.primary : colors.surface }}
           >
             <Text style={{ color: tab === t ? "#fff" : colors.textSecondary, fontSize: 13, fontWeight: "500" }}>
-              {t === "users" ? "Kullanıcılar" : `Doğrulama (${pendingVerifications.length})`}
+              {t === "users" ? "Kullanıcılar" : `Doğrulama (${verifications.length})`}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <FlatList
-        data={tab === "users" ? users : pendingVerifications}
-        keyExtractor={(item) => item.id}
-        windowSize={10}
-        maxToRenderPerBatch={10}
-        initialNumToRender={10}
-        removeClippedSubviews={Platform.OS === "android"}
-        contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
-        renderItem={({ item }) => (
-          <View style={{ backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border, flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-            <Avatar uri={item.avatarUrl} name={item.fullName} size={40} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontWeight: "600", fontSize: 14 }}>{item.fullName}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{item.email}</Text>
-              <View style={{ flexDirection: "row", gap: spacing.xs, marginTop: 4 }}>
-                <View style={{ backgroundColor: colors.surfaceLight, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 2 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 11 }}>{item.role}</Text>
-                </View>
-                {item.identityVerified && (
-                  <View style={{ backgroundColor: colors.success + "20", borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 2 }}>
-                    <Text style={{ color: colors.success, fontSize: 11 }}>Doğrulanmış</Text>
+      {tab === "users" ? (
+        <FlatList
+          data={users}
+          keyExtractor={(item) => item.id}
+          windowSize={10}
+          maxToRenderPerBatch={10}
+          initialNumToRender={10}
+          removeClippedSubviews={Platform.OS === "android"}
+          contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
+          ListEmptyComponent={<Text style={{ color: colors.textMuted, textAlign: "center", marginTop: spacing.lg }}>Kullanıcı bulunmuyor.</Text>}
+          renderItem={({ item }) => (
+            <View style={{ backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border, flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+              <Avatar uri={item.avatarUrl} name={item.fullName} size={40} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontWeight: "600", fontSize: 14 }}>{item.fullName}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{item.email}</Text>
+                <View style={{ flexDirection: "row", gap: spacing.xs, marginTop: 4 }}>
+                  <View style={{ backgroundColor: colors.surfaceLight, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 2 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11 }}>{item.role}</Text>
                   </View>
-                )}
+                  {item.identityVerified && (
+                    <View style={{ backgroundColor: colors.success + "20", borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 2 }}>
+                      <Text style={{ color: colors.success, fontSize: 11 }}>Kimliği doğrulanmış</Text>
+                    </View>
+                  )}
+                </View>
               </View>
             </View>
-            {tab === "verifications" && (
-              <TouchableOpacity onPress={() => handleVerify(item.id)} style={{ backgroundColor: colors.success + "20", borderRadius: radius.sm, padding: spacing.sm }}>
-                <Ionicons name="checkmark" size={20} color={colors.success} />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primary} />}
-      />
+          )}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primary} />}
+        />
+      ) : (
+        <FlatList
+          data={verifications}
+          keyExtractor={(item) => item.id}
+          windowSize={10}
+          maxToRenderPerBatch={10}
+          initialNumToRender={10}
+          removeClippedSubviews={Platform.OS === "android"}
+          contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: 100 }}
+          ListEmptyComponent={<Text style={{ color: colors.textMuted, textAlign: "center", marginTop: spacing.lg }}>Bekleyen doğrulama belgesi bulunmuyor.</Text>}
+          renderItem={({ item }) => {
+            const reviewing = reviewingId === item.id;
+            return (
+              <View style={{ backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+                  <View style={{ width: 40, height: 40, borderRadius: radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.primary + "18" }}>
+                    <Ionicons name="document-text" size={21} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.text, fontWeight: "700", fontSize: 14 }}>{item.tutorName}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{item.documentType} · {formatDate(item.createdAt)}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>Öğretmen no: {item.tutorId}</Text>
+                  </View>
+                  <View style={{ backgroundColor: colors.warning + "20", borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 3 }}>
+                    <Text style={{ color: colors.warning, fontSize: 10, fontWeight: "600" }}>{item.status}</Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => void openDocument(item.documentUrl)}
+                  style={{ marginTop: spacing.md, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, paddingVertical: spacing.sm, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: spacing.xs }}
+                >
+                  <Ionicons name="open-outline" size={17} color={colors.primary} />
+                  <Text style={{ color: colors.primary, fontSize: 13, fontWeight: "600" }}>Belgeyi aç</Text>
+                </TouchableOpacity>
+
+                <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
+                  <TouchableOpacity
+                    disabled={reviewing}
+                    onPress={() => void handleReview(item.id, false)}
+                    style={{ flex: 1, borderRadius: radius.sm, paddingVertical: spacing.sm, backgroundColor: colors.error + "18", alignItems: "center", opacity: reviewing ? 0.5 : 1 }}
+                  >
+                    <Text style={{ color: colors.error, fontWeight: "600", fontSize: 13 }}>Reddet</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    disabled={reviewing}
+                    onPress={() => void handleReview(item.id, true)}
+                    style={{ flex: 1, borderRadius: radius.sm, paddingVertical: spacing.sm, backgroundColor: colors.success + "20", alignItems: "center", opacity: reviewing ? 0.5 : 1 }}
+                  >
+                    {reviewing ? <ActivityIndicator size="small" color={colors.success} /> : <Text style={{ color: colors.success, fontWeight: "600", fontSize: 13 }}>Onayla</Text>}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            );
+          }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primary} />}
+        />
+      )}
     </View>
   );
 }

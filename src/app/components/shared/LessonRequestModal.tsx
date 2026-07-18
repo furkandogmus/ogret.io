@@ -1,12 +1,78 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { X, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, CheckCircle, CalendarX2, LoaderCircle } from "lucide-react";
 import { useAuth } from "../../providers/AuthProvider";
-import { lessonApi, subjectApi, type UserResponse, type SubjectResponse } from "../../api/services";
+import {
+  lessonApi,
+  subjectApi,
+  tutorApi,
+  type AvailabilitySlot,
+  type UserResponse,
+  type SubjectResponse,
+} from "../../api/services";
 
 interface LessonRequestModalProps {
   tutor: UserResponse;
   onClose: () => void;
+}
+
+const BOOKING_WINDOW_DAYS = 14;
+const TIME_STEP_MINUTES = 30;
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function dateKey(date: Date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function dateFromKey(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function mondayBasedDayIndex(date: Date) {
+  return (date.getDay() + 6) % 7;
+}
+
+function timeToMinutes(value: string) {
+  const [hours, minutes] = value.slice(0, 5).split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function minutesToTime(value: number) {
+  return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
+}
+
+function availableStartTimes(
+  date: Date,
+  slots: AvailabilitySlot[],
+  duration: number,
+  now: Date,
+) {
+  const selectedDateKey = dateKey(date);
+  const todayKey = dateKey(now);
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const starts = new Set<number>();
+
+  slots
+    .filter((slot) => slot.dayOfWeek === mondayBasedDayIndex(date))
+    .forEach((slot) => {
+      const rangeStart = timeToMinutes(slot.startTime);
+      const rangeEnd = timeToMinutes(slot.endTime);
+      for (let candidate = rangeStart; candidate + duration <= rangeEnd; candidate += TIME_STEP_MINUTES) {
+        if (selectedDateKey !== todayKey || candidate > currentMinutes) {
+          starts.add(candidate);
+        }
+      }
+    });
+
+  return [...starts].sort((first, second) => first - second).map(minutesToTime);
 }
 
 export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) {
@@ -17,7 +83,10 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
   const [subjectId, setSubjectId] = useState("");
   const [duration, setDuration] = useState(60);
   const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState(14);
+  const [selectedTime, setSelectedTime] = useState("");
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
+  const [availabilityError, setAvailabilityError] = useState("");
   const [messageText, setMessageText] = useState("");
   const [stepError, setStepError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -26,6 +95,28 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
   useEffect(() => {
     subjectApi.list().then(({ data }) => setSubjects(data)).catch(() => console.error("Konular yuklenemedi"));
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    setAvailabilityLoading(true);
+    setAvailabilityError("");
+    setAvailability([]);
+    setSelectedDate("");
+    setSelectedTime("");
+
+    tutorApi.getAvailability(tutor.id)
+      .then(({ data }) => {
+        if (active) setAvailability(data);
+      })
+      .catch(() => {
+        if (active) setAvailabilityError("Öğretmenin müsaitlik takvimi yüklenemedi. Lütfen tekrar deneyin.");
+      })
+      .finally(() => {
+        if (active) setAvailabilityLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [tutor.id]);
 
   if (!isAuthenticated) {
     return (
@@ -48,13 +139,16 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
     );
   }
 
-  const today = new Date();
-  const dates = Array.from({ length: 7 }, (_, i) => {
+  const now = new Date();
+  const today = startOfDay(now);
+  const dates = Array.from({ length: BOOKING_WINDOW_DAYS }, (_, i) => {
     const d = new Date(today);
     d.setDate(d.getDate() + i);
     return d;
-  });
-  const times = [9, 10, 11, 14, 15, 16, 17];
+  }).filter((date) => availableStartTimes(date, availability, duration, now).length > 0);
+  const times = selectedDate
+    ? availableStartTimes(dateFromKey(selectedDate), availability, duration, now)
+    : [];
   const durations = [30, 45, 60, 90];
   const hourlyRate = tutor.hourlyRate || 0;
   const totalPrice = Math.round((hourlyRate * duration) / 60);
@@ -63,13 +157,11 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
     setSubmitting(true);
     setError("");
     try {
-      const dateStr = selectedDate || dates[0].toISOString().split("T")[0];
-      const startMinutes = selectedTime * 60;
+      const dateStr = selectedDate;
+      const startMinutes = timeToMinutes(selectedTime);
       const endMinutes = startMinutes + duration;
-      const endHour = Math.floor(endMinutes / 60);
-      const endMin = endMinutes % 60;
-      const startTime = `${String(selectedTime).padStart(2, "0")}:00`;
-      const endTime = `${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
+      const startTime = minutesToTime(startMinutes);
+      const endTime = minutesToTime(endMinutes);
 
       await lessonApi.create({
         tutorId: tutor.id,
@@ -88,7 +180,7 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
   };
 
   const formatDateLabel = (d: Date) => {
-    const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
+    const diff = Math.round((startOfDay(d).getTime() - today.getTime()) / 86400000);
     if (diff === 0) return "Bugün";
     if (diff === 1) return "Yarın";
     return d.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" });
@@ -179,7 +271,11 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
                   {durations.map((d) => (
                     <button
                       key={d}
-                      onClick={() => setDuration(d)}
+                      onClick={() => {
+                        setDuration(d);
+                        setSelectedDate("");
+                        setSelectedTime("");
+                      }}
                       className={`p-2.5 rounded-xl text-sm font-medium border transition-colors ${
                         duration === d
                           ? "border-primary bg-primary/10 text-primary"
@@ -200,45 +296,81 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
 
           {step === 2 && (
             <div className="space-y-5">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">Tarih Seçin</label>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {dates.map((d, i) => {
-                    const dateStr = d.toISOString().split("T")[0];
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setSelectedDate(dateStr)}
-                        className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                          selectedDate === dateStr
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border text-foreground hover:bg-muted"
-                        }`}
-                      >
-                        {formatDateLabel(d)}
-                      </button>
-                    );
-                  })}
+              {availabilityLoading ? (
+                <div role="status" className="rounded-2xl border border-stone-100 bg-stone-50 px-5 py-10 text-center">
+                  <LoaderCircle className="mx-auto mb-3 h-7 w-7 animate-spin text-primary" aria-hidden="true" />
+                  <p className="text-sm font-semibold text-stone-600">Müsait saatler yükleniyor…</p>
                 </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">Uygun Saatler</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {times.map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setSelectedTime(t)}
-                      className={`p-2.5 rounded-xl text-sm font-medium border transition-colors ${
-                        selectedTime === t
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border text-foreground hover:bg-muted"
-                      }`}
-                    >
-                      {t}:00
-                    </button>
-                  ))}
+              ) : availabilityError ? (
+                <div role="alert" className="rounded-2xl border border-red-100 bg-red-50 px-5 py-8 text-center">
+                  <CalendarX2 className="mx-auto mb-3 h-8 w-8 text-red-400" aria-hidden="true" />
+                  <p className="text-sm font-semibold text-red-700">{availabilityError}</p>
                 </div>
-              </div>
+              ) : dates.length === 0 ? (
+                <div role="status" className="rounded-2xl border border-amber-100 bg-amber-50 px-5 py-8 text-center">
+                  <CalendarX2 className="mx-auto mb-3 h-8 w-8 text-amber-500" aria-hidden="true" />
+                  <p className="text-sm font-bold text-amber-900">Uygun ders saati bulunmuyor</p>
+                  <p className="mt-1 text-xs font-medium leading-relaxed text-amber-800">
+                    Öğretmenin önümüzdeki 14 günde {duration} dakikalık uygun bir saati yok. Farklı bir süre deneyebilir veya öğretmene mesaj gönderebilirsiniz.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">Tarih Seçin</label>
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {dates.map((d) => {
+                        const currentDate = dateKey(d);
+                        const dateTimes = availableStartTimes(d, availability, duration, now);
+                        return (
+                          <button
+                            key={currentDate}
+                            type="button"
+                            data-testid="available-date"
+                            onClick={() => {
+                              setSelectedDate(currentDate);
+                              setSelectedTime(dateTimes[0] || "");
+                            }}
+                            className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                              selectedDate === currentDate
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            {formatDateLabel(d)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">Uygun Saatler</label>
+                    {selectedDate ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {times.map((time) => (
+                          <button
+                            key={time}
+                            type="button"
+                            data-testid="available-time"
+                            onClick={() => setSelectedTime(time)}
+                            className={`p-2.5 rounded-xl text-sm font-medium border transition-colors ${
+                              selectedTime === time
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            {time}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="rounded-xl bg-stone-50 px-4 py-3 text-xs font-medium text-stone-500">
+                        Uygun saatleri görmek için önce bir tarih seçin.
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -277,7 +409,7 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
               <div className="bg-muted rounded-xl p-4 space-y-2.5 text-sm">
                 {[
                   { label: "Öğretmen", value: tutor.fullName },
-                  { label: "Tarih & Saat", value: `${selectedDate ? formatDateLabel(new Date(selectedDate)) : "Yarın"}, ${selectedTime}:00` },
+                  { label: "Tarih & Saat", value: `${selectedDate ? formatDateLabel(dateFromKey(selectedDate)) : "-"}, ${selectedTime || "-"}` },
                   { label: "Süre", value: `${duration} dakika` },
                   { label: "Tahmini Ücret", value: `₺${totalPrice}`, bold: true, primary: true },
                 ].map(({ label, value, bold, primary }) => (
@@ -290,8 +422,8 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
                 ))}
               </div>
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-yellow-800">
-                <strong>Not:</strong> Ödeme, öğretmenle karşılıklı anlaşarak ders sonrasında doğrudan yapılır.
-                Platformumuz herhangi bir komisyon almaz.
+                <strong>Not:</strong> Ödeme yöntemini ve zamanını öğretmenle karşılıklı olarak belirlersiniz.
+                Platform bu işlemde ödeme veya komisyon tahsil etmez.
               </div>
             </div>
           )}
@@ -320,10 +452,10 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
                 setStepError("");
                 if (step === 3) return handleSubmit();
                 if (step === 1 && !subjectId) { setStepError("Lütfen bir ders konusu seçin"); return; }
-                if (step === 2 && !selectedDate) { setStepError("Lütfen bir tarih seçin"); return; }
+                if (step === 2 && (!selectedDate || !selectedTime)) { setStepError("Lütfen uygun bir tarih ve saat seçin"); return; }
                 setStep(step + 1);
               }}
-              disabled={submitting}
+              disabled={submitting || (step === 2 && (availabilityLoading || Boolean(availabilityError) || dates.length === 0))}
               className="flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               {step === 3 ? (submitting ? "Gönderiliyor..." : "Talep Gönder") : "Devam Et"}

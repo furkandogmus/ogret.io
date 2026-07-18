@@ -2,11 +2,7 @@ import { useState } from "react";
 import { View, Text, TouchableOpacity, FlatList, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, radius } from "../constants/theme";
-
-interface TimeRange {
-  startTime: string;
-  endTime: string;
-}
+import { getSelectableTimeSlots, type TimeRange } from "../utils/dateTimeSlots";
 
 interface DateTimePickerProps {
   selectedDate: string | null;
@@ -19,12 +15,6 @@ interface DateTimePickerProps {
   availableDaysOfWeek?: number[];
   availableTimeRanges?: TimeRange[];
 }
-
-const TIME_SLOTS = [
-  "08:00", "09:00", "10:00", "11:00", "12:00",
-  "13:00", "14:00", "15:00", "16:00", "17:00",
-  "18:00", "19:00", "20:00", "21:00", "22:00",
-];
 
 function toBackendDay(jsDay: number): number {
   return (jsDay + 6) % 7;
@@ -109,11 +99,12 @@ export function DateTimePicker({
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: "500", marginBottom: spacing.xs }}>Bitiş</Text>
           <TouchableOpacity
+            disabled={!selectedStart}
             onPress={() => setShowEndPicker(true)}
             style={{
               flexDirection: "row", alignItems: "center", justifyContent: "space-between",
               backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border,
-              paddingHorizontal: spacing.md, paddingVertical: 12,
+              paddingHorizontal: spacing.md, paddingVertical: 12, opacity: selectedStart ? 1 : 0.5,
             }}
           >
             <Text style={{ color: selectedEnd ? colors.text : colors.textMuted, fontSize: 14 }}>
@@ -129,7 +120,7 @@ export function DateTimePicker({
         selected={selectedStart}
         onSelect={(t) => { onStartSelect(t); setShowStartPicker(false); }}
         onClose={() => setShowStartPicker(false)}
-        minTime={TIME_SLOTS[0]}
+        mode="start"
         timeRanges={availableTimeRanges}
       />
       <TimeSlotModal
@@ -137,7 +128,8 @@ export function DateTimePicker({
         selected={selectedEnd}
         onSelect={(t) => { onEndSelect(t); setShowEndPicker(false); }}
         onClose={() => setShowEndPicker(false)}
-        minTime={selectedStart || TIME_SLOTS[0]}
+        mode="end"
+        selectedStart={selectedStart}
         timeRanges={availableTimeRanges}
       />
     </View>
@@ -145,16 +137,17 @@ export function DateTimePicker({
 }
 
 function TimeSlotModal({
-  visible, selected, onSelect, onClose, minTime, timeRanges,
+  visible, selected, onSelect, onClose, mode, selectedStart, timeRanges,
 }: {
-  visible: boolean; selected: string | null; onSelect: (t: string) => void; onClose: () => void; minTime: string; timeRanges?: TimeRange[];
+  visible: boolean;
+  selected: string | null;
+  onSelect: (t: string) => void;
+  onClose: () => void;
+  mode: "start" | "end";
+  selectedStart?: string | null;
+  timeRanges?: TimeRange[];
 }) {
-  const isInRanges = (t: string): boolean => {
-    if (!timeRanges || timeRanges.length === 0) return true;
-    return timeRanges.some(r => t >= r.startTime && t < r.endTime);
-  };
-  const minIndex = TIME_SLOTS.indexOf(minTime);
-  const slots = (minIndex >= 0 ? TIME_SLOTS.slice(minIndex + 1) : TIME_SLOTS).filter(isInRanges);
+  const slots = getSelectableTimeSlots({ mode, selectedStart, timeRanges });
 
   return (
     <Modal visible={visible} transparent animationType="slide">

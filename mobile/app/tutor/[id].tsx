@@ -9,9 +9,10 @@ import { StarRating } from "../../src/components/StarRating";
 import { Button } from "../../src/components/Button";
 import { Skeleton } from "../../src/components/Skeleton";
 import { useToast } from "../../src/components/Toast";
-import { tutorApi, reviewApi, referenceApi } from "../../src/api/services";
+import { tutorApi, reviewApi, referenceApi, listingApi } from "../../src/api/services";
 import type { User, SubjectInfo, Review, Reference } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
+import { getTutorSubjects } from "../../src/utils/tutorSubjects";
 
 function ProfileSkeleton() {
   return (
@@ -46,14 +47,15 @@ export default function TutorProfileScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const [tutorRes, reviewsRes, refsRes] = await Promise.all([
+        const [tutorRes, reviewsRes, refsRes, listingsRes] = await Promise.all([
           tutorApi.getById(id),
           reviewApi.getTutorReviews(id),
           referenceApi.getApproved(id).catch(() => ({ data: [] })),
+          listingApi.getTutorListings(id).catch(() => ({ data: [] })),
         ]);
         const tutorData = tutorRes.data;
         setTutor(tutorData);
-        setSubjects(tutorData.subjects || []);
+        setSubjects(getTutorSubjects(listingsRes.data, tutorData.subjects || []));
         setReviews(reviewsRes.data);
         setReferences(refsRes.data);
       } catch {

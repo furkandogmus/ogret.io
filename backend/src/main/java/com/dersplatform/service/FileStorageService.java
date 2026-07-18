@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
@@ -257,7 +258,7 @@ public class FileStorageService {
                     .getObjectRequest(builder -> builder.bucket(finalBucket).key(finalKey))
                     .build();
 
-            return s3Presigner.presignGetObject(presignRequest).url().toString();
+            return toPublicStorageUrl(s3Presigner.presignGetObject(presignRequest).url().toString());
         } catch (Exception e) {
             log.error("Failed to generate presigned URL for: " + fileUrlOrKey, e);
             return fileUrlOrKey; // Fallback to original URL
@@ -265,7 +266,21 @@ public class FileStorageService {
     }
 
     public boolean isManagedPublicAvatarUrl(String url) {
-        return isManagedUrl(url, publicBucket, "avatars/");
+        if (!isManagedUrl(url, publicBucket, "avatars/")) {
+            return false;
+        }
+        String expectedPrefix = trimUrl(publicUrl) + "/" + publicBucket + "/avatars/";
+        String objectName = url.substring(expectedPrefix.length());
+        return objectName.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\.(jpg|png)");
+    }
+
+    private String toPublicStorageUrl(String presignedUrl) {
+        if (!publicUrl.startsWith("/")) {
+            return presignedUrl;
+        }
+        URI uri = URI.create(presignedUrl);
+        String query = uri.getRawQuery();
+        return trimUrl(publicUrl) + uri.getRawPath() + (query == null ? "" : "?" + query);
     }
 
     public boolean isManagedPrivateIdentityDocumentUrl(String url) {

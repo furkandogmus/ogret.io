@@ -1,6 +1,5 @@
 package com.dersplatform.service;
 
-import com.dersplatform.model.entity.TutorSubject;
 import com.dersplatform.model.entity.User;
 import com.dersplatform.model.enums.Role;
 import com.dersplatform.model.enums.VerificationStatus;
@@ -9,7 +8,6 @@ import com.dersplatform.repository.LessonRepository;
 import com.dersplatform.repository.ReviewRepository;
 import com.dersplatform.repository.TutorListingRepository;
 import com.dersplatform.repository.TutorReferenceRepository;
-import com.dersplatform.repository.TutorSubjectRepository;
 import com.dersplatform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -35,10 +33,10 @@ public class ScoringService {
     private final UserRepository userRepository;
     private final LessonRepository lessonRepository;
     private final ReviewRepository reviewRepository;
-    private final TutorSubjectRepository tutorSubjectRepository;
     private final FavoriteTutorRepository favoriteTutorRepository;
     private final TutorReferenceRepository tutorReferenceRepository;
     private final TutorListingRepository tutorListingRepository;
+    private final ProfileCompletionService profileCompletionService;
 
     private static final double BAYESIAN_GLOBAL_AVG = 4.5;
     private static final double BAYESIAN_MIN_REVIEWS = 10;
@@ -46,15 +44,11 @@ public class ScoringService {
 
     @Transactional
     public void recompute(UUID tutorId) {
-        recompute(tutorId, null);
-    }
-
-    @Transactional
-    public void recompute(UUID tutorId, List<TutorSubject> preloadedSubjects) {
         userRepository.findById(tutorId).ifPresent(tutor -> {
             if (tutor.getRole() != Role.TUTOR)
                 return;
-            double score = computeScore(tutor, preloadedSubjects);
+            int profileCompletionScore = profileCompletionService.refresh(tutor).getScore();
+            double score = computeScore(tutor, profileCompletionScore);
             BigDecimal newScore = BigDecimal.valueOf(score).setScale(2, RoundingMode.HALF_UP);
             if (tutor.getPopularityScore() == null || newScore.compareTo(tutor.getPopularityScore()) != 0) {
                 tutor.setPopularityScore(newScore);
@@ -68,28 +62,20 @@ public class ScoringService {
     public void recomputeAll() {
         log.info("Starting periodic popularity score recomputation for all tutors");
         List<User> tutors = userRepository.findByRole(Role.TUTOR);
-        List<UUID> tutorIds = tutors.stream().map(User::getId).toList();
-
-        var subjectsByTutor = tutorSubjectRepository.findByTutorIdIn(tutorIds)
-                .stream()
-                .collect(java.util.stream.Collectors.groupingBy(
-                        ts -> ts.getTutor().getId(),
-                        java.util.stream.Collectors.toList()));
 
         for (User tutor : tutors) {
-            var subjects = subjectsByTutor.getOrDefault(tutor.getId(), List.of());
-            recompute(tutor.getId(), subjects);
+            recompute(tutor.getId());
         }
         log.info("Completed periodic score recomputation for {} tutors", tutors.size());
     }
 
-    private double computeScore(User tutor, List<TutorSubject> preloadedSubjects) {
+    private double computeScore(User tutor, int profileCompletionScore) {
         UUID id = tutor.getId();
 
         double ratingScore = computeRatingScore(id);
         double reviewCountScore = computeReviewCountScore(id);
         double completionScore = computeCompletionScore(id);
-        double profileScore = computeProfileScore(tutor, preloadedSubjects);
+        double profileScore = (profileCompletionScore / 100.0) * 15;
         double experienceScore = computeExperienceScore(tutor);
         double recencyScore = computeRecencyScore(id, tutor);
         double newTutorBoost = computeNewTutorBoost(tutor);
@@ -142,52 +128,6 @@ public class ScoringService {
         });
 
         return rate * 12;
-    }
-
-    private double computeProfileScore(User tutor, List<TutorSubject> preloadedSubjects) {
-        int score = 0;
-
-        if (tutor.getAvatarUrl() != null && !tutor.getAvatarUrl().isBlank())
-            score += 15;
-
-        if (tutor.getBio() != null && !tutor.getBio().isBlank()) {
-            int len = tutor.getBio().length();
-            if (len >= 200)
-                score += 20;
-            else if (len >= 100)
-                score += 14;
-            else
-                score += 8;
-        }
-
-        if (tutor.getEducation() != null && !tutor.getEducation().isBlank())
-            score += 12;
-
-        if (tutor.getHourlyRate() != null && tutor.getHourlyRate().compareTo(BigDecimal.ZERO) > 0)
-            score += 8;
-
-        List<TutorSubject> subjects = preloadedSubjects != null
-                ? preloadedSubjects
-                : tutorSubjectRepository.findByTutorId(tutor.getId());
-        if (!subjects.isEmpty()) {
-            int count = subjects.size();
-            if (count >= 3)
-                score += 20;
-            else if (count == 2)
-                score += 14;
-            else
-                score += 8;
-        }
-
-        if (tutor.getExperienceYears() != null && tutor.getExperienceYears() > 0)
-            score += 10;
-
-        score = Math.min(score, 100);
-        if (tutor.getProfileCompletionScore() == null || tutor.getProfileCompletionScore() != score) {
-            tutor.setProfileCompletionScore(score);
-        }
-
-        return (score / 100.0) * 15;
     }
 
     private double computeExperienceScore(User tutor) {

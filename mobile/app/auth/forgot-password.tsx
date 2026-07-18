@@ -14,6 +14,7 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [deliveryEnabled, setDeliveryEnabled] = useState(true);
 
   const handleSubmit = async () => {
     if (!email) {
@@ -22,9 +23,10 @@ export default function ForgotPasswordScreen() {
     }
     setLoading(true);
     try {
-      await authApi.forgotPassword(email);
+      const { data } = await authApi.forgotPassword(email);
+      setDeliveryEnabled(data.deliveryEnabled);
       setSent(true);
-      toast.show("Şifre sıfırlama bağlantısı gönderildi", "success");
+      toast.show(data.message, "success");
     } catch {
       toast.show("Gönderilemedi, e-posta adresinizi kontrol edin", "error");
     } finally {
@@ -44,7 +46,11 @@ export default function ForgotPasswordScreen() {
           <Ionicons name="lock-open-outline" size={64} color={colors.primary} />
           <Text style={{ color: colors.text, fontSize: 28, fontWeight: "700", marginTop: spacing.md }}>Şifremi Unuttum</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: "center", marginTop: spacing.sm }}>
-            {sent ? "E-posta adresinize şifre sıfırlama bağlantısı gönderdik." : "E-posta adresinizi girin, size sıfırlama bağlantısı gönderelim."}
+            {sent
+              ? deliveryEnabled
+                ? "Hesap mevcutsa e-posta adresine şifre sıfırlama bağlantısı gönderildi."
+                : "Bu kurulumda e-posta gönderimi kapalı. Yöneticiniz hesabınız için geçici şifre belirleyebilir."
+              : "E-posta adresinizi girin, şifre kurtarma seçeneklerini gösterelim."}
           </Text>
         </View>
         {!sent && (
@@ -56,7 +62,9 @@ export default function ForgotPasswordScreen() {
         {sent && (
           <View style={{ gap: spacing.md }}>
             <Button title="Giriş Yap" onPress={() => router.push("/auth/login")} variant="outline" size="lg" />
-            <Button title="Şifre Sıfırlama Sayfasına Git" onPress={() => router.push("/auth/reset-password")} variant="outline" size="lg" />
+            {deliveryEnabled && (
+              <Button title="Şifre Sıfırlama Sayfasına Git" onPress={() => router.push("/auth/reset-password")} variant="outline" size="lg" />
+            )}
           </View>
         )}
       </View>

@@ -13,13 +13,15 @@ export function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
+  const [deliveryEnabled, setDeliveryEnabled] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await authApi.forgotPassword(email);
+      const { data } = await authApi.forgotPassword(email);
+      setDeliveryEnabled(data.deliveryEnabled);
       setSent(true);
     } catch (err: any) {
       setError(err.response?.data?.message || "Bir hata oluştu");
@@ -53,8 +55,9 @@ export function ForgotPasswordPage() {
               <CheckCircle className="w-12 h-12 text-emerald-500" />
             </div>
             <p className="text-sm text-muted-foreground">
-              E-posta adresinize şifre sıfırlama bağlantısı gönderildi.
-              Lütfen gelen kutunuzu kontrol edin.
+              {deliveryEnabled
+                ? "Hesap mevcutsa şifre sıfırlama bağlantısı gönderildi. Lütfen gelen kutunuzu kontrol edin."
+                : "Bu kurulumda e-posta gönderimi kapalı. Platform yöneticisi, yönetim panelinden hesabınız için geçici şifre belirleyebilir."}
             </p>
             <Link
               to="/giris"

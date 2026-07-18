@@ -35,6 +35,10 @@ public class MessageService {
 
     @Transactional
     public MessageResponse sendMessage(UUID senderId, SendMessageRequest request) {
+        if (request.getContent() == null || request.getContent().isBlank()
+                || request.getContent().length() > 2000) {
+            throw ApiException.badRequest("Mesaj 1 ile 2000 karakter arasında olmalıdır");
+        }
         if (senderId.equals(request.getReceiverId())) {
             throw ApiException.badRequest("Kendinize mesaj gönderemezsiniz");
         }

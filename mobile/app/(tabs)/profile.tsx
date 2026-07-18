@@ -9,9 +9,11 @@ import { LessonCard } from "../../src/components/LessonCard";
 import { EmptyState } from "../../src/components/EmptyState";
 import { useAuth } from "../../src/providers/AuthProvider";
 import { useToast } from "../../src/components/Toast";
-import { fileApi, userApi, lessonApi } from "../../src/api/services";
+import { userApi, lessonApi } from "../../src/api/services";
 import type { Lesson } from "../../src/types";
 import { colors, spacing, radius } from "../../src/constants/theme";
+import { ProfileCompletionCard } from "../../src/components/ProfileCompletionCard";
+import { resolveMediaUrl } from "../../src/utils/mediaUrl";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -24,6 +26,7 @@ export default function ProfileScreen() {
   const [lessonsLoading, setLessonsLoading] = useState(true);
 
   const isTutor = user?.role === "TUTOR";
+  const fullAvatarUrl = useMemo(() => resolveMediaUrl(user?.avatarUrl), [user?.avatarUrl]);
 
   const fetchLessons = useCallback(async () => {
     try {
@@ -43,10 +46,7 @@ export default function ProfileScreen() {
 
   const handleAvatarPicked = async (uri: string) => {
     try {
-      const { data } = await fileApi.upload(uri);
-      if (data.url) {
-        await userApi.updateAvatar(data.url);
-      }
+      await userApi.uploadAvatar(uri);
       await refreshUser();
       toast.show("Fotoğraf güncellendi", "success");
     } catch {
@@ -141,6 +141,14 @@ export default function ProfileScreen() {
         {user?.email && (
           <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: spacing.sm }}>{user.email}</Text>
         )}
+      </View>
+
+      <View style={{ paddingHorizontal: spacing.md, marginBottom: spacing.lg }}>
+        <ProfileCompletionCard
+          completion={user?.profileCompletion}
+          score={user?.profileCompletionScore}
+          complete={Boolean(user?.profileComplete)}
+        />
       </View>
 
       {/* Stats */}
@@ -238,8 +246,8 @@ export default function ProfileScreen() {
       <AvatarPicker visible={showAvatarPicker} onClose={() => setShowAvatarPicker(false)} onImagePicked={handleAvatarPicked} />
       <Modal visible={showAvatarFull} transparent animationType="fade">
         <TouchableOpacity style={{ flex: 1, backgroundColor: "#000", alignItems: "center", justifyContent: "center" }} activeOpacity={1} onPress={() => setShowAvatarFull(false)}>
-          {user?.avatarUrl && (
-            <Image source={{ uri: user.avatarUrl }} style={{ width: 300, height: 300, borderRadius: 150 }} contentFit="cover" />
+          {fullAvatarUrl && (
+            <Image source={{ uri: fullAvatarUrl }} style={{ width: 300, height: 300, borderRadius: 150 }} contentFit="cover" />
           )}
           <Text style={{ color: "#fff", fontSize: 14, marginTop: 20 }}>Kapatmak için tıkla</Text>
         </TouchableOpacity>

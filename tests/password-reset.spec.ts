@@ -9,7 +9,7 @@ test.describe('Password Reset Flow (Forgot & Reset Password Pages)', () => {
   test('should display forgot password form and send reset link', async ({ page }) => {
     // Intercept forgot password POST
     await page.route(/\/api\/v1\/auth\/forgot-password/, async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ deliveryEnabled: true }) });
     });
 
     await page.goto('/sifre-unuttum');
@@ -23,7 +23,7 @@ test.describe('Password Reset Flow (Forgot & Reset Password Pages)', () => {
     await page.locator('button[type="submit"]').click();
 
     // Should show success state
-    await expect(page.locator('text=E-posta adresinize şifre sıfırlama bağlantısı gönderildi')).toBeVisible();
+    await expect(page.locator('text=Hesap mevcutsa şifre sıfırlama bağlantısı gönderildi')).toBeVisible();
     await expect(page.locator('text=Giriş sayfasına dön')).toBeVisible();
   });
 
@@ -37,6 +37,23 @@ test.describe('Password Reset Flow (Forgot & Reset Password Pages)', () => {
     await page.locator('button[type="submit"]').click();
 
     await expect(page.locator('text=E-posta bulunamadı')).toBeVisible();
+  });
+
+  test('should explain admin recovery when email delivery is disabled', async ({ page }) => {
+    await page.route(/\/api\/v1\/auth\/forgot-password/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ deliveryEnabled: false }),
+      });
+    });
+
+    await page.goto('/sifre-unuttum');
+    await page.locator('input[type="email"]').fill('ogrenci@test.com');
+    await page.locator('button[type="submit"]').click();
+
+    await expect(page.getByText('Bu kurulumda e-posta gönderimi kapalı.')).toBeVisible();
+    await expect(page.getByText(/yönetim panelinden hesabınız için geçici şifre/)).toBeVisible();
   });
 
   test('should display invalid token state on reset page without token', async ({ page }) => {

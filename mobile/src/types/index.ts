@@ -21,10 +21,20 @@ export interface User {
   online: boolean;
   verified: boolean;
   profileComplete: boolean;
+  profileCompletionScore?: number;
+  profileCompletion?: ProfileCompletion;
   identityVerified: boolean;
   popularityScore?: number;
   responseTimeHours?: number;
   subjects?: SubjectInfo[];
+}
+
+export interface ProfileCompletion {
+  score: number;
+  complete: boolean;
+  completedItems: number;
+  totalItems: number;
+  items: { key: string; label: string; completed: boolean }[];
 }
 
 export interface TutorSummary {

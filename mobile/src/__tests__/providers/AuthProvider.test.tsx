@@ -109,10 +109,10 @@ describe("AuthProvider", () => {
     });
   });
 
-  it("register waits for email verification without creating a session", async () => {
+  it("register creates a session immediately", async () => {
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
     mockAxios.post.mockResolvedValue({
-      data: { user: { ...mockUser, verified: false } },
+      data: { accessToken: "access-register", refreshToken: "refresh-register", user: mockUser },
     });
     mockAxios.get.mockResolvedValue({ data: mockUser });
     const { getByTestId } = render(
@@ -126,8 +126,9 @@ describe("AuthProvider", () => {
     await act(async () => {
       fireEvent.press(getByTestId("btn-register"));
     });
-    expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
-    expect(getByTestId("auth-status").props.children).toBe("logged-out");
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith("accessToken", "access-register");
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith("refreshToken", "refresh-register");
+    expect(getByTestId("auth-status").props.children).toBe("logged-in");
   });
 
   it("logout clears tokens and user", async () => {

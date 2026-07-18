@@ -8,10 +8,12 @@ import com.dersplatform.model.dto.response.UserDataExportResponse;
 import com.dersplatform.service.UserService;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -64,6 +66,19 @@ public class UserController {
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(userService.updateAvatar(UUID.fromString(userDetails.getUsername()), body.get("avatarUrl")));
+    }
+
+    @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserResponse> uploadAvatar(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestPart("file") MultipartFile file) {
+        return ResponseEntity.ok(userService.uploadAvatar(UUID.fromString(userDetails.getUsername()), file));
+    }
+
+    @DeleteMapping("/me/avatar")
+    public ResponseEntity<UserResponse> removeAvatar(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(userService.removeAvatar(UUID.fromString(userDetails.getUsername())));
     }
 
     @GetMapping

@@ -21,12 +21,14 @@ function RootLayoutInner() {
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === "auth";
-    const isSharedScreen = segments[0] === "tutor";
+    const segmentPath = segments as string[];
+    const inAuthGroup = segmentPath[0] === "auth";
+    const isEmailVerification = inAuthGroup && segmentPath[1] === "email-verify";
+    const isSharedScreen = segmentPath[0] === "tutor";
 
     if (!isAuthenticated && !inAuthGroup && !isSharedScreen) {
       router.replace("/auth/login");
-    } else if (isAuthenticated && inAuthGroup) {
+    } else if (isAuthenticated && inAuthGroup && !isEmailVerification) {
       router.replace("/(tabs)");
     }
   }, [isAuthenticated, loading, segments]);

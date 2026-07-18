@@ -68,9 +68,14 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<Map<String, Object>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request.getEmail());
-        return ResponseEntity.ok(Map.of("message", "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi"));
+        boolean deliveryEnabled = authService.isEmailDeliveryEnabled();
+        return ResponseEntity.ok(Map.of(
+                "deliveryEnabled", deliveryEnabled,
+                "message", deliveryEnabled
+                        ? "Hesap mevcutsa şifre sıfırlama bağlantısı e-posta adresine gönderildi"
+                        : "E-posta servisi bu kurulumda kapalı; yöneticiniz geçici şifre belirleyebilir"));
     }
 
     @PostMapping("/resend-verification")

@@ -31,9 +31,7 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       await register({ email, phone, password, fullName, role });
-      Alert.alert("E-postanızı doğrulayın", "Hesabınız oluşturuldu. Giriş yapmadan önce e-postanıza gönderilen bağlantıyı açın.", [
-        { text: "Girişe git", onPress: () => router.replace("/auth/login") },
-      ]);
+      router.replace("/(tabs)");
     } catch (err: any) {
       Alert.alert("Hata", err?.response?.data?.message || "Kayıt yapılamadı");
     } finally {

@@ -15,6 +15,10 @@ public class ListingResponse {
     private UUID tutorId;
     private String tutorName;
     private String tutorAvatar;
+    private BigDecimal tutorRatingAvg;
+    private Integer tutorRatingCount;
+    private boolean tutorOnline;
+    private boolean tutorIdentityVerified;
     private UUID subjectId;
     private String subjectName;
     private String title;
@@ -36,6 +40,10 @@ public class ListingResponse {
                 .tutorId(listing.getTutor().getId())
                 .tutorName(listing.getTutor().getFullName())
                 .tutorAvatar(listing.getTutor().getAvatarUrl())
+                .tutorRatingAvg(listing.getTutor().getRatingAvg())
+                .tutorRatingCount(listing.getTutor().getRatingCount())
+                .tutorOnline(listing.getTutor().isOnline())
+                .tutorIdentityVerified(listing.getTutor().isIdentityVerified())
                 .subjectId(listing.getSubject().getId())
                 .subjectName(listing.getSubject().getName())
                 .title(listing.getTitle())

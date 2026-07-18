@@ -3,6 +3,7 @@ package com.dersplatform.repository;
 import com.dersplatform.model.entity.User;
 import com.dersplatform.model.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -12,7 +13,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificationExecutor<User> {
     Optional<User> findByEmail(String email);
     Optional<User> findByPhone(String phone);
     boolean existsByEmail(String email);
@@ -23,6 +24,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Page<User> findByIdIn(List<UUID> ids, Pageable pageable);
     Page<User> findByRoleAndIdIn(Role role, List<UUID> ids, Pageable pageable);
     List<User> findByFullNameContainingIgnoreCase(String name);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.isVerified = true")
+    long countVerifiedUsers();
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.isProfileComplete = true")
+    long countCompletedProfiles();
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role AND u.isIdentityVerified = true")
+    long countIdentityVerifiedByRole(@Param("role") Role role);
 
     @Query(value = """
         SELECT * FROM users u

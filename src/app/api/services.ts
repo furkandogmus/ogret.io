@@ -21,6 +21,22 @@ export interface UserResponse {
   identityVerified: boolean;
   popularityScore?: number;
   responseTimeHours?: number;
+  profileCompletionScore?: number;
+  profileCompletion?: ProfileCompletion;
+}
+
+export interface ProfileCompletionItem {
+  key: string;
+  label: string;
+  completed: boolean;
+}
+
+export interface ProfileCompletion {
+  score: number;
+  complete: boolean;
+  completedItems: number;
+  totalItems: number;
+  items: ProfileCompletionItem[];
 }
 
 export interface TutorSummaryResponse {
@@ -115,6 +131,14 @@ export interface SubscriptionResponse {
   paymentMethod?: string;
 }
 
+export interface AvailabilitySlot {
+  id?: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  isActive?: boolean;
+}
+
 // ─── Users ───
 
 export const userApi = {
@@ -136,6 +160,17 @@ export const userApi = {
   updateAvatar: (avatarUrl: string) =>
     api.put<UserResponse>("/users/me/avatar", { avatarUrl }),
 
+  uploadAvatar: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post<UserResponse>("/users/me/avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+
+  removeAvatar: () =>
+    api.delete<UserResponse>("/users/me/avatar"),
+
   changePassword: (currentPassword: string, newPassword: string) =>
     api.put("/users/me/password", { currentPassword, newPassword }),
 
@@ -154,6 +189,42 @@ export interface Page<T> {
   totalPages: number;
 }
 
+export interface AdminDashboardResponse {
+  totalUsers: number;
+  totalTutors: number;
+  totalStudents: number;
+  totalAdmins: number;
+  verifiedEmails: number;
+  completedProfiles: number;
+  identityVerifiedTutors: number;
+  totalLessons: number;
+  pendingLessons: number;
+  confirmedLessons: number;
+  completedLessons: number;
+  activeListings: number;
+  totalMessages: number;
+  pendingVerifications: number;
+  pendingReferences: number;
+  openDisputes: number;
+  totalBlogPosts: number;
+  publishedPosts: number;
+}
+
+export interface AdminUserResponse {
+  id: string;
+  email: string;
+  phone: string;
+  fullName: string;
+  role: "STUDENT" | "TUTOR" | "ADMIN";
+  verified: boolean;
+  profileComplete: boolean;
+  identityVerified: boolean;
+  online: boolean;
+  status: "READY" | "PROFILE_INCOMPLETE";
+  createdAt?: string;
+  lastActiveAt?: string;
+}
+
 // ─── Auth ───
 
 export const authApi = {
@@ -166,8 +237,11 @@ export const authApi = {
   verifyEmail: (token: string) =>
     api.post("/auth/verify-email", { token }),
 
+  resendVerification: (email: string) =>
+    api.post("/auth/resend-verification", { email }),
+
   forgotPassword: (email: string) =>
-    api.post("/auth/forgot-password", { email }),
+    api.post<{ message: string; deliveryEnabled: boolean }>("/auth/forgot-password", { email }),
 
   resetPassword: (token: string, password: string) =>
     api.post("/auth/reset-password", { token, password }),
@@ -186,16 +260,16 @@ export const tutorApi = {
     api.get<{ subjectId: string; subjectName: string; id: string }[]>("/tutors/me/subjects"),
 
   updateMySubjects: (subjectIds: string[]) =>
-    api.put("/tutors/me/subjects", subjectIds),
+    api.put<UserResponse>("/tutors/me/subjects", subjectIds),
 
   getMyAvailability: () =>
-    api.get<{ id: string; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }[]>("/tutors/me/availability"),
+    api.get<AvailabilitySlot[]>("/tutors/me/availability"),
 
   updateMyAvailability: (slots: { dayOfWeek: number; startTime: string; endTime: string }[]) =>
-    api.put("/tutors/me/availability", slots),
+    api.put<AvailabilitySlot[]>("/tutors/me/availability", slots),
 
   getAvailability: (tutorId: string) =>
-    api.get<{ id: string; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }[]>(`/tutors/${tutorId}/availability`),
+    api.get<AvailabilitySlot[]>(`/tutors/${tutorId}/availability`),
 };
 
 // ─── Lessons ───
@@ -327,13 +401,25 @@ export const verificationApi = {
 
 export const adminApi = {
   getDashboard: () =>
-    api.get("/admin/dashboard"),
+    api.get<AdminDashboardResponse>("/admin/dashboard"),
 
-  getUsers: (params?: { page?: number; size?: number }) =>
-    api.get<Page<UserResponse>>("/admin/users", { params }),
+  getUsers: (params?: {
+    q?: string;
+    role?: "STUDENT" | "TUTOR" | "ADMIN";
+    verified?: boolean;
+    profileComplete?: boolean;
+    page?: number;
+    size?: number;
+  }) => api.get<Page<AdminUserResponse>>("/admin/users", { params }),
 
   verifyUser: (id: string) =>
     api.put<UserResponse>(`/admin/users/${id}/verify`),
+
+  updateEmailVerification: (id: string, verified: boolean) =>
+    api.patch<AdminUserResponse>(`/admin/users/${id}/email-verification`, { verified }),
+
+  setTemporaryPassword: (id: string, temporaryPassword: string) =>
+    api.put(`/admin/users/${id}/temporary-password`, { temporaryPassword }),
 
   getVerifications: () =>
     api.get("/admin/verifications"),
@@ -365,6 +451,10 @@ export interface ListingResponse {
   tutorId: string;
   tutorName: string;
   tutorAvatar?: string;
+  tutorRatingAvg?: number;
+  tutorRatingCount?: number;
+  tutorOnline: boolean;
+  tutorIdentityVerified: boolean;
   subjectId: string;
   subjectName: string;
   title: string;
@@ -376,6 +466,7 @@ export interface ListingResponse {
   allowsOnline: boolean;
   maxTravelDistanceKm?: number;
   languages: string[];
+  experienceYears?: number;
   status: string;
   createdAt?: string;
 }

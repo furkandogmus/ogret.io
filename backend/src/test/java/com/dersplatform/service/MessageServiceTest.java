@@ -1,5 +1,6 @@
 package com.dersplatform.service;
 
+import com.dersplatform.exception.ApiException;
 import com.dersplatform.model.dto.request.SendMessageRequest;
 import com.dersplatform.model.dto.response.MessageResponse;
 import com.dersplatform.model.entity.Message;
@@ -41,7 +42,7 @@ class MessageServiceTest {
         MockitoAnnotations.openMocks(this);
         messageService = new MessageService(messageRepository, userRepository, notificationService, messagingTemplate);
 
-        sender = User.builder().id(UUID.randomUUID()).fullName("Alice").build();
+        sender = User.builder().id(UUID.randomUUID()).fullName("Alice").isVerified(true).build();
         receiver = User.builder().id(UUID.randomUUID()).fullName("Bob").build();
 
         message = Message.builder()
@@ -73,6 +74,17 @@ class MessageServiceTest {
         assertFalse(response.isRead());
 
         verify(messageRepository).save(any(Message.class));
+    }
+
+    @Test
+    void sendMessage_ShouldRejectOversizedContentBeforePersistence() {
+        var request = new SendMessageRequest();
+        request.setReceiverId(receiver.getId());
+        request.setContent("x".repeat(2001));
+
+        assertThrows(ApiException.class, () -> messageService.sendMessage(sender.getId(), request));
+
+        verifyNoInteractions(userRepository, messageRepository, notificationService, messagingTemplate);
     }
 
     @Test

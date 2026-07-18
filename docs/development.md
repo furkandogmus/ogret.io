@@ -96,16 +96,50 @@ useEffect(() => {
 
 ## Docker
 
-```bash
-# Altyapıyı başlat (PostgreSQL + Redis)
-docker compose up -d
+Tüm geliştirme ortamı için `.env` veya token gerekmez:
 
-# Sadece DB
-docker compose up -d postgres
+```bash
+# Frontend + backend + PostgreSQL + Redis + MinIO
+docker compose up --build
+
+# Arka planda çalıştır ve durumunu kontrol et
+docker compose up --build -d
+docker compose ps
+
+# Logları izle
+docker compose logs -f backend frontend
 
 # Container'ları durdur
 docker compose down
 ```
+
+- Uygulama: http://localhost:3000
+- Swagger: http://localhost:3000/api/v1/swagger-ui.html
+
+Veritabanı, Redis, MinIO ve backend host portlarına açılmaz; frontend aynı origin
+üzerinden API, WebSocket ve dosya depolamaya proxy olur.
+
+Yerel ortam `dev` profilini kullanır. E-posta gönderimi kapalıdır; kayıt ve
+eşleşme e-posta doğrulaması olmadan çalışır. Şifremi unuttum çağrısı kullanılamayan
+bir sıfırlama token'ı üretmez ve kullanıcıyı adminin geçici şifre akışına yönlendirir.
+Production profilinde de e-posta opsiyoneldir; etkinleştirilirse doğrulanmış gönderici
+zorunludur. Güçlü secret, HTTPS adresleri ve güvenli depolama ayarları production'da
+zorunlu kalır.
+
+Hazır hesaplar:
+
+| Rol | E-posta |
+|-----|---------|
+| Admin | admin@ogret.io |
+| Öğretmen | zeynep@ogret.io |
+| Öğrenci | ahmet@ogret.io |
+
+İlk çalıştırmada üretilen şifreleri `docker compose exec backend
+show-bootstrap-credentials` komutu gösterir. Şifreler ve JWT anahtarı kalıcı Docker
+volume'ünde tutulur; restart sırasında hesap şifreleri sıfırlanmaz.
+
+Öğretmen hesabında örnek matematik ilanı ve hafta içi 09:00–18:00 uygunluk
+takvimi bulunur. Seed yalnızca `dev` profilinde çalışır.
 
 ## Yapılandırma
 
@@ -141,8 +175,8 @@ http://localhost:8080/h2-console (sadece test profilinde aktif)
 
 - Frontend JS bundle ~762 kB (chunk warning, dynamic import ile iyileştirilebilir)
 - Test coverage sadece controller seviyesinde (service/ repository testleri yok)
-- SMS (Twilio) ve Email (Spring Mail) entegrasyonları .env gerektirdiği için ertelendi
-- Dosya yükleme (S3) ertelendi — doğrulama belgeleri mock URL ile çalışır
+- SMS (Twilio) entegrasyonu yerel ortamda devre dışıdır
+- E-posta yerel ortamda no-op çalışır; gerçek gönderim için production SES kurulumu gerekir
 - Ödeme entegrasyonu yok
 - Rate limiting in-memory (Redis tabanlı değil, restart'ta sıfırlanır)
 - WebSocket, load balancer altında sticky session gerektirir
