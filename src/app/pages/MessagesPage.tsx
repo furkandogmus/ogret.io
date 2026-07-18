@@ -34,6 +34,7 @@ export function MessagesPage() {
   const [showMobileList, setShowMobileList] = useState(true);
   const chatEnd = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const conversationEventIds = useRef(new Set<string>());
 
   useEffect(() => {
@@ -74,6 +75,11 @@ export function MessagesPage() {
   useEffect(() => {
     if (!activeId) return;
     fetchMessages(activeId);
+
+    // Focus the input field when switching conversation
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
 
     // Fetch user details to get actual online status
     userApi.getById(activeId)
@@ -425,6 +431,7 @@ export function MessagesPage() {
               {sendError && <p className="mb-2 text-xs font-medium text-red-600">{sendError}</p>}
               <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-1.5">
                 <input
+                  ref={inputRef}
                   type="text"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
