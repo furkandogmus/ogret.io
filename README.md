@@ -1,17 +1,15 @@
-# ders.online — Online Özel Ders Pazaryeri
+# ogret.io — Online Özel Ders Pazaryeri
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
 [![E2E](https://img.shields.io/badge/e2e-playwright-blueviolet)]()
 [![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20Vite%20%2B%20Tailwind%20v4-blue)]()
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203-red)]()
 
-Superprof alternatifi, **sadece online derslere** odaklanan, sıfır komisyonlu (SaaS abonelik) Türkiye pazarı özel ders platformu.
+Öğrenci ve öğretmenleri buluşturan, **sadece online derslere** odaklanan ve ücretsiz çalışan Türkiye pazarı özel ders platformu.
 
-## Transactional e-mail (Amazon SES)
+## E-posta Gönderimi (Varsayılan Olarak Devre Dışı)
 
-The backend sends account-verification and password-reset messages through Amazon SES v2. Terraform creates the SES domain identity and grants the backend EKS IRSA role the minimal `ses:SendEmail` permission. Kubernetes deployment configuration now lives in the private GitOps repository; Argo CD synchronizes its `apps/ogret` Kustomize production overlay. After `terraform apply`, publish the CNAME records reported by `terraform output ses_dkim_tokens`, then configure the GitOps service-account role ARN from `terraform output -raw backend_irsa_role_arn`. SES starts in sandbox mode, so request production access before sending to unverified recipients.
-
-For the initial SES sandbox test, the GitOps ConfigMap uses the verified Gmail sender. It can only send to verified SES recipients and is not suitable for production delivery; replace it with a verified domain sender before launch.
+Geliştirme ve yerel self-host kurulumlarında e-posta doğrulama akışı kapalıdır. Kayıt işlemleri herhangi bir aktivasyon kodu gerektirmeden anında tamamlanır. Şifre sıfırlama ve doğrulama gibi taleplerde arayüz kullanıcıyı doğrudan adminin geçici şifre belirleyebildiği yerel akışa yönlendirir.
 
 ---
 
@@ -32,33 +30,45 @@ For the initial SES sandbox test, the GitOps ConfigMap uses the verified Gmail s
 ## Hızlı Başlangıç
 
 ### Gereksinimler
-- Java 17+, Node.js 18+, Docker Desktop
+- Docker Desktop veya Docker Engine + Compose v2
+- Intel ve Apple Silicon (arm64) desteklenir; Compose yerel mimariye uygun imajları otomatik çeker.
 
-### 1. Altyapı
+### Tek komutla çalıştır
+
+`.env`, API anahtarı veya harici servis hesabı oluşturmadan:
+
 ```bash
-docker compose up -d postgres redis
+docker compose up --build
 ```
 
-### 2. Backend
-```bash
-cd backend
-./gradlew bootRun
-# → http://localhost:8080
-```
+Servisler hazır olduğunda:
 
-### 3. Frontend
-```bash
-npm install
-npm run dev
-# → http://localhost:5173
-```
+- Uygulama: http://localhost:3000
+- Swagger: http://localhost:3000/api/v1/swagger-ui.html
 
-### Seed Hesaplar (tümü: `123456`)
+PostgreSQL, Redis, MinIO ve backend yalnızca Compose ağı içinde kalır; dışarıya
+sadece uygulamanın `3000` portu açılır. JWT anahtarı ile ilk hesap şifreleri ilk
+çalıştırmada üretilir ve Docker volume içinde korunur.
+
+Arka planda başlatmak için `docker compose up --build -d`, logları izlemek için `docker compose logs -f` ve durdurmak için `docker compose down` kullanın.
+
+### Hazır geliştirme hesapları
 | Rol | Email |
 |-----|-------|
 | ADMIN | admin@ogret.io |
-| TUTOR | zeynep@ogret.io, mehmet@ogret.io, ayse@ogret.io, can@ogret.io |
-| STUDENT | ahmet@ogret.io, elif@ogret.io |
+| TUTOR | zeynep@ogret.io |
+| STUDENT | ahmet@ogret.io |
+
+İlk şifreleri terminalden görmek için:
+
+```bash
+docker compose exec backend show-bootstrap-credentials
+```
+
+Bu şifreler yalnızca hesaplar ilk kez oluşturulurken kullanılır; container yeniden
+başladığında kullanıcı şifreleri sıfırlanmaz.
+
+Bu hesaplar, örnek öğretmen ilanı ve hafta içi uygunluk takvimi yalnızca `dev` profilinde oluşturulur; production veritabanına yazılmaz.
 
 ---
 
@@ -77,21 +87,32 @@ npm run dev
 
 ---
 
-## Test
+## Test ve Simülasyon
+
+### Otomatik Testler
 
 ```bash
-# Backend (33 test)
+# Backend Birim Testleri
 cd backend && ./gradlew test
 
-# E2E (Playwright)
+# E2E Testleri (Playwright)
 npm run test:e2e
-npm run test:e2e:ui      # Görsel arayüz
+npm run test:e2e:ui      # Görsel arayüz ile çalıştırma
 npx playwright show-report
+```
+
+### Yüksek Eş Zamanlılık (Simulation) Testi
+
+Platformun gerçek zamanlı WebSocket mesajlaşma kararlılığını, profil onboarding ve avatar yükleme adımlarını test etmek için 60 eş zamanlı kullanıcıyla çalışan simülasyon testi:
+
+```bash
+# Eş zamanlı 50 öğrenci ve 10 öğretmeni simüle eder
+node --experimental-strip-types tests/simulation.ts
 ```
 
 ## API Dokümanı
 
-Swagger UI: http://localhost:8080/swagger-ui.html
+Swagger UI: http://localhost:3000/api/v1/swagger-ui.html
 
 Tüm endpoint'ler `/api/v1` prefix'i altındadır.
 
