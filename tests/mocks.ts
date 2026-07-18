@@ -19,6 +19,18 @@ export const mockStudent = {
   profileComplete: true,
   identityVerified: false,
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+  profileCompletionScore: 100,
+  profileCompletion: {
+    score: 100,
+    complete: true,
+    completedItems: 3,
+    totalItems: 3,
+    items: [
+      { key: 'fullName', label: 'Ad soyad', completed: true },
+      { key: 'phone', label: 'Telefon', completed: true },
+      { key: 'avatarUrl', label: 'Profil fotoğrafı', completed: true },
+    ],
+  },
 };
 
 export const mockTutor = {
@@ -38,6 +50,25 @@ export const mockTutor = {
   ratingCount: 15,
   online: true,
   avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+  profileCompletionScore: 100,
+  profileCompletion: {
+    score: 100,
+    complete: true,
+    completedItems: 10,
+    totalItems: 10,
+    items: [
+      { key: 'fullName', label: 'Ad soyad', completed: true },
+      { key: 'phone', label: 'Telefon', completed: true },
+      { key: 'avatarUrl', label: 'Profil fotoğrafı', completed: true },
+      { key: 'bio', label: 'Kısa tanıtım', completed: true },
+      { key: 'education', label: 'Eğitim bilgisi', completed: true },
+      { key: 'experienceYears', label: 'Deneyim yılı', completed: true },
+      { key: 'hourlyRate', label: 'Ders ücreti', completed: true },
+      { key: 'subjects', label: 'Ders konuları', completed: true },
+      { key: 'activeListing', label: 'Aktif ders ilanı', completed: true },
+      { key: 'availability', label: 'Haftalık müsaitlik', completed: true },
+    ],
+  },
 };
 
 export const mockAdmin = {
@@ -246,7 +277,10 @@ export const mockVerifications = [
 
 // ─── Routing Mock Setup Helper ───
 
-export async function setupDefaultMocks(page: Page) {
+export async function setupDefaultMocks(page: Page, user?: any) {
+  if (user) {
+    (page as any)._mockUser = user;
+  }
   await page.addInitScript(() => {
     if (!localStorage.getItem('cookie-consent-v2')) {
       localStorage.setItem('cookie-consent-v2', JSON.stringify({
@@ -301,8 +335,8 @@ export async function setupDefaultMocks(page: Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify([
-        { id: 'av-1', tutorId: 'user-tutor-1', dayOfWeek: 1, startTime: '09:00:00', endTime: '18:00:00', active: true },
-        { id: 'av-2', tutorId: 'user-tutor-1', dayOfWeek: 3, startTime: '10:00:00', endTime: '20:00:00', active: true },
+        { dayOfWeek: 0, startTime: '09:00', endTime: '18:00' },
+        { dayOfWeek: 2, startTime: '10:00', endTime: '20:00' },
       ]),
     });
   });
@@ -388,16 +422,21 @@ export async function setupDefaultMocks(page: Page) {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ url: 'http://localhost:9000/dersplatform-public/mock-avatar.png' }),
+      body: JSON.stringify({ url: '/storage/dersplatform-public/avatars/11111111-1111-1111-1111-111111111111.png' }),
     });
   });
 
   // The application no longer reads auth state from localStorage. Legacy E2E
   // fixtures still use it only as input for these mocked cookie-session endpoints.
-  const readFixtureUser = async () => page.evaluate(() => {
-    const value = localStorage.getItem('user');
-    return value ? JSON.parse(value) : null;
-  }).catch(() => null);
+  const readFixtureUser = async () => {
+    if ((page as any)._mockUser) {
+      return (page as any)._mockUser;
+    }
+    return page.evaluate(() => {
+      const value = localStorage.getItem('user');
+      return value ? JSON.parse(value) : null;
+    }).catch(() => null);
+  };
 
   await page.route(/\/api\/v1\/auth\/refresh(\?|$)/, async (route) => {
     const user = await readFixtureUser();

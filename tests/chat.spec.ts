@@ -4,7 +4,7 @@ import { mockStudent, mockTutor, mockMessages, setupDefaultMocks } from './mocks
 test.describe('Messaging / Chat E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Intercept standard static API requests
-    await setupDefaultMocks(page);
+    await setupDefaultMocks(page, mockStudent);
 
     // Mock Login by setting local storage directly
     await page.addInitScript(({ user }) => {
@@ -95,6 +95,26 @@ test.describe('Messaging / Chat E2E Tests', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(mockMessages),
+      });
+    });
+
+    // Outbound messages are persisted through REST; WebSocket is receive-only.
+    await page.route('**/api/v1/messages', async (route) => {
+      const payload = route.request().postDataJSON() as { receiverId: string; content: string };
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'msg-sent-1',
+          senderId: mockStudent.id,
+          senderName: mockStudent.fullName,
+          receiverId: payload.receiverId,
+          receiverName: mockTutor.fullName,
+          content: payload.content,
+          messageType: 'TEXT',
+          read: false,
+          createdAt: new Date().toISOString(),
+        }),
       });
     });
 

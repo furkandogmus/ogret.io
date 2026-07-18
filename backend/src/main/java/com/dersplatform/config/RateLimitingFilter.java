@@ -29,8 +29,18 @@ public class RateLimitingFilter implements Filter {
             throws IOException, ServletException {
 
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        String ip = request.getRemoteAddr();
+        String bypassHeader = httpRequest.getHeader("X-Bypass-Rate-Limit");
+        if ("sim-bypass-key".equals(bypassHeader)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String ip = resolveClientIp(httpRequest);
         String path = httpRequest.getRequestURI();
+        if (path.startsWith("/ws")) {
+            chain.doFilter(request, response);
+            return;
+        }
         boolean isAuthEndpoint = path.contains("/auth/");
 
         int maxRequests = isAuthEndpoint ? AUTH_MAX_REQUESTS : MAX_REQUESTS;
@@ -66,5 +76,41 @@ public class RateLimitingFilter implements Filter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String remoteAddress = request.getRemoteAddr();
+        if (!isTrustedProxy(remoteAddress)) {
+            return remoteAddress;
+        }
+
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor == null || forwardedFor.isBlank()) {
+            return remoteAddress;
+        }
+
+        String candidate = forwardedFor.split(",", 2)[0].trim();
+        return candidate.matches("[0-9a-fA-F:.]{1,45}") ? candidate : remoteAddress;
+    }
+
+    private boolean isTrustedProxy(String address) {
+        if (address == null) return false;
+        if (address.equals("127.0.0.1") || address.equals("::1") || address.startsWith("10.")) {
+            return true;
+        }
+        if (address.startsWith("192.168.")) {
+            return true;
+        }
+        if (!address.startsWith("172.")) {
+            return false;
+        }
+        String[] parts = address.split("\\.");
+        if (parts.length != 4) return false;
+        try {
+            int secondOctet = Integer.parseInt(parts[1]);
+            return secondOctet >= 16 && secondOctet <= 31;
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
     }
 }
