@@ -59,7 +59,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 authenticateExistingPrincipal(accessor);
                 return message;
             }
-            throw new MessageDeliveryException("WebSocket kimlik doğrulaması gerekli");
+            throw new MessageDeliveryException("Lütfen giriş yapın");
         }
 
         if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
@@ -68,7 +68,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         }
 
         if (accessor.getUser() == null) {
-            throw new MessageDeliveryException("WebSocket kimlik doğrulaması gerekli");
+            throw new MessageDeliveryException("Lütfen giriş yapın");
         }
 
         if ((StompCommand.SEND.equals(accessor.getCommand())

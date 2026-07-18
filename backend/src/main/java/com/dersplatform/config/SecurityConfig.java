@@ -45,7 +45,7 @@ public class SecurityConfig {
         return (request, response, authException) -> {
             response.setContentType("application/json");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"message\":\"Kimlik doğrulama gerekli\"}");
+            response.getWriter().write("{\"message\":\"Lütfen giriş yapın\"}");
         };
     }
 
