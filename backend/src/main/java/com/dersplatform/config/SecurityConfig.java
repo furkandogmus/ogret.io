@@ -75,7 +75,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterAfter(csrfCookieFilter, BasicAuthenticationFilter.class);
+            .addFilterAfter(csrfCookieFilter, org.springframework.security.web.csrf.CsrfFilter.class);
 
         return http.build();
     }
