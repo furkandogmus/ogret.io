@@ -173,7 +173,13 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
       });
       setStep(4);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Talep gönderilirken hata oluştu");
+      const fieldErrors = err.response?.data?.errors;
+      if (fieldErrors && typeof fieldErrors === "object") {
+        const messages = Object.values(fieldErrors).join(", ");
+        setError(messages || err.response?.data?.message || "Talep gönderilirken hata oluştu");
+      } else {
+        setError(err.response?.data?.message || "Talep gönderilirken hata oluştu");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -377,7 +383,9 @@ export function LessonRequestModal({ tutor, onClose }: LessonRequestModalProps) 
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">Öğretmene Mesaj Yazın</label>
+                <label className="text-sm font-medium text-foreground mb-1 block">
+                  Öğretmene Mesaj Yazın <span className="text-red-500">*</span>
+                </label>
                 <p className="text-xs text-muted-foreground mb-3">
                   Hedeflerinizi, mevcut seviyenizi ve öğrenmek istediklerinizi kısaca anlatın.
                 </p>
