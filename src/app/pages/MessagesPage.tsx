@@ -177,6 +177,23 @@ export function MessagesPage() {
           grouped[otherId].time = new Date(msg.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
         }
       });
+
+      if (selectUserId && !grouped[selectUserId]) {
+        try {
+          const { data: userData } = await userApi.getById(selectUserId);
+          grouped[selectUserId] = {
+            userId: userData.id,
+            fullName: userData.fullName,
+            avatarUrl: userData.avatarUrl,
+            lastMessage: "Henüz mesaj yok",
+            time: "",
+            unread: 0,
+          };
+        } catch (e) {
+          console.error("Failed to fetch target user for conversation", e);
+        }
+      }
+
       setConversations(Object.values(grouped));
     } catch { console.error("Konusmalar yuklenemedi"); } finally { setLoading(false); }
   };
