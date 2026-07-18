@@ -329,56 +329,57 @@ async function runSimulation() {
   console.log('\n🔌 Establishing 60 concurrent WebSocket connections over STOMP...');
   const allUsers = [...tutors, ...students];
   const connectionPromises = allUsers.map((user, idx) => {
-    return new Promise<void>(async (resolve) => {
-      await sleep(idx * 50);
-      const client = new Client({
-        brokerURL: WS_URL,
-        connectHeaders: {
-          Authorization: `Bearer ${user.token}`,
-        },
-        reconnectDelay: 0,
-        debug: () => {},
-        onConnect: () => {
-          user.connected = true;
-          stats.wsConnectionsOpened++;
+    return new Promise<void>((resolve) => {
+      sleep(idx * 50).then(() => {
+        const client = new Client({
+          brokerURL: WS_URL,
+          connectHeaders: {
+            Authorization: `Bearer ${user.token}`,
+          },
+          reconnectDelay: 0,
+          debug: () => {},
+          onConnect: () => {
+            user.connected = true;
+            stats.wsConnectionsOpened++;
 
-          // Subscribe to messages
-          client.subscribe('/user/queue/messages', (msg) => {
-            user.receivedCount++;
-            stats.messagesReceived++;
-            try {
-              const body = JSON.parse(msg.body);
-              handleIncomingMessage(user, body);
-            } catch { /* ignore */ }
-          });
+            // Subscribe to messages
+            client.subscribe('/user/queue/messages', (msg) => {
+              user.receivedCount++;
+              stats.messagesReceived++;
+              try {
+                const body = JSON.parse(msg.body);
+                handleIncomingMessage(user, body);
+              } catch { /* ignore */ }
+            });
 
-          // Subscribe to typing indicators
-          client.subscribe('/user/queue/typing', () => {
-            stats.typingEventsReceived++;
-          });
+            // Subscribe to typing indicators
+            client.subscribe('/user/queue/typing', () => {
+              stats.typingEventsReceived++;
+            });
 
-          resolve();
-        },
-        onStompError: (frame) => {
-          stats.wsConnectionsFailed++;
-          stats.errors.push(`STOMP error for ${user.email}: ${frame.headers['message']}`);
-          resolve();
-        },
-        onWebSocketError: (evt) => {
-          stats.wsConnectionsFailed++;
-          stats.errors.push(`WebSocket error for ${user.email}`);
-          resolve();
-        },
-        onWebSocketClose: () => {
-          user.connected = false;
-          stats.wsConnectionsFailed++;
-          stats.errors.push(`WebSocket closed for ${user.email}`);
-          resolve();
-        },
+            resolve();
+          },
+          onStompError: (frame) => {
+            stats.wsConnectionsFailed++;
+            stats.errors.push(`STOMP error for ${user.email}: ${frame.headers['message']}`);
+            resolve();
+          },
+          onWebSocketError: (evt) => {
+            stats.wsConnectionsFailed++;
+            stats.errors.push(`WebSocket error for ${user.email}`);
+            resolve();
+          },
+          onWebSocketClose: () => {
+            user.connected = false;
+            stats.wsConnectionsFailed++;
+            stats.errors.push(`WebSocket closed for ${user.email}`);
+            resolve();
+          },
+        });
+
+        user.client = client;
+        client.activate();
       });
-
-      user.client = client;
-      client.activate();
     });
   });
 
