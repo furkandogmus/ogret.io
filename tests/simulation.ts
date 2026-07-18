@@ -64,6 +64,31 @@ async function apiGet(path: string, token?: string) {
   return res.json();
 }
 
+// Helper to upload a profile avatar
+async function apiUploadAvatar(token: string) {
+  const dummyPngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  const buffer = Buffer.from(dummyPngBase64, 'base64');
+  const blob = new Blob([buffer], { type: 'image/png' });
+  const formData = new FormData();
+  formData.append('file', blob, 'avatar.png');
+
+  const res = await fetch(`${BASE_URL}/users/me/avatar`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'X-Bypass-Rate-Limit': 'sim-bypass-key',
+      'X-Client-Platform': 'mobile'
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`POST /users/me/avatar failed with ${res.status}: ${text}`);
+  }
+  return res.json();
+}
+
 interface SimUser {
   id: string;
   email: string;
@@ -229,6 +254,13 @@ async function runSimulation() {
           phone: tutor.phone,
         }, tutor.token);
 
+        // Upload avatar image
+        try {
+          await apiUploadAvatar(tutor.token);
+        } catch (avatarErr: any) {
+          console.error(`Tutor avatar upload failed for ${tutor.email}:`, avatarErr.message);
+        }
+
         // Update subjects
         await apiPut('/tutors/me/subjects', [subjectId], tutor.token);
 
@@ -274,6 +306,14 @@ async function runSimulation() {
           fullName: student.fullName,
           phone: student.phone,
         }, student.token);
+
+        // Upload avatar image
+        try {
+          await apiUploadAvatar(student.token);
+        } catch (avatarErr: any) {
+          console.error(`Student avatar upload failed for ${student.email}:`, avatarErr.message);
+        }
+
         stats.successfulOnboardings++;
       } catch (err: any) {
         console.error(`Student profile update failed for ${student.email}:`, err.message);
